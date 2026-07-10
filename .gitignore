@@ -1,0 +1,15 @@
+# Visual Studi
+.vs/
+*.user
+*.suo
+
+# .NET build ouput
+bin/
+obj/
+
+# Rider / VS Code
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
