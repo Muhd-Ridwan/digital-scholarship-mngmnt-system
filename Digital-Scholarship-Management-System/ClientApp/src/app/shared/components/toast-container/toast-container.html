@@ -1,0 +1,27 @@
+<div class="fixed top-4 right-4 z-50 flex w-[90vw] max-w-sm flex-col gap-2">
+  @for (toast of toastService.toasts(); track toast.id) {
+    <div
+      class="relative flex items-start gap-3 overflow-hidden rounded-xl border border-ink-800 bg-ink-900 p-4 pl-4 shadow-lg"
+    >
+      <span
+        class="absolute left-0 top-0 h-full w-1"
+        [class.bg-status-success]="toast.type === 'success'"
+        [class.bg-status-danger]="toast.type === 'error'"
+      ></span>
+      @if (toast.type === 'success') {
+        <lucide-icon name="circle-check" class="h-5 w-5 shrink-0 text-status-success"></lucide-icon>
+      } @else {
+        <lucide-icon name="circle-alert" class="h-5 w-5 shrink-0 text-status-danger"></lucide-icon>
+      }
+      <p class="flex-1 text-sm text-mist-100">{{ toast.message }}</p>
+
+      <button
+        type="button"
+        (click)="toastService.dismiss(toast.id)"
+        class="text-mist-400 hover:text-mist-100"
+      >
+        <lucide-icon name="x" class="h-4 w-4"></lucide-icon>
+      </button>
+    </div>
+  }
+</div>

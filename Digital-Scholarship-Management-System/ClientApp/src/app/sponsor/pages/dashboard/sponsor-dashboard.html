@@ -1,0 +1,73 @@
+<div class="flex flex-col gap-6">
+  <app-dashboard-header
+    fullName="Muhammad Ridwan Bin Jesmarnel"
+    subtitle="Here's an overview of your sponsored scholarships."
+    primaryActionLabel="Create Scholarship"
+    primaryActionIcon="circle-plus"
+  />
+
+  <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
+    <app-stat-card
+      label="Scholarships Available"
+      value="5"
+      icon="graduation-cap"
+      description="Currently open"
+    />
+    <app-stat-card
+      label="Total Applicants"
+      value="47"
+      icon="users"
+      description="Across all listings"
+    />
+    <app-stat-card
+      label="Total Funded"
+      value="RM 25,000"
+      icon="hand-coins"
+      description="This year"
+    />
+    <app-stat-card
+      label="Closed Listings"
+      value="2"
+      icon="history"
+      tone="warning"
+      description="No longer accepting"
+    />
+  </div>
+
+  <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+    <div class="flex flex-col gap-3 lg:col-span-2">
+      <div class="flex items-center gap-2">
+        <lucide-icon name="zap" class="h-4 w-4 text-gold-500"></lucide-icon>
+        <h2 class="text-sm font-semibold text-mist-100">My Actions</h2>
+      </div>
+      <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <app-action-card
+          label="Create Scholarship"
+          description="Set up a new scholarship listing"
+          icon="circle-plus"
+          route="/sponsor/scholarships/new"
+        />
+        <app-action-card
+          label="Manage Listings"
+          description="Edit or close existing scholarships"
+          icon="graduation-cap"
+          route="/sponsor/scholarships"
+        />
+        <app-action-card
+          label="View Applicants"
+          description="Browse applicants to your scholarships"
+          icon="users"
+          route="/sponsor/applicants"
+        />
+        <app-action-card
+          label="Funding Reports"
+          description="Track your contribution history"
+          icon="chart-column"
+          route="/sponsor/reports"
+        />
+      </div>
+    </div>
+
+    <app-sponsor-listings [listings]="listings" createRoute="/sponsor/scholarships/new" />
+  </div>
+</div>

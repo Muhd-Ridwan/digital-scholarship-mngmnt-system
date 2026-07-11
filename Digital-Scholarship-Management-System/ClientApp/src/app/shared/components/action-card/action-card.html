@@ -1,0 +1,12 @@
+<a
+  [routerLink]="route()"
+  class="group flex h-full flex-col gap-3 rounded-xl border border-ink-800 bg-ink-950 p-4 transition-colors hover:border-gold-500/40 hover:bg-ink-900"
+>
+  <div class="flex h-9 w-9 items-center justify-center rounded-lg" [class]="iconToneClasses()">
+    <lucide-icon [name]="icon()" class="h-5 w-5"></lucide-icon>
+  </div>
+  <div>
+    <p class="text-sm font-semibold text-mist-100">{{ label() }}</p>
+    <p class="mt-0.5 text-xs text-mist-400">{{ description() }}</p>
+  </div>
+</a>

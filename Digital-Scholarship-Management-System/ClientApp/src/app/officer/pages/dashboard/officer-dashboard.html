@@ -1,0 +1,69 @@
+<div class="flex flex-col gap-6">
+  <app-dashboard-header
+    fullName="Muhammad Ridwan Bin Jesmarnel"
+    subtitle="Here's what's waiting for your review."
+    primaryActionLabel="Review Queue"
+    primaryActionIcon="list-checks"
+  />
+
+  <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
+    <app-stat-card
+      label="Scholarships Available"
+      value="12"
+      icon="graduation-cap"
+      description="Open for application"
+    />
+    <app-stat-card
+      label="Assigned to You"
+      value="8"
+      icon="file-text"
+      tone="warning"
+      description="Pending your review"
+    />
+    <app-stat-card
+      label="Reviewed This Week"
+      value="15"
+      icon="circle-check"
+      tone="success"
+      description="Decisions made"
+    />
+    <app-stat-card label="Approval Rate" value="72%" icon="target" [progress]="72" />
+  </div>
+
+  <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+    <div class="flex flex-col gap-3 lg:col-span-2">
+      <div class="flex items-center gap-2">
+        <lucide-icon name="zap" class="h-4 w-4 text-gold-500"></lucide-icon>
+        <h2 class="text-sm font-semibold text-mist-100">My Actions</h2>
+      </div>
+      <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <app-action-card
+          label="Review Applications"
+          description="Evaluate pending applications"
+          icon="file-text"
+          route="/officer/applications"
+        />
+        <app-action-card
+          label="Schedule Interviews"
+          description="Set up applicant interviews"
+          icon="calendar"
+          route="/officer/interviews"
+        />
+        <app-action-card
+          label="Evaluation Rubric"
+          description="View scoring criteria"
+          icon="list-checks"
+          route="/officer/rubric"
+        />
+        <app-action-card
+          label="Reports"
+          description="View review analytics"
+          icon="chart-column"
+          route="/officer/reports"
+        />
+      </div>
+    </div>
+
+    <app-review-queue [items]="reviewQueue" viewAllRoute="/officer/applications" />
+  </div>
+</div>

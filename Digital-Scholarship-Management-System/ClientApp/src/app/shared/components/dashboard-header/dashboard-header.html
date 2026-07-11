@@ -1,0 +1,26 @@
+<section class="rounded-2xl border border-ink-800 bg-ink-900 p-6">
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <p class="flex items-center gap-1.5 text-xs font-semibold tracking-wide text-gold-500">
+        <lucide-icon name="sparkles" class="h-3.5 w-3.5"></lucide-icon>
+        {{ eyebrowDate() }}
+      </p>
+      <h1 class="mt-2 font-display text-2xl text-mist-100 sm:text-3xl">
+        Welcome back, <span class="text-gold-500">{{ fullName() }}</span>
+      </h1>
+      <p class="mt-1 text-sm text-mist-400">{{ subtitle() }}</p>
+    </div>
+    @if (primaryActionLabel()) {
+      <button
+        type="button"
+        (click)="primaryAction.emit()"
+        class="flex items-center justify-center gap-2 rounded-lg border border-ink-800 bg-ink-950 px-4 py-2.5 text-sm font-medium text-mist-100 hover:bg-ink-800"
+      >
+        @if (primaryActionIcon()) {
+          <lucide-icon [name]="primaryActionIcon()!" class="h-4 w-4"></lucide-icon>
+        }
+        {{ primaryActionLabel() }}
+      </button>
+    }
+  </div>
+</section>

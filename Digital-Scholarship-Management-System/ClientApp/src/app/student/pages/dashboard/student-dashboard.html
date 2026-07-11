@@ -1,0 +1,76 @@
+<div class="flex flex-col gap-6">
+  <app-dashboard-header
+    fullName="Muhammad Ridwan Bin Jesmarnel"
+    subtitle="Here's an overview of your scholarship applications."
+    primaryActionLabel="View Applications"
+    primaryActionIcon="calendar"
+  />
+
+  <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
+    <app-stat-card
+      label="Scholarships Available"
+      value="12"
+      icon="graduation-cap"
+      description="Open for application"
+    />
+    <app-stat-card
+      label="Active Applications"
+      value="3"
+      icon="file-text"
+      tone="success"
+      description="In review"
+    />
+    <app-stat-card
+      label="Profile Completion"
+      value="80%"
+      icon="target"
+      tone="warning"
+      [progress]="80"
+    />
+    <app-stat-card
+      label="Approved"
+      value="1"
+      icon="circle-check"
+      tone="success"
+      description="Awarded scholarships"
+    />
+  </div>
+
+  <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+    <div class="flex flex-col gap-3 lg:col-span-2">
+      <div class="flex items-center gap-2">
+        <lucide-icon name="zap" class="h-4 w-4 text-gold-500"></lucide-icon>
+        <h2 class="text-sm font-semibold text-mist-100">My Actions</h2>
+      </div>
+      <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <app-action-card
+          label="Browse Scholarships"
+          description="Find scholarships to apply for"
+          icon="graduation-cap"
+          route="/student/scholarships"
+        />
+        <app-action-card
+          label="My Applications"
+          description="Track your submitted applications"
+          icon="file-text"
+          route="/student/applications"
+        />
+        <app-action-card
+          label="Documents"
+          description="Upload required documents"
+          icon="folder-open"
+          route="/student/documents"
+          tone="warning"
+        />
+        <app-action-card
+          label="Profile Settings"
+          description="Update your personal details"
+          icon="user"
+          route="/student/profile"
+        />
+      </div>
+    </div>
+
+    <app-application-progress [applications]="sampleApplications" />
+  </div>
+</div>

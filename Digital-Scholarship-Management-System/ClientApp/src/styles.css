@@ -1,3 +1,25 @@
 /* You can add global styles to this file, and also import other style files */
 
 @import 'tailwindcss';
+
+@theme {
+  --color-ink-950: #12141c;
+  --color-ink-900: #1a1d29;
+  --color-ink-800: #262a3a;
+  --color-mist-100: #eef0f6;
+  --color-mist-400: #8b90a3;
+  --color-gold-500: #d4a24c;
+
+  --color-status-success: #4fae7d;
+  --color-status-warning: #e0a83f;
+  --color-status-danger: #e0645f;
+
+  --font-display: 'Fraunces', ui-serif, Georgia, serif;
+  --font-sans: 'Manrope', ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  body {
+    @apply bg-ink-950 text-mist-100 font-sans antialiased;
+  }
+}

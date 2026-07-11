@@ -1,0 +1,67 @@
+<header class="sticky top-0 z-40 border-b border-ink-800 bg-ink-950/95">
+  <div class="mx-auto flex h-16 max-w-screen-2xl items-center justify-between gap-4 px-4 sm:px-6">
+    <div class="flex items-center gap-3">
+      <div class="flex h-9 w-9 items-center justify-center rounded-lg text-gold-500">
+        <lucide-icon name="graduation-cap" class="h-5 w-5"></lucide-icon>
+      </div>
+      <div>
+        <p class="font-display text-lg leading-tight text-mist-100">
+          Digital Scholarship *Can change later*
+        </p>
+        <p class="hidden text-xs text-mist-400 sm:block">Management Portal</p>
+      </div>
+    </div>
+    @if (navLinks().length) {
+      <nav class="hidden items-center gap-1 md:flex">
+        @for (link of navLinks(); track link.route) {
+          <a
+            [routerLink]="link.route"
+            class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-mist-400 hover:bg-ink-900 hover:text-mist-100"
+          >
+            <lucide-icon [name]="link.icon" class="h-4 w-4"></lucide-icon>
+            {{ link.label }}
+          </a>
+        }
+      </nav>
+    }
+
+    <div class="relative">
+      <button
+        type="button"
+        (click)="toggleMenu()"
+        class="flex items-center gap-3 rounded-lg px-2 py-1.5 hover:bg-ink-900"
+      >
+        <div class="text-right">
+          <p class="hidden text-sm font-medium text-mist-100 sm:block">{{ fullName() }}</p>
+          <p class="hidden text-xs text-mist-400 md:block">{{ email() }}</p>
+        </div>
+        <div
+          class="flex h-9 w-9 items-center justify-center rounded-full bg-gold-500 text-sm font-semibold text-ink-950"
+        >
+          {{ initials() }}
+        </div>
+        <lucide-icon name="chevron-down" class="h-4 w-4 text-mist-400"></lucide-icon>
+      </button>
+      @if (menuOpen()) {
+        <button
+          type="button"
+          class="fixed inset-0 z-40 cursor-default"
+          (click)="closeMenu()"
+          aria-label="Close menu"
+        ></button>
+        <div
+          class="absolute right-0 z-50 mt-2 w-48 overflow-hidden rounded-xl border border-ink-800 bg-ink-900 shadow-lg"
+        >
+          <button
+            type="button"
+            (click)="onLogout()"
+            class="flex w-full items-center gap-2 px-4 py-3 text-sm text-mist-100 hover:bg-ink-800"
+          >
+            <lucide-icon name="log-out" class="h-4 w-4"></lucide-icon>
+            Log out
+          </button>
+        </div>
+      }
+    </div>
+  </div>
+</header>

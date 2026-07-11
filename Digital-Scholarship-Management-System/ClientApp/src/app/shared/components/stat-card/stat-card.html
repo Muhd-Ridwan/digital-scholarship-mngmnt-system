@@ -1,0 +1,42 @@
+<div
+  class="flex items-center justify-between gap-3 rounded-xl border border-ink-800 bg-ink-900 px-4 py-3 sm:hidden"
+>
+  <div class="flex items-center gap-3">
+    <div
+      class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
+      [class]="iconToneClasses()"
+    >
+      <lucide-icon [name]="icon()" class="h-4 w-4"></lucide-icon>
+    </div>
+    <p class="text-xs font-semibold tracking-wide text-mist-400 uppercase">{{ label() }}</p>
+  </div>
+  <p class="text-base font-semibold tabular-nums text-mist-100">{{ value() }}</p>
+</div>
+
+<div class="hidden rounded-2xl border border-ink-800 bg-ink-900 p-5 sm:block">
+  <div class="flex items-start justify-between gap-3">
+    <p class="text-xs font-semibold tracking-wide text-mist-400 uppercase">{{ label() }}</p>
+    <div
+      class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
+      [class]="iconToneClasses()"
+    >
+      <lucide-icon [name]="icon()" class="h-5 w-5"></lucide-icon>
+    </div>
+  </div>
+
+  <p class="mt-3 text-3xl font-semibold tabular-nums text-mist-100">{{ value() }}</p>
+
+  @if (description()) {
+    <p class="mt-1 text-xs text-mist-400">{{ description() }}</p>
+  }
+
+  @if (progress() !== null) {
+    <div class="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-ink-800">
+      <div
+        class="h-full rounded-full"
+        [class]="progressToneClasses()"
+        [style.width.%]="progress()"
+      ></div>
+    </div>
+  }
+</div>

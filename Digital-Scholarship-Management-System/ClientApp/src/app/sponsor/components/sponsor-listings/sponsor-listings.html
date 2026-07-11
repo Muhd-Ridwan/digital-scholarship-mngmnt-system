@@ -1,0 +1,47 @@
+<div class="flex h-full flex-col rounded-2xl border border-ink-800 bg-ink-900 p-5">
+  <div class="flex items-center justify-between">
+    <div class="flex items-center gap-2">
+      <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-gold-500/10 text-gold-500">
+        <lucide-icon name="graduation-cap" class="h-4 w-4"></lucide-icon>
+      </div>
+      <h2 class="text-sm font-semibold text-mist-100">My Listings</h2>
+    </div>
+    @if (createRoute()) {
+      <a
+        [routerLink]="createRoute()"
+        class="flex items-center gap-1 text-xs font-medium text-gold-500 hover:text-gold-500/80"
+      >
+        <lucide-icon name="circle-plus" class="h-3.5 w-3.5"></lucide-icon>
+        New
+      </a>
+    }
+  </div>
+
+  @if (listings().length) {
+    <div class="mt-4 flex flex-col gap-3">
+      @for (listing of listings(); track listing.id) {
+        <a
+          [routerLink]="['/sponsor/scholarships', listing.id]"
+          class="block rounded-xl border border-ink-800 bg-ink-950 p-3 transition-colors hover:border-gold-500/40 hover:bg-ink-900"
+        >
+          <div class="flex items-start justify-between gap-2">
+            <p class="text-sm font-medium text-mist-100">{{ listing.name }}</p>
+            <span
+              class="shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold"
+              [class]="statusClasses(listing.status)"
+            >
+              {{ statusLabel(listing.status) }}
+            </span>
+          </div>
+          <p class="mt-1 text-xs text-mist-400">{{ listing.applicantCount }} applicants</p>
+        </a>
+      }
+    </div>
+  } @else {
+    <div class="mt-6 flex flex-1 flex-col items-center justify-center gap-2 text-center">
+      <lucide-icon name="graduation-cap" class="h-6 w-6 text-mist-400"></lucide-icon>
+      <p class="text-sm text-mist-400">No listings yet</p>
+      <p class="text-xs text-mist-400">Create your first scholarship to get started.</p>
+    </div>
+  }
+</div>
