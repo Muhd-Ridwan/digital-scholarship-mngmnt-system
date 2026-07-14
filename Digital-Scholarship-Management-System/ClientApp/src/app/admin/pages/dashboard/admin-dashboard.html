@@ -38,16 +38,10 @@
       </div>
       <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
         <app-action-card
-          label="Review Applications"
-          description="Approve or reject pending applications"
-          icon="file-text"
-          route="/admin/applications"
-        />
-        <app-action-card
-          label="Manage Scholarships"
-          description="Create and edit scholarship listings"
-          icon="graduation-cap"
-          route="/admin/scholarships"
+          label="Users & Access"
+          description="Register reviewers, lock accounts, approve sponsors"
+          icon="users"
+          route="/admin/users"
         />
         <app-action-card
           label="Reports"
@@ -65,6 +59,6 @@
       </div>
     </div>
 
-    <app-management-panel [items]="managementItems" viewAllRoute="/admin/tools" />
+    <app-management-panel [items]="managementItems" />
   </div>
 </div>

@@ -42,3 +42,7 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
+
+# Legacy prototype reference files (kept local, not tracked)
+src/app/admin/pages/dashboard/hr-dashboard.component.*
+src/app/admin/pages/dashboard/scholarhub_prototype.html
