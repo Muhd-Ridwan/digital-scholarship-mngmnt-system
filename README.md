@@ -8,7 +8,8 @@
    `RDS: For relational database`
    `DynamoDB: For storing audit log purposes`
    `Cognito: For issuing JWT user login using RBAC`
-   `AWS EB: To deploy backend` <br/>
+   `AWS EB: To deploy backend`
+   `AWS Amplify /  S3 + Cloudfront: For frontend deployment`<br/>
    It is a group assignment consist of 4 team members under module name Designing &amp; Developing Cloud Applications
 
 ---
