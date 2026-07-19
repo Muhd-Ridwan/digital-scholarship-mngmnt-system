@@ -21,6 +21,13 @@ import {
   History,
   CirclePlus,
   HandCoins,
+  Lock,
+  LockOpen,
+  UserPlus,
+  ShieldCheck,
+  Download,
+  Sun,
+  Moon,
 } from 'lucide-angular';
 
 export const AppIcons = {
@@ -46,4 +53,11 @@ export const AppIcons = {
   History,
   CirclePlus,
   HandCoins,
+  Lock,
+  LockOpen,
+  UserPlus,
+  ShieldCheck,
+  Download,
+  Sun,
+  Moon,
 };

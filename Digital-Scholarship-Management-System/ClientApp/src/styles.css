@@ -3,12 +3,15 @@
 @import 'tailwindcss';
 
 @theme {
-  --color-ink-950: #12141c;
-  --color-ink-900: #1a1d29;
-  --color-ink-800: #262a3a;
-  --color-mist-100: #eef0f6;
-  --color-mist-400: #8b90a3;
-  --color-gold-500: #d4a24c;
+  /* Dark theme (default). Token NAMES stay the same in both themes (ink = surfaces,
+     mist = text, gold = accent) so component classes never change — only the values
+     flip. Light-theme values live below in the [data-theme='light'] override. */
+  --color-ink-950: #12141c; /* page background (darkest surface) */
+  --color-ink-900: #1a1d29; /* cards / panels */
+  --color-ink-800: #262a3a; /* borders / subtle fills / progress tracks */
+  --color-mist-100: #eef0f6; /* primary text (near-white) */
+  --color-mist-400: #8b90a3; /* muted / secondary text */
+  --color-gold-500: #d4a24c; /* accent */
 
   --color-status-success: #4fae7d;
   --color-status-warning: #e0a83f;
@@ -16,6 +19,19 @@
 
   --font-display: 'Fraunces', ui-serif, Georgia, serif;
   --font-sans: 'Manrope', ui-sans-serif, system-ui, sans-serif;
+}
+
+:root[data-theme='light'] {
+  --color-ink-950: #f5f6f8; /* page background (lightest surface) */
+  --color-ink-900: #ffffff; /* cards / panels */
+  --color-ink-800: #e3e6ec; /* borders / subtle fills / progress tracks */
+  --color-mist-100: #1b1e28; /* primary text (near-black) + dark text on gold */
+  --color-mist-400: #5c6272; /* muted / secondary text */
+  --color-gold-500: #b7842a; /* accent (darkened from #d4a24c for contrast on white) */
+
+  --color-status-success: #2f9e6b;
+  --color-status-warning: #b7791f;
+  --color-status-danger: #d0483f;
 }
 
 @layer base {
