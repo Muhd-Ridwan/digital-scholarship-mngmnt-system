@@ -1,5 +1,10 @@
+using Amazon;
+using Amazon.CognitoIdentityProvider;
+using Amazon.Runtime;
 using Digital_Scholarship_Management_System.API.Data;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,6 +15,50 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
 builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddHttpClient();
+
+// For JWT From Cognito
+var cognitoRegion = builder.Configuration["Cognito:Region"];
+var cognitoUserPoolId = builder.Configuration["Cognito:UserPoolId"];
+var cognitoAppClientId = builder.Configuration["Cognito:AppClientId"];
+
+// Cognito Admin Client
+// Cred are from user secrets.
+var awsAccessKey = builder.Configuration["AWS:AccessKey"];
+var awsSecretKey = builder.Configuration["AWS:SecretKey"];
+var awsCredentials = new BasicAWSCredentials(awsAccessKey, awsSecretKey);
+var cognitoRegionEndpoint = RegionEndpoint.GetBySystemName(cognitoRegion);
+
+builder.Services.AddSingleton<IAmazonCognitoIdentityProvider>(
+    new AmazonCognitoIdentityProviderClient(awsCredentials, cognitoRegionEndpoint)
+    );
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.Authority = $"https://cognito-idp.{cognitoRegion}.amazonaws.com/{cognitoUserPoolId}";
+        options.MapInboundClaims = false;
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = false,
+            ValidateLifetime = true,
+        };
+        options.Events = new JwtBearerEvents
+        {
+            OnTokenValidated = context =>
+            {
+                var clientId = context.Principal?.FindFirst("client_id")?.Value;
+                if (clientId != cognitoAppClientId)
+                {
+                    context.Fail("Token was not issued for this app client.");
+                }
+                return Task.CompletedTask;
+            },
+        };
+    });
+
+builder.Services.AddAuthorization();
 
 // The CORS: Origins are read from the configuration and not hardcoded
 // Thats why make a variable that holds the allowed request API backend from a specific URL
@@ -38,6 +87,7 @@ app.UseHttpsRedirection();
 // So every incoming request got checked against it before proceeding further.
 app.UseCors("AllowFrontend");
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

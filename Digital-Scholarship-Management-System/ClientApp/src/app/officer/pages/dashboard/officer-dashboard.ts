@@ -1,9 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { LucideAngularModule } from 'lucide-angular';
 import { DashboardHeader } from '../../../shared/components/dashboard-header/dashboard-header';
 import { StatCard } from '../../../shared/components/stat-card/stat-card';
 import { ActionCard } from '../../../shared/components/action-card/action-card';
 import { ReviewQueue, ReviewQueueItem } from '../../components/review-queue/review-queue';
+import { AuthService } from '../../../auth/services/auth.service';
 
 @Component({
   selector: 'app-officer-dashboard',
@@ -12,6 +13,9 @@ import { ReviewQueue, ReviewQueueItem } from '../../components/review-queue/revi
   templateUrl: './officer-dashboard.html',
 })
 export class OfficerDashboard {
+  private readonly auth = inject(AuthService);
+  readonly profile = this.auth.profile;
+
   protected readonly reviewQueue: ReviewQueueItem[] = [
     {
       id: '1',

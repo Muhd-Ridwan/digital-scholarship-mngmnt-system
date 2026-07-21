@@ -1,0 +1,98 @@
+<div class="flex min-h-screen flex-col items-center justify-center gap-4 bg-ink-950 px-4">
+  <h1 class="font-display text-2xl text-mist-100">Centralised Scholarship Management</h1>
+  <section class="w-full max-w-sm rounded-2xl border border-ink-800 bg-ink-900 p-6">
+    <h2 class="font-display text-2xl text-mist-100">Create an Account</h2>
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="mt-6 flex flex-col gap-4">
+      <div>
+        <label for="username" class="text-sm text-mist-400">Username</label>
+        <input
+          id="username"
+          type="text"
+          formControlName="username"
+          class="mt-1 w-full rounded-lg border border-ink-800 bg-ink-950 px-3 py-2 text-mist-100"
+        />
+        @if (form.controls.username.invalid && form.controls.username.touched) {
+          <p class="mt-1 text-xs text-status-danger">Username is required</p>
+        }
+      </div>
+      <div>
+        <label for="email" class="text-sm text-mist-400">Email</label>
+        <input
+          id="email"
+          type="email"
+          formControlName="email"
+          class="mt-1 w-full rounded-lg border border-ink-800 bg-ink-950 px-3 py-2 text-mist-100"
+        />
+        @if (form.controls.email.invalid && form.controls.email.touched) {
+          <p class="mt-1 text-xs text-status-danger">A valid email is required</p>
+        }
+      </div>
+
+      <div>
+        <label for="fullName" class="text-sm text-mist-400">Full Name</label>
+        <input
+          id="fullName"
+          type="text"
+          formControlName="fullName"
+          class="mt-1 w-full rounded-lg border border-ink-800 bg-ink-950 px-3 py-2 text-mist-100"
+        />
+        @if (form.controls.fullName.invalid && form.controls.fullName.touched) {
+          <p class="mt-1 text-xs text-status-danger">Full name is required</p>
+        }
+      </div>
+
+      <div>
+        <label class="text-sm text-mist-400">Register as</label>
+        <div class="mt-1 flex gap-4">
+          <label class="flex items-center gap-2 text-sm text-mist-100">
+            <input type="radio" formControlName="role" value="user" />
+            Student / Applicant
+          </label>
+          <label class="flex items-center gap-2 text-sm text-mist-100">
+            <input type="radio" formControlName="role" value="sponsor" />
+            Sponsor
+          </label>
+        </div>
+      </div>
+
+      @if (isSponsor) {
+        <div>
+          <label for="companyName" class="text-sm text-mist-400">Company Name</label>
+          <input
+            id="companyName"
+            type="text"
+            formControlName="companyName"
+            class="mt-1 w-full rounded-lg border border-ink-800 bg-ink-900 px-3 py-2 text-mist-100"
+          />
+          @if (form.controls.companyName.invalid && form.controls.companyName.touched) {
+            <p class="mt-1 text-xs text-status-danger">Company name is required</p>
+          }
+        </div>
+
+        <div>
+          <label for="ssmNumber" class="text-sm text-mist-400">SSM Number</label>
+          <input
+            id="ssmNumber"
+            type="text"
+            formControlName="ssmNumber"
+            class="mt-1 w-full rounded-lg border border-ink-800 bg-ink-950 px-3 py-2 text-mist-100"
+          />
+          @if (form.controls.ssmNumber.invalid && form.controls.ssmNumber.touched) {
+            <p class="mt-1 text-xs text-status-danger">SSM number is required</p>
+          }
+        </div>
+      }
+      <p class="mt-4 text-center text-sm text-mist-400">
+        Already have an account?
+        <a routerLink="/login" class="text-gold-500 underline hover:text-mist-100">Sign In</a>
+      </p>
+      <button
+        type="submit"
+        [disabled]="form.invalid || submitting()"
+        class="mt-2 cursor-pointer rounded-lg bg-gold-500 px-4 py-2.5 text-sm font-medium text-ink-950 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {{ submitting() ? 'Creating account...' : 'Register' }}
+      </button>
+    </form>
+  </section>
+</div>

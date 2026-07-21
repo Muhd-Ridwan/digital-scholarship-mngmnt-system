@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { LucideAngularModule } from 'lucide-angular';
 import { DashboardHeader } from '../../../shared/components/dashboard-header/dashboard-header';
 import { StatCard } from '../../../shared/components/stat-card/stat-card';
@@ -7,6 +7,7 @@ import {
   ApplicationProgress,
   ApplicationStatusItem,
 } from '../../components/application-progress/application-progress';
+import { AuthService } from '../../../auth/services/auth.service';
 
 @Component({
   selector: 'app-student-dashboard',
@@ -15,6 +16,10 @@ import {
   templateUrl: './student-dashboard.html',
 })
 export class StudentDashboard {
+  private readonly auth = inject(AuthService);
+
+  readonly profile = this.auth.profile;
+
   protected readonly sampleApplications: ApplicationStatusItem[] = [
     {
       id: '1',

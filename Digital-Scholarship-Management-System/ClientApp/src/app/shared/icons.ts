@@ -28,6 +28,8 @@ import {
   Download,
   Sun,
   Moon,
+  Eye,
+  EyeOff,
 } from 'lucide-angular';
 
 export const AppIcons = {
@@ -60,4 +62,6 @@ export const AppIcons = {
   Download,
   Sun,
   Moon,
+  Eye,
+  EyeOff,
 };

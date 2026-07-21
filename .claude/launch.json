@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "angular-dev",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "Digital-Scholarship-Management-System/ClientApp", "start"],
+      "port": 4200
+    }
+  ]
+}
