@@ -37,6 +37,10 @@ namespace Digital_Scholarship_Management_System.API.Data
                 .Property(s => s.FundingAmount)
                 .HasPrecision(18, 2);
 
+            modelBuilder.Entity<User>()
+                .HasIndex(u => u.Email)
+                .IsUnique();
+
         }
     }
 }

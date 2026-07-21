@@ -3,7 +3,7 @@ import {
   provideBrowserGlobalErrorListeners,
   importProvidersFrom,
 } from '@angular/core';
-import { provideRouter } from '@angular/router';
+import { provideRouter, withRouterConfig } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { LucideAngularModule } from 'lucide-angular';
 
@@ -13,7 +13,7 @@ import { AppIcons } from './shared/icons';
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
-    provideRouter(routes),
+    provideRouter(routes, withRouterConfig({ paramsInheritanceStrategy: 'always' })),
     provideHttpClient(),
     importProvidersFrom(LucideAngularModule.pick(AppIcons)),
   ],

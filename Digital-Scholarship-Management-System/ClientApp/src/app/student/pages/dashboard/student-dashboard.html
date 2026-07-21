@@ -1,6 +1,6 @@
 <div class="flex flex-col gap-6">
   <app-dashboard-header
-    fullName="Muhammad Ridwan Bin Jesmarnel"
+    [fullName]="profile()?.fullName ?? ''"
     subtitle="Here's an overview of your scholarship applications."
     primaryActionLabel="View Applications"
     primaryActionIcon="calendar"

@@ -1,0 +1,78 @@
+<div class="flex flex-col gap-6">
+  <div>
+    <h1 class="font-display text-2xl text-mist-100">Audit log</h1>
+    <p class="mt-1 text-sm text-mist-400">
+      Recent Activity — logins, submissions, edits, drafts, and profile changes, filterable by date, role, and
+      person.
+    </p>
+  </div>
+
+  <div class="grid grid-cols-1 gap-3 rounded-2xl border border-ink-800 bg-ink-900 p-5 sm:grid-cols-3">
+    <div>
+      <label class="text-xs font-semibold tracking-wide text-mist-400 uppercase">Date range</label>
+      <input
+        type="text"
+        value="Last 7 days"
+        placeholder="Last 7 days"
+        class="mt-1 w-full rounded-lg border border-ink-800 bg-ink-950 px-3 py-2 text-sm text-mist-100 placeholder:text-mist-400 focus:border-gold-500/50 focus:outline-none"
+      />
+    </div>
+    <div>
+      <label class="text-xs font-semibold tracking-wide text-mist-400 uppercase">Role</label>
+      <select
+        (change)="onRoleFilterChange($any($event.target).value)"
+        class="mt-1 w-full rounded-lg border border-ink-800 bg-ink-950 px-3 py-2 text-sm text-mist-100 focus:border-gold-500/50 focus:outline-none"
+      >
+        @for (role of roles; track role) {
+          <option [value]="role">{{ role }}</option>
+        }
+      </select>
+    </div>
+    <div>
+      <label class="text-xs font-semibold tracking-wide text-mist-400 uppercase">Person</label>
+      <input
+        type="text"
+        placeholder="Search by name or email"
+        (input)="onPersonFilterChange($any($event.target).value)"
+        class="mt-1 w-full rounded-lg border border-ink-800 bg-ink-950 px-3 py-2 text-sm text-mist-100 placeholder:text-mist-400 focus:border-gold-500/50 focus:outline-none"
+      />
+    </div>
+  </div>
+
+  <div class="overflow-hidden rounded-2xl border border-ink-800 bg-ink-900">
+    <div class="flex items-center gap-2 border-b border-ink-800 px-5 py-4">
+      <lucide-icon name="history" class="h-4 w-4 text-gold-500"></lucide-icon>
+      <h2 class="text-sm font-semibold text-mist-100">Recent Activity</h2>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-sm">
+        <thead>
+          <tr class="text-xs font-semibold tracking-wide text-mist-400 uppercase">
+            <th class="px-5 py-3">Timestamp</th>
+            <th class="px-5 py-3">User</th>
+            <th class="px-5 py-3">Role</th>
+            <th class="px-5 py-3">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (entry of filteredEntries(); track entry.id) {
+            <tr class="border-t border-ink-800/60">
+              <td class="px-5 py-3 whitespace-nowrap text-mist-400">{{ entry.timestamp }}</td>
+              <td class="px-5 py-3 font-medium text-mist-100">{{ entry.user }}</td>
+              <td class="px-5 py-3">
+                <span class="rounded-full px-2 py-0.5 text-xs font-medium" [class]="roleBadgeClasses(entry.role)">
+                  {{ entry.role }}
+                </span>
+              </td>
+              <td class="px-5 py-3 text-mist-100">{{ entry.action }}</td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="4" class="px-5 py-8 text-center text-mist-400">No activity matches these filters.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
