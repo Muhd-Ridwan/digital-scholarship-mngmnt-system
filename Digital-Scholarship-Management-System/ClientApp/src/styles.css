@@ -38,4 +38,11 @@
   body {
     @apply bg-ink-950 text-mist-100 font-sans antialiased;
   }
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0px 1000px var(--color-ink-950) inset;
+    -webkit-text-fill-color: var(--color-mist-100);
+    transition: background-color 5000s ease-in-out 0s;
+  }
 }
