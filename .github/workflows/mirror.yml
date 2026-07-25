@@ -14,9 +14,9 @@ jobs:
       -  name:  Push To Gitlab
          run:  |
            git remote add gitlab https://oauth2:${{ secrets.GITLAB_TOKEN }}@gitlab.com/personal-workspace9813530/digital-scholarship-mngmnt-system.git
-           git push gitlab --mirror --force
+           git push gitlab --prune --force 'refs/heads/*:refs/heads/*' 'refs/tags/*:refs/tags/*'
 
       -  name:  Push to Gitea
          run:  |
            git remote add gitea https://pentao:${{ secrets.GITEA_TOKEN }}@gitea.dev-r.org/pentao/digital-scholarship-mngmnt-system.git
-           git push gitea --mirror --force
+           git push gitea --prune --force 'refs/heads/*:refs/heads/*' 'refs/tags/*:refs/tags/*'
