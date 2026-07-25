@@ -1,6 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-import { RouterLink, Router } from '@angular/router';
+import { RouterLink, Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { ToastService } from '../../../shared/services/toast.service';
 import { ROLE_ROUTES } from '../../role-routes';
@@ -17,6 +17,7 @@ export class Login {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
+  private readonly route = inject(ActivatedRoute);
 
   readonly newPasswordForm = this.fb.nonNullable.group({
     newPassword: ['', [Validators.required, Validators.minLength(8)]],
@@ -94,6 +95,12 @@ export class Login {
 
   private async routeToDashboard() {
     const profile = await this.auth.getProfile();
+    const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+
+    if (profile && returnUrl) {
+      await this.router.navigateByUrl(returnUrl);
+      return;
+    }
     const route = profile ? ROLE_ROUTES[profile.role] : undefined;
 
     if (!route) {

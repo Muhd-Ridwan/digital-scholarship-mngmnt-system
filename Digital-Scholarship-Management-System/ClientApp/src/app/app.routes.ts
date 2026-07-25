@@ -6,10 +6,22 @@ import { SponsorDashboard } from './sponsor/pages/dashboard/sponsor-dashboard';
 import { Login } from './auth/pages/login/login';
 import { authGuard } from './auth/guards/auth.guards';
 import { Register } from './auth/pages/register/register';
+import { PublicShell } from './shared/components/public-shell/public-shell';
+import { ScholarshipList } from './scholarships/pages/list/scholarship-list';
+import { ScholarshipDetail } from './scholarships/pages/detail/scholarship-detail';
 
 export const routes: Routes = [
   { path: 'login', component: Login },
   { path: 'register', component: Register },
+  {
+    path: '',
+    component: PublicShell,
+    children: [
+      { path: 'scholarships', component: ScholarshipList },
+      { path: 'scholarships/:id', component: ScholarshipDetail },
+      { path: '', redirectTo: 'scholarships', pathMatch: 'full' },
+    ],
+  },
   {
     path: '',
     component: DashboardShell,
