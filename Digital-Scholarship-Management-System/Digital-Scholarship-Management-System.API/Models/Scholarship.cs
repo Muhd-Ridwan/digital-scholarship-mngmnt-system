@@ -11,10 +11,12 @@ namespace Digital_Scholarship_Management_System.API.Models
 
         public string Title { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
-        public string EligibilityCriteria {  get; set; } = string.Empty;
-        public string? University {  get; set; }
+        public string EligibilityCriteria { get; set; } = string.Empty;
+        public string FundType { get; set; } = string.Empty;
+        public string StudyLocation { get; set; } = string.Empty;
+        public string OrganisationType { get; set; } = string.Empty;
         public decimal FundingAmount { get; set; }
-        public DateTime Deadline {  get; set; }
+        public DateTime Deadline { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public ICollection<Application> Applications { get; set; } = new List<Application>();
