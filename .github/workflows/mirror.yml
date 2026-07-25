@@ -10,7 +10,7 @@ jobs:
     steps:
       -  name:  Mirror Clone Source
          run:  |
-           git clone --mirror https://github.com/${{ github.repository }}.git source-mirror
+           git clone --mirror https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git source-mirror
            
       -  name:  Push To Gitlab
          run:  |
