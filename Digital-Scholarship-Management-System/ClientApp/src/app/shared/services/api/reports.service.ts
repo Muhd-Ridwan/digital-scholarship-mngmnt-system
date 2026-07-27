@@ -1,29 +1,44 @@
 import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
-import { ReportStat, ScholarshipVolume } from '../../models/report.model';
+import {
+  ReportStat,
+  StatusVolume,
+  ScholarshipReportRow,
+  ScreeningSummary,
+} from '../../models/report.model';
 
-/**
- * Oversight reports API (FR-33). MOCK for now — the numbers aggregate cross-role data
- * that other owners provide, so these stay canned until Phase 1.
- * Phase 1: swap `of(...)` for real endpoints, e.g.
- *   this.http.get<ReportStat[]>(`${environment.apiUrl}/reports/stats`);
- */
+// Report totals pulled from across the system. Canned data for now — swap of(...)
+// for this.http.get<ReportStat[]>(`${environment.apiUrl}/reports/stats`).
+
 @Injectable({ providedIn: 'root' })
 export class ReportsService {
   getStats(): Observable<ReportStat[]> {
     return of([
-      { label: 'Approval Rate', value: '31%', icon: 'circle-check', tone: 'success', description: 'Applications approved' },
-      { label: 'Avg. Review Time', value: '2.4 days', icon: 'history', tone: 'gold', description: 'Submission to decision' },
-      { label: 'Total Awarded', value: 'RM 1.1M', icon: 'hand-coins', tone: 'gold', description: 'Across all scholarships' },
-      { label: 'Completion Rate', value: '78%', icon: 'target', tone: 'warning', description: 'Awards fully disbursed' },
+      { label: 'Total Listings', value: '24', icon: 'graduation-cap', tone: 'gold', description: 'Scholarships posted' },
+      { label: 'Applications Received', value: '412', icon: 'file-text', tone: 'gold', description: 'Across all scholarships' },
+      { label: 'Total Awarded', value: '86 · RM 1.1M', icon: 'hand-coins', tone: 'success', description: 'Count and value' },
+      { label: 'Approval Rate', value: '31%', icon: 'circle-check', tone: 'success', description: 'Of decided applications' },
     ]);
   }
 
-  getApplicationsByScholarship(): Observable<ScholarshipVolume[]> {
+  getApplicationsByStatus(): Observable<StatusVolume[]> {
     return of([
-      { label: 'STEM Innovation', count: 118, percent: 82 },
-      { label: 'Merit Excellence', count: 92, percent: 64 },
-      { label: 'SPM Diploma Bridging', count: 70, percent: 48 },
+      { status: 'Submitted', count: 140, percent: 100 },
+      { status: 'Under Review', count: 96, percent: 69 },
+      { status: 'Approved', count: 86, percent: 61 },
+      { status: 'Rejected', count: 90, percent: 64 },
     ]);
+  }
+
+  getByScholarship(): Observable<ScholarshipReportRow[]> {
+    return of([
+      { scholarship: 'STEM Innovation', sponsor: 'Yayasan Tech', applications: 118, awards: 20, slotsFilled: 20, slotsTotal: 25, status: 'Open' },
+      { scholarship: 'Merit Excellence', sponsor: 'Maju Foundation', applications: 92, awards: 15, slotsFilled: 15, slotsTotal: 15, status: 'Closed' },
+      { scholarship: 'SPM Diploma Bridging', sponsor: 'EduCare Bhd', applications: 70, awards: 12, slotsFilled: 12, slotsTotal: 20, status: 'Open' },
+    ]);
+  }
+
+  getScreeningSummary(): Observable<ScreeningSummary> {
+    return of({ passed: 268, screenedOut: 144 });
   }
 }

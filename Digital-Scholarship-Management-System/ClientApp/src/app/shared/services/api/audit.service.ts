@@ -2,11 +2,8 @@ import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { AuditEntry } from '../../models/audit.model';
 
-/**
- * Audit-log API (AD3 / FR-32, FR-44). MOCK for now.
- * Phase 1/4: swap `of(...)` for `this.http.get<AuditEntry[]>(`${environment.apiUrl}/audit-log`)`,
- * which reads from DynamoDB server-side. Entries are written by every role at their action points.
- */
+// Activity log. Canned data for now — replace of(...) with
+// this.http.get<AuditEntry[]>(`${environment.apiUrl}/audit-log`) once the endpoint exists.
 @Injectable({ providedIn: 'root' })
 export class AuditService {
   getEntries(): Observable<AuditEntry[]> {

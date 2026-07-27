@@ -2,10 +2,8 @@ import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { Announcement } from '../../models/announcement.model';
 
-/**
- * Announcements API (AD2 / FR-31, FR-35). MOCK for now.
- * Phase 1: swap `of(...)` for `this.http.get<Announcement[]>(`${environment.apiUrl}/announcements`)`.
- */
+// Announcements. Canned data for now — swap of(...) for
+// this.http.get<Announcement[]>(`${environment.apiUrl}/announcements`).
 @Injectable({ providedIn: 'root' })
 export class AnnouncementsService {
   getAll(): Observable<Announcement[]> {
@@ -25,6 +23,14 @@ export class AnnouncementsService {
         audience: 'Sponsor',
         status: 'Draft',
         publishedAt: null,
+      },
+      {
+        id: 'a-3',
+        title: 'Semester 1 application window now closed',
+        body: 'The intake deadline has passed. Thank you to all applicants.',
+        audience: 'Student',
+        status: 'Archived',
+        publishedAt: '2 Jun 2026',
       },
     ]);
   }

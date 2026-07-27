@@ -3,12 +3,9 @@ import { Observable, of } from 'rxjs';
 import { User } from '../../models/user.model';
 import { SponsorProfile } from '../../models/sponsor-profile.model';
 
-/**
- * Users & access API (AD1 / FR-28, FR-29). MOCK for now.
- * Phase 1: swap `of(...)` for real endpoints, e.g.
- *   this.http.get<User[]>(`${environment.apiUrl}/users`)
- * Phase 2: register/lock/approve become POST/PATCH that hit the Cognito Admin API server-side.
- */
+// Users and access. Canned data for now — swap of(...) for
+// this.http.get<User[]>(`${environment.apiUrl}/users`) once the endpoints exist.
+// Register / lock / approve become POST and PATCH calls, handled server-side.
 @Injectable({ providedIn: 'root' })
 export class UsersService {
   getUsers(): Observable<User[]> {
@@ -20,7 +17,7 @@ export class UsersService {
     ]);
   }
 
-  // Pending sponsors use the SponsorProfile PLACEHOLDER — the Sponsor owner expands it later.
+  // SponsorProfile is still a placeholder — expect more fields on it later.
   getPendingSponsors(): Observable<SponsorProfile[]> {
     return of([{ id: 'sp-1', companyName: 'Green Future Sdn Bhd', ssmNumber: '202601099887' }]);
   }

@@ -12,7 +12,7 @@ import { ManagementPanel, ManagementItem,} from '../../components/management-pan
   templateUrl: './admin-dashboard.html',
 })
 export class AdminDashboard {
-  // AD2 — global reference data & announcements.
+  //global reference data & announcements
   protected readonly managementItems: ManagementItem[] = [
     { label: 'Reference Data', icon: 'list-checks', route: '/admin/reference-data' },
     { label: 'Announcements', icon: 'bell', route: '/admin/announcements' },

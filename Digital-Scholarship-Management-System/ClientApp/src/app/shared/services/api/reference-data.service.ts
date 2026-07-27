@@ -2,11 +2,8 @@ import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { ReferenceDataItem } from '../../models/reference-data.model';
 
-/**
- * Reference-data API (AD2 / FR-30). MOCK for now — returns canned data via `of(...)`.
- * Phase 1: inject HttpClient and swap each `of(...)` for a real call, e.g.
- *   return this.http.get<ReferenceDataItem[]>(`${environment.apiUrl}/reference-data`);
- */
+// Lookup lists. Canned data for now — inject HttpClient and swap each of(...) for
+// this.http.get<ReferenceDataItem[]>(`${environment.apiUrl}/reference-data`).
 @Injectable({ providedIn: 'root' })
 export class ReferenceDataService {
   getAll(): Observable<ReferenceDataItem[]> {

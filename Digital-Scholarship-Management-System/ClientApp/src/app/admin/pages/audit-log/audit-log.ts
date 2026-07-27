@@ -21,7 +21,7 @@ export class AdminAuditLog {
   private readonly entries = signal<AuditEntry[]>([]);
 
   constructor() {
-    // MOCK read now; becomes a real HTTP GET (DynamoDB-backed) in Phase 1/4.
+    // Mock read; becomes a real HTTP GET once the endpoint exists.
     this.auditApi.getEntries().subscribe((list) => this.entries.set(list));
   }
 

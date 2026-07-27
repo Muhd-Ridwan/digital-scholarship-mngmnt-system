@@ -6,8 +6,13 @@ namespace Digital_Scholarship_Management_System.API.Models
     {
         Student,
         Officer,
-        SponsorProvider,
+        Sponsor,
         Admin,
+    }
+    public enum UserStatus
+    {
+        Active,
+        Locked,
     }
     public class User
     {
@@ -20,6 +25,7 @@ namespace Digital_Scholarship_Management_System.API.Models
         public string? CompanyName { get; set; }
         public string? SsmNumber { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public UserStatus Status {  get; set; } = UserStatus.Active;
 
         public ICollection<Application> Applications { get; set; } = new List<Application>();
         public ICollection<Scholarship> Scholarships { get; set; } = new List<Scholarship>();

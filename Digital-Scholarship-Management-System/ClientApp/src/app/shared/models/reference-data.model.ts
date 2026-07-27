@@ -1,9 +1,7 @@
-/**
- * Global reference/lookup data — Admin owns CRUD (AD2), but the Sponsor reads it
- * in the eligibility-rule builder, so the contract lives in `shared/`.
- *
- * Mirrors the `reference_data` table (category / code / label / is_active).
- */
+// Lookup lists (universities, courses, study levels, categories) that feed the
+// dropdowns and eligibility rules. Only the admin screens edit these; everywhere
+// else just reads them, which is why the type lives in shared/.
+// Matches the reference_data table.
 
 export type ReferenceCategory = 'University' | 'Course' | 'StudyLevel' | 'Category';
 
@@ -15,7 +13,7 @@ export interface ReferenceDataItem {
   isActive: boolean;
 }
 
-/** Human-readable heading per category, shared so Admin and Sponsor label them identically. */
+// Display names for the categories — one place, so screens don't drift.
 export const REFERENCE_CATEGORY_LABELS: Record<ReferenceCategory, string> = {
   University: 'Universities / IPTS',
   Course: 'Courses',
