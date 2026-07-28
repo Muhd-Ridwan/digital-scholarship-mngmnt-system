@@ -1,5 +1,6 @@
 using Digital_Scholarship_Management_System.API.Data;
 using Digital_Scholarship_Management_System.API.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,6 +9,7 @@ namespace Digital_Scholarship_Management_System.API.Controllers
     // User account & access management. DB-only for now; Cognito later.
     [Route("api/users")]
     [ApiController]
+    [Authorize]
     public class UsersController : ControllerBase
     {
         private readonly AppDbContext _db;
@@ -19,6 +21,31 @@ namespace Digital_Scholarship_Management_System.API.Controllers
         {
             var users = await _db.Users.OrderBy(u => u.FullName).ToListAsync();
             return Ok(users);
+        }
+
+        // GET /api/users/me
+        [HttpGet("me")]
+        public async Task<IActionResult> Me()
+        {
+            var sub = User.FindFirst("sub")?.Value;
+            if (sub is null)
+            {
+                return Unauthorized();
+            }
+
+            var user = await _db.Users.FirstOrDefaultAsync(u => u.CognitoSub == sub);
+            if (user is null)
+            {
+                return NotFound();
+            }
+
+            return Ok(new
+            {
+                user.CognitoSub,
+                user.Email,
+                user.FullName,
+                Role = user.Role.ToString().ToLowerInvariant(),
+            });
         }
 
         // POST /api/users — register an Officer (Officers cannot self-register)

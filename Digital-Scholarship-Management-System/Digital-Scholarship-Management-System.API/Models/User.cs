@@ -4,7 +4,7 @@ namespace Digital_Scholarship_Management_System.API.Models
 {
     public enum UserRole
     {
-        Student,
+        User,
         Officer,
         Sponsor,
         Admin,
@@ -22,6 +22,7 @@ namespace Digital_Scholarship_Management_System.API.Models
         public string Email { get; set; }
         public string FullName { get; set; }
         public UserRole Role { get; set; }
+        public bool IsApproved { get; set; }
         public string? CompanyName { get; set; }
         public string? SsmNumber { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
