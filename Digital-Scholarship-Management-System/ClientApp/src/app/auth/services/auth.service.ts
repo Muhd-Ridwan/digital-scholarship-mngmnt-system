@@ -35,6 +35,7 @@ export class AuthService {
     const { isSignedIn, nextStep } = await signIn({ username, password });
 
     if (isSignedIn) {
+      this.profilePromise = null;
       return { status: 'signedIn' };
     }
     if (nextStep.signInStep === 'CONFIRM_SIGN_IN_WITH_NEW_PASSWORD_REQUIRED') {
@@ -45,6 +46,9 @@ export class AuthService {
 
   async completeNewPassword(newPassword: string): Promise<boolean> {
     const { isSignedIn } = await confirmSignIn({ challengeResponse: newPassword });
+    if (isSignedIn) {
+      this.profilePromise = null;
+    }
     return isSignedIn;
   }
 

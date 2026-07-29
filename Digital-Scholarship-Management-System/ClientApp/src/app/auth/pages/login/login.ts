@@ -55,7 +55,8 @@ export class Login {
         return;
       }
       await this.routeToDashboard();
-    } catch {
+    } catch (err) {
+      console.error('Sign-in error:', err);
       this.toast.error('Incorrect username or password.');
     } finally {
       this.submitting.set(false);
