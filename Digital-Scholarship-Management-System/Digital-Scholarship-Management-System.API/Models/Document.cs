@@ -8,6 +8,14 @@
         other,
     }
 
+    //for officer to review the document 
+    public enum ReviewStatus
+    {
+        Pending = 0,
+        Approved = 1,
+        Rejected = 2
+    }
+
     public class Document
     {
         public int Id { get; set; }
@@ -20,5 +28,9 @@
         public string FileName { get; set; } = string.Empty;
         public string FileType { get; set; } = string.Empty;
         public DateTime UploadAt { get; set; } = DateTime.UtcNow;
+
+        // Officer review
+        public ReviewStatus Status { get; set; } = ReviewStatus.Pending;
+        public DateTime? ReviewedAt { get; set; }
     }
 }

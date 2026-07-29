@@ -10,100 +10,70 @@ namespace Digital_Scholarship_Management_System.API.Controllers
 {
     [ApiController]
     [Route("api/officer/documents")]
-    [Authorize]
+    [Authorize(Roles = "officer")]
     public class OfficerDocumentsController : ControllerBase
     {
         private readonly AppDbContext _db;
         private readonly IAmazonS3 _s3;
         private readonly string _bucketName;
 
-        public OfficerDocumentsController(
-            AppDbContext db,
-            IAmazonS3 s3,
-            IConfiguration configuration)
+        public OfficerDocumentsController(AppDbContext db, IAmazonS3 s3, IConfiguration config)
         {
             _db = db;
             _s3 = s3;
-            _bucketName = configuration["S3:BucketName"]!;
+            _bucketName = config["S3:BucketName"]!;
         }
 
-
-        // Get documents uploaded by a specific student
-        [HttpGet("{studentId}")]
-        public async Task<IActionResult> GetStudentDocuments(int studentId)
+        // List all student documents
+        [HttpGet]
+        public async Task<IActionResult> GetAllDocuments()
         {
-            var officer = await GetCurrentOfficer();
-
-            if (officer == null)
-            {
-                return Unauthorized();
-            }
-
             var documents = await _db.Documents
-                .Where(d => d.UserId == studentId)
+                .Include(d => d.User)
                 .OrderByDescending(d => d.UploadAt)
-                .Select(d => new
-                {
-                    d.Id,
-                    d.FileName,
-                    d.FileType,
-                    d.DocumentType,
-                    d.UploadAt
-                })
                 .ToListAsync();
 
-            return Ok(documents);
+            return Ok(documents.Select(d => new {
+                d.Id,
+                d.FileName,
+                d.FileType,
+                d.UploadAt,
+                d.DocumentType,
+                d.Status,
+                StudentName = d.User!.FullName,
+                StudentEmail = d.User.Email
+            }));
         }
 
+        // Approve or Reject a document
+        [HttpPost("{id}/review")]
+        public async Task<IActionResult> ReviewDocument(int id, [FromQuery] ReviewStatus status)
+        {
+            var document = await _db.Documents.FindAsync(id);
+            if (document == null) return NotFound();
 
-        // Generate download link
+            document.Status = status;
+            document.ReviewedAt = DateTime.UtcNow;
+            await _db.SaveChangesAsync();
+
+            return Ok(new { document.Id, document.Status, document.ReviewedAt });
+        }
+
+        // Officer can download any student document
         [HttpGet("{id}/download")]
-        public async Task<IActionResult> DownloadDocument(int id)
+        public async Task<IActionResult> GetDownloadUrl(int id)
         {
-            var officer = await GetCurrentOfficer();
+            var document = await _db.Documents.FindAsync(id);
+            if (document == null) return NotFound();
 
-            if (officer == null)
+            var url = _s3.GetPreSignedURL(new GetPreSignedUrlRequest
             {
-                return Unauthorized();
-            }
-
-            var document = await _db.Documents
-                .FirstOrDefaultAsync(d => d.Id == id);
-
-            if (document == null)
-            {
-                return NotFound();
-            }
-
-
-            var url = await _s3.GetPreSignedURLAsync(
-                new GetPreSignedUrlRequest
-                {
-                    BucketName = _bucketName,
-                    Key = document.S3ObjectKey,
-                    Expires = DateTime.UtcNow.AddMinutes(15)
-                });
-
-            return Ok(new
-            {
-                url
+                BucketName = _bucketName,
+                Key = document.S3ObjectKey,
+                Expires = DateTime.UtcNow.AddMinutes(15)
             });
-        }
 
-        private async Task<User?> GetCurrentOfficer()
-        {
-            var sub = User.FindFirst("sub")?.Value;
-
-            if (sub == null)
-                return null;
-
-            var user = await _db.Users
-                .FirstOrDefaultAsync(u => u.CognitoSub == sub);
-
-            if (user == null || user.Role != UserRole.officer)
-                return null;
-
-            return user;
+            return Ok(new { url });
         }
     }
 }
