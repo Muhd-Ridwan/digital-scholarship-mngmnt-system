@@ -31,6 +31,8 @@ import {
   Eye,
   EyeOff,
   ArrowLeft,
+  ChevronLeft,
+  Trash2,
 } from 'lucide-angular';
 
 export const AppIcons = {
@@ -66,4 +68,6 @@ export const AppIcons = {
   Eye,
   EyeOff,
   ArrowLeft,
+  ChevronLeft,
+  Trash2,
 };

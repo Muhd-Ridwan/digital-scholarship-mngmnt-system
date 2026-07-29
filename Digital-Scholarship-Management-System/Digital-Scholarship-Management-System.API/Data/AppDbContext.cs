@@ -11,6 +11,7 @@ namespace Digital_Scholarship_Management_System.API.Data
         public DbSet<Scholarship> Scholarships => Set<Scholarship>();
         public DbSet<Application> Applications => Set<Application>();
         public DbSet<Document> Documents => Set<Document>();
+        public DbSet<StudentProfile> StudentProfiles => Set<StudentProfile>();
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // Model Builder = Tool for telling EF Core "here's exactly how this relationship/constraint
@@ -40,6 +41,38 @@ namespace Digital_Scholarship_Management_System.API.Data
             modelBuilder.Entity<User>()
                 .HasIndex(u => u.Email)
                 .IsUnique();
+
+            modelBuilder.Entity<Document>()
+                .HasOne(d => d.Application)
+                .WithMany(a => a.Documents)
+                .HasForeignKey(d => d.ApplicationId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Document>()
+                .HasOne(d => d.User)
+                .WithMany(u => u.Documents)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Document>()
+                .ToTable(t => t.HasCheckConstraint(
+                    "CK_Document_ExactlyOneOwner",
+                    "([ApplicationId] IS NOT NULL AND [UserId] IS NULL) OR ([ApplicationId] IS NULL AND [UserId] IS NOT NULL)"
+                    ));
+
+            modelBuilder.Entity<StudentProfile>()
+                .HasOne(p => p.User)
+                .WithOne(u => u.StudentProfile)
+                .HasForeignKey<StudentProfile>(p => p.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<StudentProfile>()
+                .HasIndex(p => p.UserId)
+                .IsUnique();
+
+            modelBuilder.Entity<StudentProfile>()
+                .Property(p => p.HouseholdIncome)
+                .HasPrecision(18, 2);
 
         }
     }

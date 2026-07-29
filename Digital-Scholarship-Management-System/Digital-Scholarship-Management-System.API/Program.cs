@@ -1,7 +1,7 @@
 using Amazon;
 using Amazon.CognitoIdentityProvider;
 using Amazon.Runtime;
-using Digital_Scholarship_Management_System.API;
+using Amazon.S3;
 using Digital_Scholarship_Management_System.API.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -30,6 +30,14 @@ var awsAccessKey = builder.Configuration["AWS:AccessKey"];
 var awsSecretKey = builder.Configuration["AWS:SecretKey"];
 var awsCredentials = new BasicAWSCredentials(awsAccessKey, awsSecretKey);
 var cognitoRegionEndpoint = RegionEndpoint.GetBySystemName(cognitoRegion);
+
+// S3 Client for document stroage
+// Reuse the same AWS credentials
+var s3Region = builder.Configuration["S3:Region"];
+var s3RegionEndpoint = RegionEndpoint.GetBySystemName(s3Region);
+
+builder.Services.AddSingleton<IAmazonS3>(
+    new AmazonS3Client(awsCredentials, s3RegionEndpoint));
 
 builder.Services.AddSingleton<IAmazonCognitoIdentityProvider>(
     new AmazonCognitoIdentityProviderClient(awsCredentials, cognitoRegionEndpoint)
