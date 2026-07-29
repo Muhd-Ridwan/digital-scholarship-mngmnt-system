@@ -9,11 +9,13 @@ import { PublicShell } from './shared/components/public-shell/public-shell';
 import { ScholarshipList } from './scholarships/pages/list/scholarship-list';
 import { ScholarshipDetail } from './scholarships/pages/detail/scholarship-detail';
 import { OfficerProfile } from './officer/pages/profile/officer-profile';
+import { OfficerDocumentsComponent } from './officer/pages/documents/officer-documents'
 
 export const routes: Routes = [
   { path: 'login', component: Login },
   { path: 'register', component: Register },
   { path: 'officer/profile', component: OfficerProfile }, //for officer view profile
+  { path: 'officer/documents', component: OfficerDocumentsComponent },
   {
     path: '',
     component: PublicShell,
