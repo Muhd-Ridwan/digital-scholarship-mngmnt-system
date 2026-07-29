@@ -4,6 +4,7 @@ using Digital_Scholarship_Management_System.API.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Digital_Scholarship_Management_System.API.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260729063429_AddStudentProfileAndDocumentOwner")]
+    partial class AddStudentProfileAndDocumentOwner
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -71,9 +74,6 @@ namespace Digital_Scholarship_Management_System.API.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<int?>("ApplicationId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("DocumentType")
                         .HasColumnType("int");
 
                     b.Property<string>("FileName")
@@ -216,9 +216,6 @@ namespace Digital_Scholarship_Management_System.API.Migrations
                     b.Property<string>("GuardianName")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("GuardianPhone")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<bool>("HasDisability")
                         .HasColumnType("bit");
 
@@ -248,9 +245,6 @@ namespace Digital_Scholarship_Management_System.API.Migrations
 
                     b.Property<int>("NumberOfSiblings")
                         .HasColumnType("int");
-
-                    b.Property<bool>("ParentsDivorced")
-                        .HasColumnType("bit");
 
                     b.Property<string>("PhoneNumber")
                         .IsRequired()

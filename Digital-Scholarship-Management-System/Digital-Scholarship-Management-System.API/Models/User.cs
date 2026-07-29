@@ -12,8 +12,8 @@ namespace Digital_Scholarship_Management_System.API.Models
     public class User
     {
         [Key]
-        public int Id { get; set;  }
-        public string CognitoSub {  get; set; }
+        public int Id { get; set; }
+        public string CognitoSub { get; set; }
         public string Email { get; set; }
         public string FullName { get; set; }
         public UserRole Role { get; set; }
@@ -24,5 +24,7 @@ namespace Digital_Scholarship_Management_System.API.Models
 
         public ICollection<Application> Applications { get; set; } = new List<Application>();
         public ICollection<Scholarship> Scholarships { get; set; } = new List<Scholarship>();
+        public ICollection<Document> Documents { get; set; } = new List<Document>();
+        public StudentProfile? StudentProfile { get; set; }
     }
 }

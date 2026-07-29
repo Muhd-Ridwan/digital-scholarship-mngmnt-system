@@ -1,6 +1,5 @@
 import { Routes } from '@angular/router';
 import { DashboardShell } from './shared/components/dashboard-shell/dashboard-shell';
-import { StudentDashboard } from './student/pages/dashboard/student-dashboard';
 import { OfficerDashboard } from './officer/pages/dashboard/officer-dashboard';
 import { SponsorDashboard } from './sponsor/pages/dashboard/sponsor-dashboard';
 import { Login } from './auth/pages/login/login';
@@ -29,11 +28,11 @@ export const routes: Routes = [
     children: [
       {
         path: 'student',
-        component: StudentDashboard,
-        canActivate: [authGuard],
+        canActivateChild: [authGuard],
         data: {
           role: 'user',
         },
+        loadChildren: () => import('./student/student.routes').then((m) => m.STUDENT_ROUTES),
       },
       {
         path: 'admin',

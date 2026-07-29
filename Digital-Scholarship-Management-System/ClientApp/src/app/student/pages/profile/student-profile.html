@@ -1,0 +1,395 @@
+<div class="flex flex-col gap-6">
+  <a
+    routerLink="/student"
+    class="inline-flex w-fit items-center gap-1 text-sm text-mist-400 hover:text-mist-100"
+  >
+    <lucide-icon name="arrow-left" size="14"></lucide-icon>
+    Back to dashboard
+  </a>
+  <div>
+    <h1 class="font-display text-2xl text-mist-100">Profile Settings</h1>
+    <p class="mt-1 text-sm text-mist-400">
+      Keep your personal, family and academic details up to date for scholarship applications.
+    </p>
+  </div>
+  @if (loading()) {
+    <div class="flex flex-col gap-6">
+      @for (i of [1, 2, 3, 4, 5]; track i) {
+        <div class="animate-pulse rounded-2xl border border-ink-800 bg-ink-900 p-6">
+          <div class="h-4 w-1/4 rounded bg-ink-800"></div>
+          <div class="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div class="h-9 rounded-lg bg-ink-800"></div>
+            <div class="h-9 rounded-lg bg-ink-800"></div>
+            <div class="h-9 rounded-lg bg-ink-800"></div>
+            <div class="h-9 rounded-lg bg-ink-800"></div>
+          </div>
+        </div>
+      }
+    </div>
+  } @else {
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col gap-6">
+      <section class="rounded-2xl border border-ink-800 bg-ink-900 p-6">
+        <h2 class="text-sm font-semibold text-mist-100">Personal Information</h2>
+        <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label for="icNumber" class="text-sm text-mist-400">IC Number</label>
+            <input
+              id="icNumber"
+              type="text"
+              formControlName="icNumber"
+              inputmode="numeric"
+              appDigitsOnly
+              class="mt-1 w-full rounded-lg border border-ink-800 bg-ink-950 px-3 py-2 text-mist-100"
+            />
+            @if (form.controls.icNumber.invalid && form.controls.icNumber.touched) {
+              <p class="mt-1 text-xs text-status-danger">IC number is required</p>
+            }
+          </div>
+          <div>
+            <label for="dateOfBirth" class="text-sm text-mist-400"> Date of Birth</label>
+            <input
+              id="dateOfBirth"
+              type="date"
+              formControlName="dateOfBirth"
+              class="mt-1 w-full rounded-lg border border-ink-800 bg-ink-950 px-3 py-2 text-mist-100"
+            />
+            @if (form.controls.dateOfBirth.invalid && form.controls.dateOfBirth.touched) {
+              <p class="mt-1 text-xs text-status-danger">Date of birth is required</p>
+            }
+          </div>
+          <div>
+            <label for="gender" class="text-sm text-mist-400">Gender</label>
+            <select
+              id="gender"
+              formControlName="gender"
+              class="mt-1 w-full rounded-lg border border-ink-800 bg-ink-950 px-3 py-2 text-mist-100"
+            >
+              <option value="" disabled>Select Gender</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+            </select>
+            @if (form.controls.gender.invalid && form.controls.gender.touched) {
+              <p class="mt-1 text-xs text-status-danger">Gender is required</p>
+            }
+          </div>
+          <div>
+            <label for="nationality" class="text-sm text-mist-400">Nationality</label>
+            <input
+              id="nationality"
+              type="text"
+              formControlName="nationality"
+              list="countryList"
+              class="mt-1 w-full rounded-lg border border-ink-800 bg-ink-950 px-3 py-2 text-mist-100"
+            />
+            <datalist id="countryList">
+              @for (country of countries; track country) {
+                <option [value]="country"></option>
+              }
+            </datalist>
+            @if (form.controls.nationality.invalid && form.controls.nationality.touched) {
+              <p class="mt-1 text-xs text-status-danger">Nationality is required</p>
+            }
+          </div>
+          <div>
+            <label for="race" class="text-sm text-mist-400">Race</label>
+            <input
+              id="race"
+              type="text"
+              formControlName="race"
+              class="mt-1 w-full rounded-lg border border-ink-800 bg-ink-950 px-3 py-2 text-mist-100"
+            />
+          </div>
+          <div class="flex items-center gap-2 sm:pt-6">
+            <input id="hasDisability" type="checkbox" formControlName="hasDisability" />
+            <label for="hasDisability" class="text-sm text-mist-100">I have a disability</label>
+          </div>
+          @if (form.controls.hasDisability.value) {
+            <div class="sm:col-span-2">
+              <label for="disabilityDetails" class="text-sm text-mist-400"
+                >Disability Details</label
+              >
+              <textarea
+                id="disabilityDetails"
+                formControlName="disabilityDetails"
+                rows="2"
+                class="mt-1 w-full rounded-lg border border-ink-800 bg-ink-950 px-3 py-2 text-mist-100"
+              ></textarea>
+            </div>
+          }
+        </div>
+      </section>
+      <section class="rounded-2xl border border-ink-800 bg-ink-900 p-6">
+        <h2 class="text-sm font-semibold text-mist-100">Contact Information</h2>
+        <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label for="phoneNumber" class="text-sm text-mist-400">Phone Number</label>
+            <input
+              id="phoneNumber"
+              type="text"
+              formControlName="phoneNumber"
+              inputmode="numeric"
+              appDigitsOnly
+              class="mt-1 w-full rounded-lg border border-ink-800 bg-ink-950 px-3 py-2 text-mist-100"
+            />
+            @if (form.controls.phoneNumber.invalid && form.controls.phoneNumber.touched) {
+              <p class="mt-1 text-xs text-status-danger">Phone number is required</p>
+            }
+          </div>
+          <div class="sm:col-span-2">
+            <label for="address" class="text-sm text-mist-400">Address</label>
+            <textarea
+              id="address"
+              formControlName="address"
+              rows="2"
+              class="mt-1 w-full rounded-lg border border-ink-800 bg-ink-950 px-3 py-2 text-mist-100"
+            ></textarea>
+            @if (form.controls.address.invalid && form.controls.address.touched) {
+              <p class="mt-1 text-xs text-status-danger">Address is required</p>
+            }
+          </div>
+          <div>
+            <label for="emergencyContactName" class="text-sm text-mist-400"
+              >Emergency Contact Name</label
+            >
+            <input
+              id="emergencyContactName"
+              type="text"
+              formControlName="emergencyContactName"
+              class="mt-1 w-full rounded-lg border border-ink-800 bg-ink-950 px-3 py-2 text-mist-100"
+            />
+            @if (
+              form.controls.emergencyContactName.invalid &&
+              form.controls.emergencyContactName.touched
+            ) {
+              <p class="mt-1 text-xs text-status-danger">Emergency contact name is required</p>
+            }
+          </div>
+          <div>
+            <label for="emergencyContactPhone" class="text-sm text-mist-400"
+              >Emergency Contact Phone</label
+            >
+            <input
+              id="emergencyContactPhone"
+              type="text"
+              inputmode="numeric"
+              appDigitsOnly
+              formControlName="emergencyContactPhone"
+              class="mt-1 w-full rounded-lg border border-ink-800 bg-ink-950 px-3 py-2 text-mist-100"
+            />
+            @if (
+              form.controls.emergencyContactPhone.invalid &&
+              form.controls.emergencyContactPhone.touched
+            ) {
+              <p class="mt-1 text-xs text-status-danger">Emergency contact phone is required</p>
+            }
+          </div>
+        </div>
+      </section>
+      <section class="rounded-2xl border border-ink-800 bg-ink-900 p-6">
+        <h2 class="text-sm font-semibold text-mist-100">Family Background</h2>
+        <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label for="fatherName" class="text-sm text-mist-400">Father's Name</label>
+            <input
+              id="fatherName"
+              type="text"
+              formControlName="fatherName"
+              class="mt-1 w-full rounded-lg border border-ink-800 bg-ink-950 px-3 py-2 text-mist-100"
+            />
+          </div>
+          <div>
+            <label for="fatherOccupation" class="text-sm text-mist-400">Father's Occupation</label>
+            <input
+              id="fatherOccupation"
+              type="text"
+              formControlName="fatherOccupation"
+              class="mt-1 w-full rounded-lg border border-ink-800 bg-ink-950 px-3 py-2 text-mist-100"
+            />
+          </div>
+          <div class="flex items-center gap-2">
+            <input id="fatherDeceased" type="checkbox" formControlName="fatherDeceased" />
+            <label for="fatherDeceased" class="text-sm text-mist-100">Father is deceased</label>
+          </div>
+          <div></div>
+          <div>
+            <label for="motherName" class="text-sm text-mist-400">Mother's Name</label>
+            <input
+              id="motherName"
+              type="text"
+              formControlName="motherName"
+              class="mt-1 w-full rounded-lg border border-ink-800 bg-ink-950 px-3 py-2 text-mist-100"
+            />
+          </div>
+          <div>
+            <label for="motherOccupation" class="text-sm text-mist-400">Mother's Occupation</label>
+            <input
+              id="motherOccupation"
+              type="text"
+              formControlName="motherOccupation"
+              class="mt-1 w-full rounded-lg border border-ink-800 bg-ink-950 px-3 py-2 text-mist-100"
+            />
+          </div>
+          <div class="flex items-center gap-2">
+            <input id="motherDeceased" type="checkbox" formControlName="motherDeceased" />
+            <label for="motherDeceased" class="text-sm text-mist-100">Mother is deceased</label>
+          </div>
+          <div class="flex items-center gap-2">
+            <input id="parentsDivorced" type="checkbox" formControlName="parentsDivorced" />
+            <label for="parentsDivorced" class="text-sm text-mist-100">Parents are divorced</label>
+          </div>
+          <div>
+            <label for="guardianName" class="text-sm text-mist-400"
+              >Guardian's Name
+              <span class="text-xs text-mist-400">(Required if both parents are deceased)</span>
+            </label>
+            <input
+              id="guardianName"
+              type="text"
+              formControlName="guardianName"
+              class="mt-1 w-full rounded-lg border border-ink-800 bg-ink-950 px-3 py-2 text-mist-100"
+            />
+            @if (form.controls.guardianName.invalid && form.controls.guardianName.touched) {
+              <p class="mt-1 text-xs text-status-danger">Guardian's name is required</p>
+            }
+          </div>
+          <div>
+            <label for="guardianPhone" class="text-sm text-mist-400">Guardian's Phone Number</label>
+            <input
+              id="guardianPhone"
+              type="text"
+              formControlName="guardianPhone"
+              inputmode="numeric"
+              appDigitsOnly
+              class="mt-1 w-full rounded-lg border border-ink-800 bg-ink-950 px-3 py-2 text-mist-100"
+            />
+            @if (form.controls.guardianPhone.invalid && form.controls.guardianPhone.touched) {
+              <p class="mt-1 text-xs text-status-danger">Guardian's phone number is required</p>
+            }
+          </div>
+          <div>
+            <label for="householdIncome" class="text-sm text-mist-400"
+              >Household Income (Monthly)</label
+            >
+            <input
+              id="householdIncome"
+              type="number"
+              formControlName="householdIncome"
+              class="mt-1 w-full rounded-lg border border-ink-800 bg-ink-950 px-3 py-2 text-mist-100"
+            />
+            @if (form.controls.householdIncome.invalid && form.controls.householdIncome.touched) {
+              <p class="mt-1 text-xs text-status-danger">Household income is required</p>
+            }
+          </div>
+          <div>
+            <label for="numberOfSiblings" class="text-sm text-mist-400">Number of Siblings</label>
+            <input
+              id="numberOfSiblings"
+              type="number"
+              formControlName="numberOfSiblings"
+              class="mt-1 w-full rounded-lg border border-ink-800 bg-ink-950 px-3 py-2 text-mist-100"
+            />
+          </div>
+        </div>
+      </section>
+
+      <section class="rounded-2xl border border-ink-800 bg-ink-900 p-6">
+        <h2 class="text-sm font-semibold text-mist-100">Academic Background</h2>
+        <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label for="highestQualification" class="text-sm text-mist-400"
+              >Highest Qualification</label
+            >
+            <select
+              id="highestQualification"
+              formControlName="highestQualification"
+              class="mt-1 w-full rounded-lg border border-ink-800 bg-ink-950 px-3 py-2 text-mist-100"
+            >
+              <option value="" disabled>Select Qualification</option>
+              <option value="spm">SPM</option>
+              <option value="stpm">STPM</option>
+              <option value="diploma">Diploma</option>
+              <option value="degree">Degree</option>
+              <option value="masters">Master's</option>
+              <option value="phd">PhD</option>
+              <option value="other">Other</option>
+            </select>
+            @if (
+              form.controls.highestQualification.invalid &&
+              form.controls.highestQualification.touched
+            ) {
+              <p class="mt-1 text-xs text-status-danger">Highest qualification is required</p>
+            }
+          </div>
+          <div>
+            <label for="currentInstitution" class="text-sm text-mist-400"
+              >Current Institution</label
+            >
+            <input
+              id="currentInstitution"
+              type="text"
+              formControlName="currentInstitution"
+              class="mt-1 w-full rounded-lg border border-ink-800 bg-ink-950 px-3 py-2 text-mist-100"
+            />
+          </div>
+          <div>
+            <label for="fieldOfStudy" class="text-sm text-mist-400">Field Of Study</label>
+            <input
+              id="fieldOfStudy"
+              type="text"
+              formControlName="fieldOfStudy"
+              class="mt-1 w-full rounded-lg border border-ink-800 bg-ink-950 px-3 py-2 text-mist-100"
+            />
+          </div>
+          <div class="sm:col-span-2">
+            <label for="examResults" class="text-sm text-mist-400">Exam Results</label>
+            <textarea
+              id="examResults"
+              formControlName="examResults"
+              rows="2"
+              class="mt-1 w-full rounded-lg border border-ink-800 bg-ink-950 px-3 py-2 text-mist-100"
+            ></textarea>
+          </div>
+        </div>
+      </section>
+
+      <section class="rounded-2xl border border-ink-800 bg-ink-900 p-6">
+        <h2 class="text-sm font-semibold text-mist-100">Bank Details (For Disbursement)</h2>
+        <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label for="bankName" class="text-sm text-mist-400">Bank Name</label>
+            <input
+              id="bankName"
+              type="text"
+              formControlName="bankName"
+              class="mt-1 w-full rounded-lg border border-ink-800 bg-ink-950 px-3 py-2 text-mist-100"
+            />
+            @if (form.controls.bankName.invalid && form.controls.bankName.touched) {
+              <p class="mt-1 text-xs text-status-danger">Bank name is required</p>
+            }
+          </div>
+          <div>
+            <label for="bankAccNumber" class="text-sm text-mist-400">Bank Account Number</label>
+            <input
+              id="bankAccNumber"
+              type="text"
+              inputmode="numeric"
+              appDigitsOnly
+              formControlName="bankAccNumber"
+              class="mt-1 w-full rounded-lg border border-ink-800 bg-ink-950 px-3 py-2 text-mist-100"
+            />
+            @if (form.controls.bankAccNumber.invalid && form.controls.bankAccNumber.touched) {
+              <p class="mt-1 text-xs text-status-danger">Bank account number is required</p>
+            }
+          </div>
+        </div>
+      </section>
+      <button
+        type="submit"
+        [disabled]="form.invalid || submitting()"
+        class="w-full cursor-pointer rounded-lg bg-gold-500 px-4 py-2.5 text-sm font-medium text-ink-950 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:self-end"
+      >
+        {{ submitting() ? 'Saving...' : 'Save Profile' }}
+      </button>
+    </form>
+  }
+</div>
