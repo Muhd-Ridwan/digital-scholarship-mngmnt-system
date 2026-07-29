@@ -1,9 +1,11 @@
 import { Component, inject, signal } from '@angular/core';
 import { LucideAngularModule } from 'lucide-angular';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ToastService } from '../../../shared/services/toast.service';
 import { ROLE_BADGE_CLASSES, User, UserRole, UserStatus } from '../../../shared/models/user.model';
 import { SponsorProfile } from '../../../shared/models/sponsor-profile.model';
 import { UsersService } from '../../../shared/services/api/users.service';
+import { AuthService } from '../../../auth/services/auth.service';
 
 @Component({
   selector: 'app-admin-users',
@@ -14,14 +16,25 @@ import { UsersService } from '../../../shared/services/api/users.service';
 export class AdminUsers {
   private readonly toastService = inject(ToastService);
   private readonly usersApi = inject(UsersService);
+  private readonly authApi = inject(AuthService);
 
   protected readonly pendingSponsors = signal<SponsorProfile[]>([]);
   protected readonly users = signal<User[]>([]);
+  protected readonly loadingUsers = signal(true);
+  protected readonly registering = signal(false);
 
   constructor() {
-    // MOCK read now; becomes a real HTTP GET once the backend endpoint is available.
-    this.usersApi.getUsers().subscribe((list) => this.users.set(list));
     this.usersApi.getPendingSponsors().subscribe((list) => this.pendingSponsors.set(list));
+    this.refreshUsers();
+  }
+
+  private refreshUsers(): void {
+    this.loadingUsers.set(true);
+    this.usersApi
+      .getUsers()
+      .then((list) => this.users.set(list))
+      .catch(() => this.toastService.error('Could not load users from the API.'))
+      .finally(() => this.loadingUsers.set(false));
   }
 
   protected roleBadgeClasses(role: UserRole): string {
@@ -44,34 +57,68 @@ export class AdminUsers {
     this.toastService.error(`${sponsor.companyName} onboarding rejected`);
   }
 
-  protected toggleLock(user: User): void {
+  protected async toggleLock(user: User): Promise<void> {
     const nextStatus: UserStatus = user.status === 'Active' ? 'Locked' : 'Active';
-    this.users.update((list) =>
-      list.map((u) => (u.id === user.id ? { ...u, status: nextStatus } : u)),
-    );
-    this.toastService.success(
-      nextStatus === 'Locked' ? `Account locked: ${user.name}` : `Account unlocked: ${user.name}`,
-    );
+    try {
+      const updated = await this.usersApi.setStatus(user.id, nextStatus);
+      this.users.update((list) => list.map((u) => (u.id === user.id ? updated : u)));
+      this.toastService.success(
+        nextStatus === 'Locked' ? `Account locked: ${user.name}` : `Account unlocked: ${user.name}`,
+      );
+    } catch (err) {
+      if (err instanceof HttpErrorResponse && err.status === 400) {
+        this.toastService.error('The Admin account cannot be locked.');
+      } else {
+        this.toastService.error(`Could not update status for ${user.name}.`);
+      }
+    }
   }
 
-  protected registerOfficer(fullName: string, email: string): boolean {
+  protected async registerOfficer(
+    username: string,
+    fullName: string,
+    email: string,
+  ): Promise<boolean> {
+    const uname = username.trim();
     const name = fullName.trim();
     const mail = email.trim();
-    if (!name || !mail) {
-      this.toastService.error('Full name and email are required to register a reviewer');
+    if (!uname || !name || !mail) {
+      this.toastService.error('Username, full name, and email are required to register a reviewer');
       return false;
     }
-    this.users.update((list) => [
-      ...list,
-      { id: `u-${Date.now()}`, name, email: mail, role: 'Officer', status: 'Active' },
-    ]);
-    this.toastService.success('Officer registered — Cognito group assigned');
-    return true;
+
+    this.registering.set(true);
+    try {
+      await this.authApi.registerOfficer({ username: uname, fullName: name, email: mail });
+      this.toastService.success(`Officer registered — temp password emailed to ${mail}`);
+      this.refreshUsers();
+      return true;
+    } catch (err) {
+      if (err instanceof HttpErrorResponse && err.status === 409) {
+        this.toastService.error('That email is already registered.');
+      } else if (err instanceof HttpErrorResponse && err.status === 403) {
+        this.toastService.error('Only an Admin can register an Officer.');
+      } else {
+        this.toastService.error('Officer registration could not be completed.');
+      }
+      return false;
+    } finally {
+      this.registering.set(false);
+    }
   }
 
-  protected onRegisterSubmit(fullNameInput: HTMLInputElement, emailInput: HTMLInputElement): void {
-    const registered = this.registerOfficer(fullNameInput.value, emailInput.value);
+  protected async onRegisterSubmit(
+    usernameInput: HTMLInputElement,
+    fullNameInput: HTMLInputElement,
+    emailInput: HTMLInputElement,
+  ): Promise<void> {
+    const registered = await this.registerOfficer(
+      usernameInput.value,
+      fullNameInput.value,
+      emailInput.value,
+    );
     if (registered) {
+      usernameInput.value = '';
       fullNameInput.value = '';
       emailInput.value = '';
     }

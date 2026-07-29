@@ -5,6 +5,7 @@ import { AdminAuditLog } from './pages/audit-log/audit-log';
 import { AdminReports } from './pages/reports/reports';
 import { AdminReferenceData } from './pages/reference-data/reference-data';
 import { AdminAnnouncements } from './pages/announcements/announcements';
+import { AdminProfile } from './pages/profile/profile';
 
 export const ADMIN_ROUTES: Routes = [
   { path: '', component: AdminDashboard },
@@ -13,4 +14,5 @@ export const ADMIN_ROUTES: Routes = [
   { path: 'reports', component: AdminReports },
   { path: 'reference-data', component: AdminReferenceData },
   { path: 'announcements', component: AdminAnnouncements },
+  { path: 'profile', component: AdminProfile },
 ];

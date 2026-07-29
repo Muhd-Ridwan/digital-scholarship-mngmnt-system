@@ -4,10 +4,10 @@ namespace Digital_Scholarship_Management_System.API.Models
 {
     public enum UserRole
     {
-        User,
-        Officer,
-        Sponsor,
-        Admin,
+        user,
+        officer,
+        sponsor,
+        admin,
     }
     public enum UserStatus
     {

@@ -12,6 +12,7 @@ import {
 
 @Injectable({ providedIn: 'root' })
 export class ReportsService {
+  // Require user/officer/sponsor code/data for reference
   getStats(): Observable<ReportStat[]> {
     return of([
       { label: 'Total Listings', value: '24', icon: 'graduation-cap', tone: 'gold', description: 'Scholarships posted' },
@@ -21,6 +22,7 @@ export class ReportsService {
     ]);
   }
 
+  // Require user/officer code/data for reference
   getApplicationsByStatus(): Observable<StatusVolume[]> {
     return of([
       { status: 'Submitted', count: 140, percent: 100 },
@@ -30,6 +32,7 @@ export class ReportsService {
     ]);
   }
 
+  // Require user/officer/sponsor code/data for reference
   getByScholarship(): Observable<ScholarshipReportRow[]> {
     return of([
       { scholarship: 'STEM Innovation', sponsor: 'Yayasan Tech', applications: 118, awards: 20, slotsFilled: 20, slotsTotal: 25, status: 'Open' },
@@ -38,6 +41,7 @@ export class ReportsService {
     ]);
   }
 
+  // Require user/sponsor code/data for reference
   getScreeningSummary(): Observable<ScreeningSummary> {
     return of({ passed: 268, screenedOut: 144 });
   }

@@ -9,10 +9,11 @@
   <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
     <app-stat-card
       label="Scholarships Available"
-      value="12"
+      [value]="scholarshipsAvailableLabel()"
       icon="graduation-cap"
       description="Open for application"
     />
+    <!-- Require user/officer code/data for reference -->
     <app-stat-card
       label="Pending Review"
       value="24"
@@ -20,7 +21,13 @@
       tone="warning"
       description="Awaiting decision"
     />
-    <app-stat-card label="Active Users" value="85" icon="users" description="Across all roles" />
+    <app-stat-card
+      label="Active Accounts"
+      [value]="activeAccountsLabel()"
+      icon="users"
+      description="Not locked"
+    />
+    <!-- Require officer/sponsor code/data for reference -->
     <app-stat-card
       label="Total Awarded"
       value="132"
@@ -55,6 +62,12 @@
           icon="history"
           route="/admin/audit-log"
           tone="warning"
+        />
+        <app-action-card
+          label="Profile Settings"
+          description="Update your personal details"
+          icon="user"
+          route="/admin/profile"
         />
       </div>
     </div>

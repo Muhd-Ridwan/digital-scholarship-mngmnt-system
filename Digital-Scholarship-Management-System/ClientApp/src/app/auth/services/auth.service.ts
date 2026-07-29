@@ -9,6 +9,7 @@ export interface UserProfile {
   email: string;
   fullName: string;
   role: string;
+  createdAt: string;
 }
 
 export interface RegisterRequest {
@@ -18,6 +19,12 @@ export interface RegisterRequest {
   role: 'user' | 'sponsor';
   companyName?: string;
   ssmNumber?: string;
+}
+
+export interface RegisterOfficerRequest {
+  username: string;
+  email: string;
+  fullName: string;
 }
 
 export type LoginResult =
@@ -60,6 +67,41 @@ export class AuthService {
 
   async register(request: RegisterRequest): Promise<void> {
     await firstValueFrom(this.http.post(`${environment.apiUrl}/auth/register`, request));
+  }
+
+  // Admin-only — the officer branch of the same /auth/register endpoint, gated server-side
+  // on the caller's own bearer token being an Admin (AuthController.Register).
+  async registerOfficer(request: RegisterOfficerRequest): Promise<void> {
+    const session = await fetchAuthSession();
+    const accessToken = session.tokens?.accessToken?.toString();
+    if (!accessToken) {
+      throw new Error('Not authenticated.');
+    }
+    await firstValueFrom(
+      this.http.post(
+        `${environment.apiUrl}/auth/register`,
+        { ...request, role: 'officer' },
+        { headers: { Authorization: `Bearer ${accessToken}` } },
+      ),
+    );
+  }
+
+  // Admin edits their own full name; email/password stay Cognito-owned.
+  async updateFullName(fullName: string): Promise<UserProfile> {
+    const session = await fetchAuthSession();
+    const accessToken = session.tokens?.accessToken?.toString();
+    if (!accessToken) {
+      throw new Error('Not authenticated.');
+    }
+    const updated = await firstValueFrom(
+      this.http.put<UserProfile>(
+        `${environment.apiUrl}/users/me`,
+        { fullName },
+        { headers: { Authorization: `Bearer ${accessToken}` } },
+      ),
+    );
+    this._profile.set(updated);
+    return updated;
   }
 
   async getCurrentUsername(): Promise<string | null> {

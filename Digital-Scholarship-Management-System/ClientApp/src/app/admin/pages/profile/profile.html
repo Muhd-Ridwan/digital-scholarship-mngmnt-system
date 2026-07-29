@@ -1,0 +1,59 @@
+<div class="flex flex-col gap-6">
+  <div>
+    <h1 class="font-display text-2xl text-mist-100">Profile settings</h1>
+    <p class="mt-1 text-sm text-mist-400">Update your personal details.</p>
+  </div>
+
+  <div class="max-w-xl rounded-2xl border border-ink-800 bg-ink-900 p-5">
+    <form [formGroup]="form" (ngSubmit)="onSave()" class="flex flex-col gap-4">
+      <div>
+        <label class="text-xs font-semibold tracking-wide text-mist-400 uppercase">Full name</label>
+        <input
+          type="text"
+          formControlName="fullName"
+          class="mt-1 w-full rounded-lg border border-ink-800 bg-ink-950 px-3 py-2 text-sm text-mist-100 placeholder:text-mist-400 focus:border-gold-500/50 focus:outline-none"
+        />
+        @if (form.controls.fullName.invalid && form.controls.fullName.touched) {
+          <p class="mt-1 text-xs text-status-danger">Full name is required.</p>
+        }
+      </div>
+
+      <div>
+        <label class="text-xs font-semibold tracking-wide text-mist-400 uppercase">Email</label>
+        <input
+          type="email"
+          [value]="profile()?.email ?? ''"
+          disabled
+          class="mt-1 w-full cursor-not-allowed rounded-lg border border-ink-800 bg-ink-950/60 px-3 py-2 text-sm text-mist-400"
+        />
+        <p class="mt-1 text-xs text-mist-400">Email is your sign-in identity and can't be changed here.</p>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="text-xs font-semibold tracking-wide text-mist-400 uppercase">Role</label>
+          <div class="mt-1">
+            <span class="rounded-full px-2 py-0.5 text-xs font-medium" [class]="roleBadgeClass()">
+              {{ profile()?.role }}
+            </span>
+          </div>
+        </div>
+        <div>
+          <label class="text-xs font-semibold tracking-wide text-mist-400 uppercase">Member since</label>
+          <p class="mt-1 text-sm text-mist-100">{{ memberSince() }}</p>
+        </div>
+      </div>
+
+      <div class="mt-2 flex items-center gap-3">
+        <button
+          type="submit"
+          [disabled]="saving() || form.invalid || form.pristine"
+          class="rounded-lg bg-gold-500 px-4 py-2 text-sm font-semibold text-mist-100 transition-colors hover:bg-gold-500/90 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {{ saving() ? 'Saving…' : 'Save changes' }}
+        </button>
+        <a routerLink="/admin" class="text-sm text-mist-400 hover:text-mist-100">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>

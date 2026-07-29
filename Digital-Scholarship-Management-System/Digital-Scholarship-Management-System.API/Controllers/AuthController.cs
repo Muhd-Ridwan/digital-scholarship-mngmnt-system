@@ -48,9 +48,25 @@ namespace Digital_Scholarship_Management_System.API.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
-            if(request.Role != "user" && request.Role != "sponsor")
+            if(request.Role != "user" && request.Role != "sponsor" && request.Role != "officer")
             {
-                return BadRequest("Role must be 'user' or 'sponsor'.");
+                return BadRequest("Role must be 'user', 'sponsor', or 'officer'.");
+            }
+
+            var isOfficer = request.Role == "officer";
+            if (isOfficer)
+            {
+                // Officer accounts cannot self-register — only an authenticated Admin may
+                // call this branch. Checked against the DB (same CognitoSub -> Role lookup as
+                // UsersController.Me()), since the JWT itself carries no app-role claim yet.
+                var callerSub = User.FindFirst("sub")?.Value;
+                var caller = callerSub is null
+                    ? null
+                    : await _db.Users.FirstOrDefaultAsync(u => u.CognitoSub == callerSub);
+                if (caller is null || caller.Role != UserRole.admin)
+                {
+                    return StatusCode(StatusCodes.Status403Forbidden, "Only an Admin can register an Officer.");
+                }
             }
 
             if(request.Role == "sponsor" && (string.IsNullOrWhiteSpace(request.CompanyName) || string.IsNullOrWhiteSpace(request.SsmNumber)))
@@ -112,7 +128,7 @@ namespace Digital_Scholarship_Management_System.API.Controllers
                 CognitoSub = sub,
                 Email = request.Email,
                 FullName = request.FullName,
-                Role = isSponsor ? UserRole.sponsor : UserRole.user,
+                Role = isSponsor ? UserRole.sponsor : isOfficer ? UserRole.officer : UserRole.user,
                 IsApproved = !isSponsor,
                 CompanyName = isSponsor ? request.CompanyName : null,
                 SsmNumber = isSponsor ? request.SsmNumber : null,

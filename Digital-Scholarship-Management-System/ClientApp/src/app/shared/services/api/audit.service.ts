@@ -1,21 +1,53 @@
-import { Injectable } from '@angular/core';
-import { Observable, of } from 'rxjs';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
+import { environment } from '../../../../environments/environment';
 import { AuditEntry } from '../../models/audit.model';
+import { UserRole } from '../../models/user.model';
 
-// Activity log. Canned data for now — replace of(...) with
-// this.http.get<AuditEntry[]>(`${environment.apiUrl}/audit-log`) once the endpoint exists.
+interface ApiAuditEntry {
+  id: number;
+  user: string;
+  role: UserRole;
+  timestamp: string;
+  action: string;
+}
+
+export interface AuditQuery {
+  from?: string;
+  to?: string;
+  role?: UserRole;
+  person?: string;
+}
+
+// Activity log — real GET /api/audit-log?from=&to=&role=&person=. No auth required today
+// (AuditLogController has no [Authorize] yet).
 @Injectable({ providedIn: 'root' })
 export class AuditService {
-  getEntries(): Observable<AuditEntry[]> {
-    return of([
-      { id: 'e-1', timestamp: '11 Jul 2026, 14:02', user: 'Siti Lestari', role: 'Officer', action: 'Approved application A-2041' },
-      { id: 'e-2', timestamp: '11 Jul 2026, 13:40', user: 'Ganesh Kumar', role: 'Student', action: 'Submitted application A-2041' },
-      { id: 'e-3', timestamp: '11 Jul 2026, 11:15', user: 'TechCorp Sdn Bhd', role: 'Sponsor', action: 'Published scholarship "Green Energy Fund"' },
-      { id: 'e-4', timestamp: '10 Jul 2026, 09:30', user: 'Admin Rae', role: 'Admin', action: 'Locked account: Old Sponsor Bhd' },
-      { id: 'e-5', timestamp: '10 Jul 2026, 08:12', user: 'Ganesh Kumar', role: 'Student', action: 'Logged in' },
-      { id: 'e-6', timestamp: '9 Jul 2026, 19:47', user: 'Aisha Rahman', role: 'Student', action: 'Saved application as draft' },
-      { id: 'e-7', timestamp: '9 Jul 2026, 16:05', user: 'Wei Jie Tan', role: 'Student', action: 'Edited application A-2035' },
-      { id: 'e-8', timestamp: '8 Jul 2026, 10:30', user: 'Siti Lestari', role: 'Officer', action: 'Updated profile details' },
-    ]);
+  private readonly http = inject(HttpClient);
+
+  async getEntries(query: AuditQuery): Promise<AuditEntry[]> {
+    let params = new HttpParams();
+    if (query.from) params = params.set('from', query.from);
+    if (query.to) params = params.set('to', query.to);
+    if (query.role) params = params.set('role', query.role);
+    if (query.person) params = params.set('person', query.person);
+
+    const apiEntries = await firstValueFrom(
+      this.http.get<ApiAuditEntry[]>(`${environment.apiUrl}/audit-log`, { params }),
+    );
+    return apiEntries.map((e) => ({
+      id: String(e.id),
+      user: e.user,
+      role: e.role,
+      action: e.action,
+      timestamp: new Date(e.timestamp).toLocaleString('en-GB', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
+    }));
   }
 }

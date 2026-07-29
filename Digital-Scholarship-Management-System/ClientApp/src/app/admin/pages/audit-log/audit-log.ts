@@ -4,6 +4,14 @@ import { ROLE_BADGE_CLASSES, UserRole } from '../../../shared/models/user.model'
 import { AuditEntry } from '../../../shared/models/audit.model';
 import { AuditService } from '../../../shared/services/api/audit.service';
 
+type DateRangeOption = 'today' | 'last7' | 'last30';
+
+const DATE_RANGE_LABELS: Record<DateRangeOption, string> = {
+  today: 'Today',
+  last7: 'Last 7 days',
+  last30: 'Last 30 days',
+};
+
 @Component({
   selector: 'app-admin-audit-log',
   standalone: true,
@@ -13,16 +21,41 @@ import { AuditService } from '../../../shared/services/api/audit.service';
 export class AdminAuditLog {
   private readonly auditApi = inject(AuditService);
 
-  protected readonly roles: ('All' | UserRole)[] = ['All', 'Student', 'Officer', 'Sponsor', 'Admin'];
+  protected readonly roles: ('All' | UserRole)[] = ['All', 'user', 'officer', 'sponsor', 'admin'];
+  protected readonly dateRangeOptions: DateRangeOption[] = ['today', 'last7', 'last30'];
+  protected readonly dateRangeLabels = DATE_RANGE_LABELS;
 
   protected readonly roleFilter = signal<'All' | UserRole>('All');
   protected readonly personFilter = signal('');
+  protected readonly dateRange = signal<DateRangeOption>('last7');
+  protected readonly loading = signal(true);
 
   private readonly entries = signal<AuditEntry[]>([]);
 
   constructor() {
-    // Mock read; becomes a real HTTP GET once the endpoint exists.
-    this.auditApi.getEntries().subscribe((list) => this.entries.set(list));
+    this.refreshEntries();
+  }
+
+  private computeFromTo(option: DateRangeOption): { from: string; to: string } {
+    const to = new Date();
+    const from = new Date(to);
+    if (option === 'today') {
+      from.setHours(0, 0, 0, 0);
+    } else if (option === 'last7') {
+      from.setDate(from.getDate() - 7);
+    } else {
+      from.setDate(from.getDate() - 30);
+    }
+    return { from: from.toISOString(), to: to.toISOString() };
+  }
+
+  private refreshEntries(): void {
+    this.loading.set(true);
+    const { from, to } = this.computeFromTo(this.dateRange());
+    this.auditApi
+      .getEntries({ from, to })
+      .then((list) => this.entries.set(list))
+      .finally(() => this.loading.set(false));
   }
 
   protected readonly filteredEntries = computed(() => {
@@ -45,5 +78,10 @@ export class AdminAuditLog {
 
   protected onPersonFilterChange(value: string): void {
     this.personFilter.set(value);
+  }
+
+  protected onDateRangeChange(value: string): void {
+    this.dateRange.set(value as DateRangeOption);
+    this.refreshEntries();
   }
 }
