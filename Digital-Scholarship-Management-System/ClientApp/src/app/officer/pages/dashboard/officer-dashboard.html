@@ -10,7 +10,7 @@
     <app-stat-card
       label="Scholarships Available"
       value="12"
-      icon="graduation-cap"
+      icon="folder-open"
       description="Open for application"
     />
     <app-stat-card
@@ -61,9 +61,24 @@
           icon="chart-column"
           route="/officer/reports"
         />
+        <app-action-card
+        label="View Profile"
+        description="View your personal details"
+        icon="user"
+        route="/officer/profile"
+      />
       </div>
     </div>
 
     <app-review-queue [items]="reviewQueue" viewAllRoute="/officer/applications" />
   </div>
 </div>
+
+
+<!--
+ office to do:
+ 1. Review document submission from applicant, verify either meet the requirement or not, 
+ 2. edit profile, 
+ 3. Approved or reject application, 
+ 4. awardee handoff & reporting. //MAYBE CHANGE TO SCHEDULE INTERVIEW, AND THEN AFTER INTERVIEW, APPROVE OR REJECT APPLICATION
+-->

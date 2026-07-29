@@ -1,10 +1,12 @@
 using Amazon;
 using Amazon.CognitoIdentityProvider;
 using Amazon.Runtime;
+using Digital_Scholarship_Management_System.API;
 using Digital_Scholarship_Management_System.API.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -72,6 +74,8 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy => policy.WithOrigins(allowedOrigins).WithHeaders("Authorization", "Content-Type").AllowAnyMethod());
 });
+
+
 
 var app = builder.Build();
 
