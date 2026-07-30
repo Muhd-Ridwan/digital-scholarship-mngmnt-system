@@ -1,27 +1,38 @@
-import { Component } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { OnInit } from '@angular/core';
 import { OfficerDocumentService } from '../../services/officer-document.service';
 import { ToastService } from '../../../shared/services/toast.service';
+import { LucideAngularModule } from 'lucide-angular';
+import { DatePipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
+import { CommonModule } from '@angular/common';
 
 
 @Component({
   selector: 'app-officer-documents',
+  standalone: true,
+  imports: [LucideAngularModule, DatePipe, RouterLink, CommonModule],
   templateUrl: './officer-documents.html'
 })
-export class OfficerDocumentsComponent implements OnInit {
-  documents: any[] = [];
 
-  constructor(private documentService: OfficerDocumentService, private toast: ToastService) {}
+export class OfficerDocumentsComponent{
+  private readonly documentService = inject(OfficerDocumentService);
+  private readonly toast = inject(ToastService);
 
-  ngOnInit() {
+  protected readonly loading = signal(true);
+  protected readonly documents = signal<any[]>([]);
+
+  constructor() {
     this.loadDocuments();
   }
 
   async loadDocuments() {
     try {
-      this.documents = await this.documentService.getAllDocuments();
+      this.documents.set(await this.documentService.getAllDocuments());
     } catch {
       this.toast.error('Could not load documents.');
+    }finally{
+      this.loading.set(false);
     }
   }
 

@@ -1,7 +1,7 @@
 <div class="p-6">
   <h2 class="text-xl font-bold mb-4">Student Documents</h2>
   <table class="min-w-full border border-gray-300">
-    <thead class="bg-gray-100">
+    <thead class="bg-black-100">
       <tr>
         <th class="px-4 py-2 border">Student</th>
         <th class="px-4 py-2 border">File Name</th>
@@ -11,7 +11,7 @@
       </tr>
     </thead>
     <tbody>
-      <tr *ngFor="let doc of documents">
+      <tr *ngFor="let doc of documents()">
         <td class="px-4 py-2 border">{{ doc.studentName }}</td>
         <td class="px-4 py-2 border">{{ doc.fileName }}</td>
         <td class="px-4 py-2 border">{{ doc.documentType }}</td>

@@ -10,7 +10,7 @@ namespace Digital_Scholarship_Management_System.API.Controllers
 {
     [ApiController]
     [Route("api/officer/documents")]
-    [Authorize(Roles = "officer")]
+    [Authorize]
     public class OfficerDocumentsController : ControllerBase
     {
         private readonly AppDbContext _db;
@@ -23,11 +23,23 @@ namespace Digital_Scholarship_Management_System.API.Controllers
             _s3 = s3;
             _bucketName = config["S3:BucketName"]!;
         }
+        private async Task<bool> IsOfficer()
+        {
+            var sub = User.FindFirst("sub")?.Value;
+
+            var user = await _db.Users
+                .FirstOrDefaultAsync(u => u.CognitoSub == sub);
+
+            return user?.Role == UserRole.officer;
+        }
 
         // List all student documents
         [HttpGet]
         public async Task<IActionResult> GetAllDocuments()
         {
+            if (!await IsOfficer())
+                return Forbid();
+
             var documents = await _db.Documents
                 .Include(d => d.User)
                 .OrderByDescending(d => d.UploadAt)
