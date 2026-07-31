@@ -10,7 +10,8 @@ namespace Digital_Scholarship_Management_System.API.Data
         public DbSet<User> Users => Set<User>();
         public DbSet<Scholarship> Scholarships => Set<Scholarship>();
         public DbSet<Application> Applications => Set<Application>();
-        public DbSet<Document> Documents => Set<Document>();
+        public DbSet<StudentDocument> StudentDocuments => Set<StudentDocument>();
+        public DbSet<ApplicationDocument> ApplicationDocuments => Set<ApplicationDocument>();
         public DbSet<StudentProfile> StudentProfiles => Set<StudentProfile>();
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -42,23 +43,21 @@ namespace Digital_Scholarship_Management_System.API.Data
                 .HasIndex(u => u.Email)
                 .IsUnique();
 
-            modelBuilder.Entity<Document>()
-                .HasOne(d => d.Application)
+            modelBuilder.Entity<Application>()
+                .HasIndex(a => new { a.StudentId, a.ScholarshipId })
+                .IsUnique();
+
+            modelBuilder.Entity<ApplicationDocument>()
+                .HasOne(ad => ad.Application)
                 .WithMany(a => a.Documents)
-                .HasForeignKey(d => d.ApplicationId)
+                .HasForeignKey(ad => ad.ApplicationId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            modelBuilder.Entity<Document>()
+            modelBuilder.Entity<StudentDocument>()
                 .HasOne(d => d.User)
                 .WithMany(u => u.Documents)
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
-
-            modelBuilder.Entity<Document>()
-                .ToTable(t => t.HasCheckConstraint(
-                    "CK_Document_ExactlyOneOwner",
-                    "([ApplicationId] IS NOT NULL AND [UserId] IS NULL) OR ([ApplicationId] IS NULL AND [UserId] IS NOT NULL)"
-                    ));
 
             modelBuilder.Entity<StudentProfile>()
                 .HasOne(p => p.User)

@@ -62,6 +62,10 @@ export class AuthService {
     await firstValueFrom(this.http.post(`${environment.apiUrl}/auth/register`, request));
   }
 
+  async forgotPassword(email: string): Promise<void> {
+    await firstValueFrom(this.http.post(`${environment.apiUrl}/auth/forgot-password`, { email }));
+  }
+
   async getCurrentUsername(): Promise<string | null> {
     try {
       const user = await getCurrentUser();

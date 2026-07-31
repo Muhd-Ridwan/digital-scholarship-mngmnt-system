@@ -48,7 +48,7 @@ namespace Digital_Scholarship_Management_System.API.Controllers
                 return errorResult!;
             }
 
-            var documents = await _db.Documents
+            var documents = await _db.StudentDocuments
                 .Where(d => d.UserId == user.Id)
                 .OrderByDescending(d => d.UploadAt)
                 .ToListAsync();
@@ -111,7 +111,7 @@ namespace Digital_Scholarship_Management_System.API.Controllers
             }
 
             // Creating Document
-            var document = new Document
+            var document = new StudentDocument
             {
                 UserId = user.Id,
                 DocumentType = documentType,
@@ -120,9 +120,17 @@ namespace Digital_Scholarship_Management_System.API.Controllers
                 FileType = file.ContentType,
                 UploadAt = DateTime.UtcNow,
             };
-
-            _db.Documents.Add(document);
-            await _db.SaveChangesAsync();
+            try
+            {
+                _db.StudentDocuments.Add(document);
+                await _db.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to save document record for user {UserId}; rolling back S3 upload", user.Id);
+                await _s3.DeleteObjectAsync(_bucketName, key);
+                return StatusCode(StatusCodes.Status500InternalServerError, "Could not save the document. Please try again.");
+            }
 
             return Ok(ToResponse(document));
         }
@@ -136,7 +144,7 @@ namespace Digital_Scholarship_Management_System.API.Controllers
                 return errorResult!;
             }
 
-            var document = await _db.Documents.FirstOrDefaultAsync(d => d.Id == id && d.UserId == user.Id);
+            var document = await _db.StudentDocuments.FirstOrDefaultAsync(d => d.Id == id && d.UserId == user.Id);
 
             if (document is null)
             {
@@ -162,7 +170,7 @@ namespace Digital_Scholarship_Management_System.API.Controllers
                 return errorResult!;
             }
 
-            var document = await _db.Documents.FirstOrDefaultAsync(d => d.Id == id && d.UserId == user.Id);
+            var document = await _db.StudentDocuments.FirstOrDefaultAsync(d => d.Id == id && d.UserId == user.Id);
 
             if (document is null)
             {
@@ -171,7 +179,7 @@ namespace Digital_Scholarship_Management_System.API.Controllers
 
             await _s3.DeleteObjectAsync(_bucketName, document.S3ObjectKey);
 
-            _db.Documents.Remove(document);
+            _db.StudentDocuments.Remove(document);
             await _db.SaveChangesAsync();
 
             return NoContent();
@@ -210,7 +218,7 @@ namespace Digital_Scholarship_Management_System.API.Controllers
             return signatures.Any(sig => header.Length >= sig.Length && header.Take(sig.Length).SequenceEqual(sig));
         }
 
-        private static object ToResponse(Document document)
+        private static object ToResponse(StudentDocument document)
         {
             return new
             {

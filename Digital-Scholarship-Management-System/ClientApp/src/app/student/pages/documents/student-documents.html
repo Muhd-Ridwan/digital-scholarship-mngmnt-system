@@ -80,10 +80,17 @@
             </div>
             <div class="min-w-0">
               <p class="truncate text-sm font-medium text-mist-100">{{ document.fileName }}</p>
-              <p class="text-xs text-mist-400">
-                {{ documentTypeLabel(document.documentType) }} ·
-                {{ document.uploadAt | date: 'mediumDate' }}
-              </p>
+              <div class="mt-1 flex items-center gap-2">
+                <span
+                  class="rounded-full px-2 py-0.5 text-[11px] font-semibold"
+                  [class]="documentTypeClasses(document.documentType)"
+                >
+                  {{ documentTypeLabel(document.documentType) }}
+                </span>
+                <p class="text-xs text-mist-400">
+                  {{ document.uploadAt | date: 'mediumDate' }}
+                </p>
+              </div>
             </div>
           </div>
           <div class="flex shrink-0 items-center gap-2">

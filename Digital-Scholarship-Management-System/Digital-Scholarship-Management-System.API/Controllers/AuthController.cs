@@ -22,10 +22,16 @@ namespace Digital_Scholarship_Management_System.API.Controllers
         public string FullName { get; set; } = string.Empty;
 
         [Required]
-        public string Role {  get; set; } = string.Empty;
+        public string Role { get; set; } = string.Empty;
 
-        public string? CompanyName {  get; set; }
+        public string? CompanyName { get; set; }
         public string? SsmNumber { get; set; }
+    }
+
+    public class ForgotPasswordRequest
+    {
+        [Required, EmailAddress]
+        public string Email { get; set; } = string.Empty;
     }
 
     [ApiController]
@@ -48,12 +54,12 @@ namespace Digital_Scholarship_Management_System.API.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
-            if(request.Role != "user" && request.Role != "sponsor")
+            if (request.Role != "user" && request.Role != "sponsor")
             {
                 return BadRequest("Role must be 'user' or 'sponsor'.");
             }
 
-            if(request.Role == "sponsor" && (string.IsNullOrWhiteSpace(request.CompanyName) || string.IsNullOrWhiteSpace(request.SsmNumber)))
+            if (request.Role == "sponsor" && (string.IsNullOrWhiteSpace(request.CompanyName) || string.IsNullOrWhiteSpace(request.SsmNumber)))
             {
                 return BadRequest("Company name and SSM number are required for sponsor registration.");
             }
@@ -98,7 +104,7 @@ namespace Digital_Scholarship_Management_System.API.Controllers
 
             var isSponsor = request.Role == "sponsor";
 
-            if(isSponsor)
+            if (isSponsor)
             {
                 await _cognito.AdminDisableUserAsync(new AdminDisableUserRequest
                 {
@@ -134,12 +140,43 @@ namespace Digital_Scholarship_Management_System.API.Controllers
                 throw;
             }
 
-            if(!isSponsor)
+            if (!isSponsor)
             {
                 await SendOnboardingEmailAsync(request.Email, request.Username, temporaryPassword, request.FullName);
             }
             return Ok(new { message = "Registration successful." });
         }
+
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
+        {
+            var user = await _db.Users.SingleOrDefaultAsync(u => u.Email == request.Email);
+
+            if (user != null)
+            {
+                var userPoolId = _config["Cognito:UserPoolId"];
+                var getUserResponse = await _cognito.AdminGetUserAsync(new AdminGetUserRequest
+                {
+                    UserPoolId = userPoolId,
+                    Username = user.CognitoSub,
+                });
+
+                var temporaryPassword = GenerateTemporaryPassword();
+
+                await _cognito.AdminSetUserPasswordAsync(new AdminSetUserPasswordRequest
+                {
+                    UserPoolId = userPoolId,
+                    Username = getUserResponse.Username,
+                    Password = temporaryPassword,
+                    Permanent = false,
+                });
+
+                await SendPasswordResetEmailAsync(user.Email, getUserResponse.Username, temporaryPassword, user.FullName);
+            }
+
+            return Ok(new { message = "If that email is registered, we've sent a new password to it." });
+        }
+
 
         private static string GenerateTemporaryPassword()
         {
@@ -175,8 +212,31 @@ namespace Digital_Scholarship_Management_System.API.Controllers
                 to = new[] { toEmail },
                 subject = "Your Scholarship Management System account",
                 html = $"<p>Hi {fullName},</p><p>Username: <strong>{username}</strong><p>Temporary password: <strong>{temporaryPassword}</strong></p>" +
-                $"<p>You'll be asked to set a new password the first time you log in.</p>" + 
-                $"<p>Click <a href=\"{ loginUrl}\">here</a> to login</p>"
+                $"<p>You'll be asked to set a new password the first time you log in.</p>" +
+                $"<p>You must signed in and changed password within 7 Days</p>" +
+                $"<p>Click <a href=\"{loginUrl}\">here</a> to login</p>"
+            });
+        }
+
+        private async Task SendPasswordResetEmailAsync(string toEmail, string username, string temporaryPassword, string fullName)
+        {
+            var loginUrl = $"{_config["Frontend:BaseUrl"]}/login";
+            var client = _httpClientFactory.CreateClient();
+            client.BaseAddress = new Uri("https://api.resend.com/");
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _config["Resend:ApiKey"]);
+
+            await client.PostAsJsonAsync("emails", new
+            {
+                from = "scholarship@dev-r.org",
+                to = new[] { toEmail },
+                subject = "Reset Your Scholarship Management System Password",
+                html = $"<p>Hi {fullName}, </p><p>We received a request to reset your password.</p>" +
+                $"<p>Username: <strong>{username}</strong></p><p>Temporary Password: <strong>{temporaryPassword}</strong></p>" +
+                $"<p>This temporary password expires in 7 days.</p>" +
+
+                $"<p>If you didn't request this, your password has already been reset.</p>" +
+                $"<p>For security - please contact support or use this temporary password to sign in and secure back your account.</p>" +
+                $"<p>Click <a href=\"{loginUrl}\">here</a> to sign in</p>"
             });
         }
     }
