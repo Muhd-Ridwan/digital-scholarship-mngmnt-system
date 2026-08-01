@@ -4,7 +4,12 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { LucideAngularModule } from 'lucide-angular';
 import { DocumentService } from '../../services/document.service';
 import { ToastService } from '../../../shared/services/toast.service';
-import { DocumentType, StudentDocument } from '../../models/document.model';
+import {
+  DocumentType,
+  StudentDocument,
+  DOCUMENT_TYPE_LABELS,
+  DOCUMENT_TYPE_CLASSES,
+} from '../../models/document.model';
 import { RouterLink } from '@angular/router';
 
 const ALLOWED_EXTENSIONS = ['.pdf', '.doc', '.docx', '.png', '.jpg', '.jpeg'];
@@ -114,15 +119,10 @@ export class StudentDocuments {
   }
 
   protected documentTypeLabel(type: DocumentType): string {
-    switch (type) {
-      case 'bank_statement':
-        return 'Bank Statement';
-      case 'academic_result':
-        return 'Academic Result';
-      case 'certificate':
-        return 'Certificate';
-      default:
-        return 'Other';
-    }
+    return DOCUMENT_TYPE_LABELS[type];
+  }
+
+  protected documentTypeClasses(type: DocumentType): string {
+    return DOCUMENT_TYPE_CLASSES[type];
   }
 }

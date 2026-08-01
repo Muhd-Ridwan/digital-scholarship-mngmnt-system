@@ -9,27 +9,27 @@
   <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
     <app-stat-card
       label="Scholarships Available"
-      value="12"
+      [value]="scholarshipsAvailableCount().toString()"
       icon="graduation-cap"
       description="Open for application"
     />
     <app-stat-card
       label="Active Applications"
-      value="3"
+      [value]="activeApplicationsCount().toString()"
       icon="file-text"
       tone="success"
       description="In review"
     />
     <app-stat-card
       label="Profile Completion"
-      value="80%"
+      [value]="profileCompletionPercent() + '%'"
       icon="target"
       tone="warning"
-      [progress]="80"
+      [progress]="profileCompletionPercent()"
     />
     <app-stat-card
       label="Approved"
-      value="1"
+      [value]="approvedCount().toString()"
       icon="circle-check"
       tone="success"
       description="Awarded scholarships"
@@ -71,6 +71,6 @@
       </div>
     </div>
 
-    <app-application-progress [applications]="sampleApplications" />
+    <app-application-progress [applications]="applications()" [loading]="applicationsLoading()" />
   </div>
 </div>

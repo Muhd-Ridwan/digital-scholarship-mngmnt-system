@@ -8,11 +8,13 @@ import { Register } from './auth/pages/register/register';
 import { PublicShell } from './shared/components/public-shell/public-shell';
 import { ScholarshipList } from './scholarships/pages/list/scholarship-list';
 import { ScholarshipDetail } from './scholarships/pages/detail/scholarship-detail';
+import { ForgotPassword } from './auth/pages/forgot-password/forgot-password';
 import { OfficerProfile } from './officer/pages/profile/officer-profile';
-import { OfficerDocumentsComponent } from './officer/pages/documents/officer-documents'
+import { OfficerDocumentsComponent } from './officer/pages/documents/officer-documents';
 
 export const routes: Routes = [
   { path: 'login', component: Login },
+  { path: 'forgot-password', component: ForgotPassword },
   { path: 'register', component: Register },
   { path: 'officer/profile', component: OfficerProfile }, //for officer view profile
   { path: 'officer/documents', component: OfficerDocumentsComponent },

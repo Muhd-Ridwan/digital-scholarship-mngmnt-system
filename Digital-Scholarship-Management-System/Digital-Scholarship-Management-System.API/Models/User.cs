@@ -24,7 +24,7 @@ namespace Digital_Scholarship_Management_System.API.Models
 
         public ICollection<Application> Applications { get; set; } = new List<Application>();
         public ICollection<Scholarship> Scholarships { get; set; } = new List<Scholarship>();
-        public ICollection<Document> Documents { get; set; } = new List<Document>();
+        public ICollection<StudentDocument> Documents { get; set; } = new List<StudentDocument>();
         public StudentProfile? StudentProfile { get; set; }
     }
 }
