@@ -5,6 +5,7 @@ using Digital_Scholarship_Management_System.API.Data;
 using Digital_Scholarship_Management_System.API.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using Digital_Scholarship_Management_System.API.Services;
 
 namespace Digital_Scholarship_Management_System.API.Controllers
 {
@@ -30,13 +31,15 @@ namespace Digital_Scholarship_Management_System.API.Controllers
         private readonly IAmazonS3 _s3;
         private readonly string _bucketName;
         private readonly ILogger<DocumentsController> _logger;
+        private readonly AuditLogService _auditLog;
 
-        public DocumentsController(AppDbContext db, IAmazonS3 s3, IConfiguration configuration, ILogger<DocumentsController> logger)
+        public DocumentsController(AppDbContext db, IAmazonS3 s3, IConfiguration configuration, ILogger<DocumentsController> logger, AuditLogService auditLog)
         {
             _db = db;
             _s3 = s3;
             _bucketName = configuration["S3:BucketName"]!;
             _logger = logger;
+            _auditLog = auditLog;
         }
 
         [HttpGet]
@@ -132,6 +135,7 @@ namespace Digital_Scholarship_Management_System.API.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, "Could not save the document. Please try again.");
             }
 
+            await _auditLog.LogAsync(user, $"Uploaded document: {file.FileName}");
             return Ok(ToResponse(document));
         }
 

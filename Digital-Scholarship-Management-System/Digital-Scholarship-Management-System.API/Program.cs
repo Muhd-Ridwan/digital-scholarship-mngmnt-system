@@ -2,7 +2,9 @@ using Amazon;
 using Amazon.CognitoIdentityProvider;
 using Amazon.Runtime;
 using Amazon.S3;
+using Amazon.DynamoDBv2;
 using Digital_Scholarship_Management_System.API.Data;
+using Digital_Scholarship_Management_System.API.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -42,6 +44,16 @@ var s3RegionEndpoint = RegionEndpoint.GetBySystemName(s3Region);
 
 builder.Services.AddSingleton<IAmazonS3>(
     new AmazonS3Client(awsCredentials, s3RegionEndpoint));
+
+// DynamoDB for Audit Log
+
+var dynamoDbRegion = builder.Configuration["DynamoDb:Region"];
+var dynamoDbRegionEndpoint = RegionEndpoint.GetBySystemName(dynamoDbRegion);
+
+builder.Services.AddSingleton<IAmazonDynamoDB>(
+    new AmazonDynamoDBClient(awsCredentials, dynamoDbRegionEndpoint));
+
+builder.Services.AddSingleton<AuditLogService>();
 
 builder.Services.AddSingleton<IAmazonCognitoIdentityProvider>(
     new AmazonCognitoIdentityProviderClient(awsCredentials, cognitoRegionEndpoint)

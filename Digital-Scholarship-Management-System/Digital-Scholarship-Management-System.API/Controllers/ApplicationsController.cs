@@ -6,6 +6,7 @@ using Digital_Scholarship_Management_System.API.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Digital_Scholarship_Management_System.API.Services;
 
 namespace Digital_Scholarship_Management_System.API.Controllers
 {
@@ -25,13 +26,15 @@ namespace Digital_Scholarship_Management_System.API.Controllers
         private readonly IAmazonS3 _s3;
         private readonly string _bucketName;
         private readonly ILogger<ApplicationsController> _logger;
+        private readonly AuditLogService _auditLog;
 
-        public ApplicationsController(AppDbContext db, IAmazonS3 s3, IConfiguration configuration, ILogger<ApplicationsController> logger)
+        public ApplicationsController(AppDbContext db, IAmazonS3 s3, IConfiguration configuration, ILogger<ApplicationsController> logger, AuditLogService auditLog)
         {
             _db = db;
             _s3 = s3;
             _bucketName = configuration["S3:BucketName"]!;
             _logger = logger;
+            _auditLog = auditLog;
         }
 
         [HttpPost]
@@ -126,6 +129,7 @@ namespace Digital_Scholarship_Management_System.API.Controllers
 
                 return StatusCode(StatusCodes.Status500InternalServerError, "Could not submit your application. Please try again.");
             }
+            await _auditLog.LogAsync(user, $"Submitted application for '{scholarship.Title}'");
             return Ok(new { application.Id, message = "Application submitted successfully." });
         }
 
