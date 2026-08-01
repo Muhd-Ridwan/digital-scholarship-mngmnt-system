@@ -26,9 +26,5 @@
         public string FileName { get; set; } = string.Empty;
         public string FileType { get; set; } = string.Empty;
         public DateTime UploadAt { get; set; } = DateTime.UtcNow;
-
-        // Officer review
-        public ReviewStatus Status { get; set; } = ReviewStatus.Pending;
-        public DateTime? ReviewedAt { get; set; }
     }
 }
