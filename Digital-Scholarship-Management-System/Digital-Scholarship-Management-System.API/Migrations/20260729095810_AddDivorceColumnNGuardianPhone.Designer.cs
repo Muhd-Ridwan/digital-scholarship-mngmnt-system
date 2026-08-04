@@ -4,6 +4,7 @@ using Digital_Scholarship_Management_System.API.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Digital_Scholarship_Management_System.API.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260729095810_AddDivorceColumnNGuardianPhone")]
+    partial class AddDivorceColumnNGuardianPhone
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,38 +24,6 @@ namespace Digital_Scholarship_Management_System.API.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("Digital_Scholarship_Management_System.API.Models.Announcement", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Audience")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Body")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("PublishedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Announcements");
-                });
 
             modelBuilder.Entity("Digital_Scholarship_Management_System.API.Models.Application", b =>
                 {
@@ -89,13 +60,12 @@ namespace Digital_Scholarship_Management_System.API.Migrations
 
                     b.HasIndex("ScholarshipId");
 
-                    b.HasIndex("StudentId", "ScholarshipId")
-                        .IsUnique();
+                    b.HasIndex("StudentId");
 
                     b.ToTable("Applications");
                 });
 
-            modelBuilder.Entity("Digital_Scholarship_Management_System.API.Models.ApplicationDocument", b =>
+            modelBuilder.Entity("Digital_Scholarship_Management_System.API.Models.Document", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -103,10 +73,7 @@ namespace Digital_Scholarship_Management_System.API.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("ApplicationId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("DocumentType")
+                    b.Property<int?>("ApplicationId")
                         .HasColumnType("int");
 
                     b.Property<string>("FileName")
@@ -124,11 +91,19 @@ namespace Digital_Scholarship_Management_System.API.Migrations
                     b.Property<DateTime>("UploadAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<int?>("UserId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ApplicationId");
 
-                    b.ToTable("ApplicationDocuments");
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Documents", t =>
+                        {
+                            t.HasCheckConstraint("CK_Document_ExactlyOneOwner", "([ApplicationId] IS NOT NULL AND [UserId] IS NULL) OR ([ApplicationId] IS NULL AND [UserId] IS NOT NULL)");
+                        });
                 });
 
             modelBuilder.Entity("Digital_Scholarship_Management_System.API.Models.Scholarship", b =>
@@ -181,42 +156,6 @@ namespace Digital_Scholarship_Management_System.API.Migrations
                     b.HasIndex("SponsorId");
 
                     b.ToTable("Scholarships");
-                });
-
-            modelBuilder.Entity("Digital_Scholarship_Management_System.API.Models.StudentDocument", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("DocumentType")
-                        .HasColumnType("int");
-
-                    b.Property<string>("FileName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("FileType")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("S3ObjectKey")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("UploadAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("StudentDocuments");
                 });
 
             modelBuilder.Entity("Digital_Scholarship_Management_System.API.Models.StudentProfile", b =>
@@ -363,15 +302,10 @@ namespace Digital_Scholarship_Management_System.API.Migrations
                     b.Property<bool>("IsApproved")
                         .HasColumnType("bit");
 
-                    b.Property<string>("Role")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("Role")
+                        .HasColumnType("int");
 
                     b.Property<string>("SsmNumber")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
@@ -408,15 +342,21 @@ namespace Digital_Scholarship_Management_System.API.Migrations
                     b.Navigation("Student");
                 });
 
-            modelBuilder.Entity("Digital_Scholarship_Management_System.API.Models.ApplicationDocument", b =>
+            modelBuilder.Entity("Digital_Scholarship_Management_System.API.Models.Document", b =>
                 {
                     b.HasOne("Digital_Scholarship_Management_System.API.Models.Application", "Application")
                         .WithMany("Documents")
                         .HasForeignKey("ApplicationId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Digital_Scholarship_Management_System.API.Models.User", "User")
+                        .WithMany("Documents")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Application");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Digital_Scholarship_Management_System.API.Models.Scholarship", b =>
@@ -428,17 +368,6 @@ namespace Digital_Scholarship_Management_System.API.Migrations
                         .IsRequired();
 
                     b.Navigation("Sponsor");
-                });
-
-            modelBuilder.Entity("Digital_Scholarship_Management_System.API.Models.StudentDocument", b =>
-                {
-                    b.HasOne("Digital_Scholarship_Management_System.API.Models.User", "User")
-                        .WithMany("Documents")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Digital_Scholarship_Management_System.API.Models.StudentProfile", b =>

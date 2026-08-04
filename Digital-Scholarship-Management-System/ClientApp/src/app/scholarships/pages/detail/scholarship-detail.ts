@@ -1,6 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { DatePipe, CurrencyPipe } from '@angular/common';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink, Router } from '@angular/router';
 import { ScholarshipService } from '../../services/scholarship.service';
 import { ScholarshipDetail as ScholarshipDetailModel } from '../../models/scholarship.model';
 import { ToastService } from '../../../shared/services/toast.service';
@@ -19,6 +19,7 @@ export class ScholarshipDetail {
   private readonly scholarshipService = inject(ScholarshipService);
   private readonly toast = inject(ToastService);
   private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
 
   readonly scholarship = signal<ScholarshipDetailModel | null>(null);
   readonly loading = signal(true);
@@ -44,12 +45,12 @@ export class ScholarshipDetail {
       this.loading.set(false);
     }
   }
-  async onApply() {
+  async onApply(scholarshipId: number) {
     const profile = await this.auth.getProfile(); // THis is because, the auth.getProfile doesnt return the profile directly, so need to use await and the onApply become async
     if (!profile) {
       this.showLoginDialog.set(true);
       return;
     }
-    this.toast.success('Application flow coming soon!.');
+    await this.router.navigate(['/student/apply', scholarshipId]);
   }
 }

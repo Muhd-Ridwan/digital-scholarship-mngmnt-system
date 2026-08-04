@@ -1,0 +1,69 @@
+<div class="flex flex-col gap-6">
+  <a
+    routerLink="/student"
+    class="inline-flex w-fit items-center gap-1 text-sm text-mist-400 hover:text-mist-100"
+  >
+    <lucide-icon name="arrow-left" class="h-4 w-4"></lucide-icon>
+    Back to dashboard
+  </a>
+  <div>
+    <h1 class="font-display text-2xl text-mist-100">My Applications</h1>
+    <p class="mt-1 text-sm text-mist-400">Track the status of your scholarship applications.</p>
+  </div>
+
+  @if (loading()) {
+    <div class="flex flex-col gap-3">
+      @for (i of [1, 2, 3]; track i) {
+        <div
+          class="flex animate-pulse items-center justify-between gap-3 rounded-xl border border-ink-800 bg-ink-900 p-4"
+        >
+          <div class="flex flex-col gap-1.5">
+            <div class="h-3 w-40 rounded bg-ink-800"></div>
+            <div class="h-3 w-24 rounded bg-ink-800"></div>
+          </div>
+          <div class="h-4 w-16 rounded-full bg-ink-800"></div>
+        </div>
+      }
+    </div>
+  } @else if (applications().length === 0) {
+    <div
+      class="flex flex-col items-center gap-2 rounded-xl border border-ink-800 bg-ink-900 p-10 text-center"
+    >
+      <lucide-icon name="file-text" class="h-6 w-6 text-mist-400"></lucide-icon>
+      <p class="text-sm font-semibold text-mist-100">No applications yet</p>
+      <p class="text-sm text-mist-400">Browse scholarships to submit your first application.</p>
+      <a
+        routerLink="/scholarships"
+        class="mt-2 text-sm font-medium text-gold-500 hover:text-gold-500/80"
+      >
+        Browse Scholarships
+      </a>
+    </div>
+  } @else {
+    <div class="flex flex-col gap-3">
+      @for (application of applications(); track application.id) {
+        <div
+          class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-ink-800 bg-ink-900 p-4"
+        >
+          <div class="min-w-0">
+            <p class="truncate text-sm font-medium text-mist-100">
+              {{ application.scholarshipTitle }}
+            </p>
+            <p class="text-xs text-mist-400">
+              Submitted {{ application.submittedAt | date: 'mediumDate' }}
+              @if (application.decisionAt) {
+                · Decided {{ application.decisionAt | date: 'mediumDate' }}
+              }
+            </p>
+          </div>
+          <span
+            class="shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold"
+            [class]="statusClasses(application.status)"
+          >
+            {{ statusLabel(application.status) }}
+          </span>
+        </div>
+      }
+    </div>
+  }
+</div>
