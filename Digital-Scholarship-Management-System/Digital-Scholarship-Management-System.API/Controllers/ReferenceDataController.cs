@@ -1,70 +1,77 @@
 using Digital_Scholarship_Management_System.API.Data;
 using Digital_Scholarship_Management_System.API.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace Digital_Scholarship_Management_System.API.Controllers
 {
-    // Global reference data. Admin owns full CRUD; Sponsor rules reference it.
+    // Read-only view of the values sponsors have actually used on their scholarships.
+    // There is no reference_data table any more — the values are derived, so there is
+    // nowhere to persist an add or an active/inactive flag.
     [Route("api/reference-data")]
     [ApiController]
+    [Authorize]
     public class ReferenceDataController : ControllerBase
     {
         private readonly AppDbContext _db;
+
         public ReferenceDataController(AppDbContext db) => _db = db;
 
-        // GET /api/reference-data?category=University&activeOnly=true
+        // GET /api/reference-data — distinct values across all scholarships, expired included
         [HttpGet]
-        public async Task<IActionResult> GetAll([FromQuery] ReferenceCategory? category, [FromQuery] bool activeOnly = false)
+        public async Task<IActionResult> GetAll()
         {
-            var query = _db.ReferenceData.AsQueryable();
-            if (category is not null) query = query.Where(r => r.Category == category.Value);
-            if (activeOnly) query = query.Where(r => r.IsActive);
-            var items = await query.OrderBy(r => r.Category).ThenBy(r => r.Label).ToListAsync();
+            var (admin, errorResult) = await FindCurrentAdminAsync();
+            if (admin is null)
+            {
+                return errorResult!;
+            }
+
+            var fundTypes = await DistinctAsync(s => s.FundType);
+            var studyLocations = await DistinctAsync(s => s.StudyLocation);
+            var organisationTypes = await DistinctAsync(s => s.OrganisationType);
+
+            var items = fundTypes.Select(v => new { Category = "FundType", Value = v })
+                .Concat(studyLocations.Select(v => new { Category = "StudyLocation", Value = v }))
+                .Concat(organisationTypes.Select(v => new { Category = "OrganisationType", Value = v }));
+
             return Ok(items);
         }
 
-        // POST /api/reference-data
-        [HttpPost]
-        public async Task<IActionResult> Create([FromBody] ReferenceDataRequest req)
+        private async Task<List<string>> DistinctAsync(
+            System.Linq.Expressions.Expression<Func<Scholarship, string>> column)
         {
-            var item = new ReferenceData
+            return await _db.Scholarships
+                .Select(column)
+                .Where(value => value != null && value != "")
+                .Distinct()
+                .OrderBy(value => value)
+                .ToListAsync();
+        }
+
+        // Same pattern as UsersController.FindCurrentAdminAsync — the JWT carries no app-role
+        // claim, so the role comes from the DB row the sub maps to.
+        private async Task<(User? User, IActionResult? Error)> FindCurrentAdminAsync()
+        {
+            var sub = User.FindFirst("sub")?.Value;
+            if (sub is null)
             {
-                Category = req.Category,
-                Code = req.Code.Trim(),
-                Label = req.Label.Trim(),
-                IsActive = req.IsActive,
-            };
-            _db.ReferenceData.Add(item);
-            await _db.SaveChangesAsync();
-            return Created($"/api/reference-data/{item.Id}", item);
-        }
+                return (null, Unauthorized());
+            }
 
-        // PUT /api/reference-data/{id} — update fields / toggle active
-        [HttpPut("{id:int}")]
-        public async Task<IActionResult> Update(int id, [FromBody] ReferenceDataRequest req)
-        {
-            var item = await _db.ReferenceData.FindAsync(id);
-            if (item is null) return NotFound();
-            item.Category = req.Category;
-            item.Code = req.Code.Trim();
-            item.Label = req.Label.Trim();
-            item.IsActive = req.IsActive;
-            await _db.SaveChangesAsync();
-            return Ok(item);
-        }
+            var user = await _db.Users.FirstOrDefaultAsync(u => u.CognitoSub == sub);
+            if (user is null)
+            {
+                return (null, NotFound());
+            }
 
-        // DELETE /api/reference-data/{id}
-        [HttpDelete("{id:int}")]
-        public async Task<IActionResult> Delete(int id)
-        {
-            var item = await _db.ReferenceData.FindAsync(id);
-            if (item is null) return NotFound();
-            _db.ReferenceData.Remove(item);
-            await _db.SaveChangesAsync();
-            return NoContent();
+            if (user.Role != UserRole.admin)
+            {
+                return (null, StatusCode(StatusCodes.Status403Forbidden, "Only admin accounts can access this feature."));
+            }
+
+            return (user, null);
         }
     }
-
-    public record ReferenceDataRequest(ReferenceCategory Category, string Code, string Label, bool IsActive);
 }

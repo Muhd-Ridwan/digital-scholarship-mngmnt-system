@@ -1,12 +1,13 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
+import { fetchAuthSession } from 'aws-amplify/auth';
 import { environment } from '../../../../environments/environment';
 import { AuditEntry } from '../../models/audit.model';
 import { UserRole } from '../../models/user.model';
 
 interface ApiAuditEntry {
-  id: number;
+  id: string;
   user: string;
   role: UserRole;
   timestamp: string;
@@ -20,13 +21,23 @@ export interface AuditQuery {
   person?: string;
 }
 
-// Activity log — real GET /api/audit-log?from=&to=&role=&person=. No auth required today
-// (AuditLogController has no [Authorize] yet).
+// Activity log — GET /api/audit-log?from=&to=&role=&person=. Admin-only, reads DynamoDB.
 @Injectable({ providedIn: 'root' })
 export class AuditService {
   private readonly http = inject(HttpClient);
 
+  private async authHeaders(): Promise<{ Authorization: string }> {
+    const session = await fetchAuthSession();
+    const accessToken = session.tokens?.accessToken?.toString();
+
+    if (!accessToken) {
+      throw new Error('Not authenticated');
+    }
+    return { Authorization: `Bearer ${accessToken}` };
+  }
+
   async getEntries(query: AuditQuery): Promise<AuditEntry[]> {
+    const headers = await this.authHeaders();
     let params = new HttpParams();
     if (query.from) params = params.set('from', query.from);
     if (query.to) params = params.set('to', query.to);
@@ -34,10 +45,10 @@ export class AuditService {
     if (query.person) params = params.set('person', query.person);
 
     const apiEntries = await firstValueFrom(
-      this.http.get<ApiAuditEntry[]>(`${environment.apiUrl}/audit-log`, { params }),
+      this.http.get<ApiAuditEntry[]>(`${environment.apiUrl}/audit-log`, { headers, params }),
     );
     return apiEntries.map((e) => ({
-      id: String(e.id),
+      id: e.id,
       user: e.user,
       role: e.role,
       action: e.action,

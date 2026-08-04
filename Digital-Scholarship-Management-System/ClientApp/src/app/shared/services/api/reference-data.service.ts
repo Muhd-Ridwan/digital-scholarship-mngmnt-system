@@ -1,19 +1,29 @@
-import { Injectable } from '@angular/core';
-import { Observable, of } from 'rxjs';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
+import { fetchAuthSession } from 'aws-amplify/auth';
+import { environment } from '../../../../environments/environment';
 import { ReferenceDataItem } from '../../models/reference-data.model';
 
-// Lookup lists. Canned data for now — inject HttpClient and swap each of(...) for
-// this.http.get<ReferenceDataItem[]>(`${environment.apiUrl}/reference-data`).
+// Distinct FundType / StudyLocation / OrganisationType values from GET /api/reference-data.
 @Injectable({ providedIn: 'root' })
 export class ReferenceDataService {
-  getAll(): Observable<ReferenceDataItem[]> {
-    return of([
-      { id: 'r-1', category: 'University', code: 'APU', label: 'Asia Pacific University (IPTS)', isActive: true },
-      { id: 'r-2', category: 'University', code: 'UM', label: 'Universiti Malaya (IPTA)', isActive: true },
-      { id: 'r-3', category: 'Course', code: 'CS', label: 'Computer Science', isActive: true },
-      { id: 'r-4', category: 'StudyLevel', code: 'DEG', label: 'Degree', isActive: true },
-      { id: 'r-5', category: 'StudyLevel', code: 'DIP', label: 'Diploma', isActive: false },
-      { id: 'r-6', category: 'Category', code: 'STEM', label: 'STEM', isActive: true },
-    ]);
+  private readonly http = inject(HttpClient);
+
+  private async authHeaders(): Promise<{ Authorization: string }> {
+    const session = await fetchAuthSession();
+    const accessToken = session.tokens?.accessToken?.toString();
+
+    if (!accessToken) {
+      throw new Error('Not authenticated');
+    }
+    return { Authorization: `Bearer ${accessToken}` };
+  }
+
+  async getAll(): Promise<ReferenceDataItem[]> {
+    const headers = await this.authHeaders();
+    return await firstValueFrom(
+      this.http.get<ReferenceDataItem[]>(`${environment.apiUrl}/reference-data`, { headers }),
+    );
   }
 }

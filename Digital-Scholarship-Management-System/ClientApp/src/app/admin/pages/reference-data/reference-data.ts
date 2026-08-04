@@ -20,18 +20,27 @@ export class AdminReferenceData {
 
   protected readonly categoryLabels = REFERENCE_CATEGORY_LABELS;
   protected readonly categories: ReferenceCategory[] = [
-    'University',
-    'Course',
-    'StudyLevel',
-    'Category',
+    'FundType',
+    'StudyLocation',
+    'OrganisationType',
   ];
-  protected readonly activeCategory = signal<ReferenceCategory>('University');
+  protected readonly activeCategory = signal<ReferenceCategory>('FundType');
+  protected readonly loading = signal(true);
 
   private readonly items = signal<ReferenceDataItem[]>([]);
 
   constructor() {
-    // MOCK read now; becomes a real HTTP GET once the backend endpoint is available.
-    this.referenceApi.getAll().subscribe((list) => this.items.set(list));
+    this.loadItems();
+  }
+
+  private async loadItems(): Promise<void> {
+    try {
+      this.items.set(await this.referenceApi.getAll());
+    } catch {
+      this.toastService.error('Could not load reference data.');
+    } finally {
+      this.loading.set(false);
+    }
   }
 
   protected readonly visibleItems = computed(() =>
@@ -40,30 +49,5 @@ export class AdminReferenceData {
 
   protected setCategory(category: ReferenceCategory): void {
     this.activeCategory.set(category);
-  }
-
-  protected toggleActive(item: ReferenceDataItem): void {
-    this.items.update((list) =>
-      list.map((i) => (i.id === item.id ? { ...i, isActive: !i.isActive } : i)),
-    );
-    this.toastService.success(
-      item.isActive ? `Deactivated: ${item.label}` : `Activated: ${item.label}`,
-    );
-  }
-
-  protected onAddSubmit(codeInput: HTMLInputElement, labelInput: HTMLInputElement): void {
-    const code = codeInput.value.trim();
-    const label = labelInput.value.trim();
-    if (!code || !label) {
-      this.toastService.error('Code and label are both required');
-      return;
-    }
-    this.items.update((list) => [
-      ...list,
-      { id: `r-${Date.now()}`, category: this.activeCategory(), code, label, isActive: true },
-    ]);
-    this.toastService.success(`Added to ${this.categoryLabels[this.activeCategory()]}: ${label}`);
-    codeInput.value = '';
-    labelInput.value = '';
   }
 }

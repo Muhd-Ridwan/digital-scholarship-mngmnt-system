@@ -39,6 +39,14 @@ export class AuthService {
   readonly profile = this._profile.asReadonly();
 
   async login(username: string, password: string): Promise<LoginResult> {
+    // Clear any stale session first — signIn() throws UserAlreadyAuthenticatedException
+    // otherwise, stranding the user on /login until they clear site data by hand.
+    try {
+      await signOut();
+    } catch {}
+    this.profilePromise = null;
+    this._profile.set(null);
+
     const { isSignedIn, nextStep } = await signIn({ username, password });
 
     if (isSignedIn) {

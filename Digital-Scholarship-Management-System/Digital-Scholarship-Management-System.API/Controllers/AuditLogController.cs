@@ -1,19 +1,34 @@
 using Digital_Scholarship_Management_System.API.Data;
 using Digital_Scholarship_Management_System.API.Models;
+using Digital_Scholarship_Management_System.API.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace Digital_Scholarship_Management_System.API.Controllers
 {
-    // Audit log review. Admin reads/queries; local EF table now, DynamoDB later.
+    // Audit log review, admin-only. Reads DynamoDB — the SQL AuditLogs table was never
+    // written to and has been dropped. Writes come from AuditLogService.LogAsync.
     [Route("api/audit-log")]
     [ApiController]
+    [Authorize]
     public class AuditLogController : ControllerBase
     {
-        private readonly AppDbContext _db;
-        public AuditLogController(AppDbContext db) => _db = db;
+        // One partition Query per day in range, so an unbounded range would sweep every
+        // day since launch. Default to a week and cap the span.
+        private const int DefaultRangeDays = 7;
+        private const int MaxRangeDays = 366;
 
-        // GET /api/audit-log?role=Officer&person=alice&from=2026-01-01&to=2026-12-31
+        private readonly AppDbContext _db;
+        private readonly AuditLogService _auditLog;
+
+        public AuditLogController(AppDbContext db, AuditLogService auditLog)
+        {
+            _db = db;
+            _auditLog = auditLog;
+        }
+
+        // GET /api/audit-log?role=officer&person=alice&from=2026-01-01&to=2026-12-31
         [HttpGet]
         public async Task<IActionResult> Get(
             [FromQuery] UserRole? role,
@@ -21,13 +36,51 @@ namespace Digital_Scholarship_Management_System.API.Controllers
             [FromQuery] DateTime? from,
             [FromQuery] DateTime? to)
         {
-            var query = _db.AuditLogs.AsQueryable();
-            if (role is not null) query = query.Where(a => a.Role == role.Value);
-            if (!string.IsNullOrWhiteSpace(person)) query = query.Where(a => a.User.Contains(person));
-            if (from is not null) query = query.Where(a => a.Timestamp >= from.Value);
-            if (to is not null) query = query.Where(a => a.Timestamp <= to.Value);
-            var entries = await query.OrderByDescending(a => a.Timestamp).ToListAsync();
+            var (admin, errorResult) = await FindCurrentAdminAsync();
+            if (admin is null)
+            {
+                return errorResult!;
+            }
+
+            var toUtc = to ?? DateTime.UtcNow;
+            var fromUtc = from ?? toUtc.AddDays(-DefaultRangeDays);
+
+            if (fromUtc > toUtc)
+            {
+                return BadRequest(new { message = "'from' must not be after 'to'." });
+            }
+
+            if ((toUtc.Date - fromUtc.Date).TotalDays > MaxRangeDays)
+            {
+                return BadRequest(new { message = $"Date range cannot exceed {MaxRangeDays} days." });
+            }
+
+            var entries = await _auditLog.QueryAsync(fromUtc, toUtc, role, person);
             return Ok(entries);
+        }
+
+        // Same pattern as UsersController.FindCurrentAdminAsync — the JWT carries no app-role
+        // claim, so the role comes from the DB row the sub maps to.
+        private async Task<(User? User, IActionResult? Error)> FindCurrentAdminAsync()
+        {
+            var sub = User.FindFirst("sub")?.Value;
+            if (sub is null)
+            {
+                return (null, Unauthorized());
+            }
+
+            var user = await _db.Users.FirstOrDefaultAsync(u => u.CognitoSub == sub);
+            if (user is null)
+            {
+                return (null, NotFound());
+            }
+
+            if (user.Role != UserRole.admin)
+            {
+                return (null, StatusCode(StatusCodes.Status403Forbidden, "Only admin accounts can access this feature."));
+            }
+
+            return (user, null);
         }
     }
 }

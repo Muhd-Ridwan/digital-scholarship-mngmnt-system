@@ -1,22 +1,17 @@
-// Lookup lists (universities, courses, study levels, categories) that feed the
-// dropdowns and eligibility rules. Only the admin screens edit these; everywhere
-// else just reads them, which is why the type lives in shared/.
-// Matches the reference_data table.
+// Distinct values in use across the Scholarships table. Read-only — these are derived
+// from what sponsors entered, not a list anyone maintains.
+// Category names match the Scholarship column names.
 
-export type ReferenceCategory = 'University' | 'Course' | 'StudyLevel' | 'Category';
+export type ReferenceCategory = 'FundType' | 'StudyLocation' | 'OrganisationType';
 
 export interface ReferenceDataItem {
-  id: string;
   category: ReferenceCategory;
-  code: string;
-  label: string;
-  isActive: boolean;
+  value: string;
 }
 
 // Display names for the categories — one place, so screens don't drift.
 export const REFERENCE_CATEGORY_LABELS: Record<ReferenceCategory, string> = {
-  University: 'Universities / IPTS',
-  Course: 'Courses',
-  StudyLevel: 'Study Levels',
-  Category: 'Categories',
+  FundType: 'Fund Type',
+  StudyLocation: 'Study Location',
+  OrganisationType: 'Organisation Type',
 };

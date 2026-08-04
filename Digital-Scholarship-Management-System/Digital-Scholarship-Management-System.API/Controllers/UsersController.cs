@@ -58,19 +58,49 @@ namespace Digital_Scholarship_Management_System.API.Controllers
 
     [ApiController]
     [Route("api/users")]
-    [ApiController]
     [Authorize]
     public class UsersController : ControllerBase
     {
         private readonly AppDbContext _db;
         private readonly ILogger<UsersController> _logger;
         private readonly AuditLogService _auditLog;
+        private readonly IAmazonCognitoIdentityProvider _cognito;
+        private readonly IConfiguration _config;
 
-        public UsersController(AppDbContext db, ILogger<UsersController> logger, AuditLogService auditLog)
+        public UsersController(AppDbContext db, ILogger<UsersController> logger, AuditLogService auditLog, IAmazonCognitoIdentityProvider cognito, IConfiguration config)
         {
             _db = db;
             _logger = logger;
             _auditLog = auditLog;
+            _cognito = cognito;
+            _config = config;
+        }
+
+        // GET /api/users — admin only. [Authorize] alone would let any signed-in student
+        // read every account. Projected to the five fields the Users & Access screen reads;
+        // the entity itself carries CognitoSub and SsmNumber.
+        [HttpGet]
+        public async Task<IActionResult> GetAll()
+        {
+            var (admin, errorResult) = await FindCurrentAdminAsync();
+            if (admin is null)
+            {
+                return errorResult!;
+            }
+
+            var users = await _db.Users
+                .OrderBy(u => u.FullName)
+                .Select(u => new
+                {
+                    u.Id,
+                    u.FullName,
+                    u.Email,
+                    u.Role,
+                    u.Status,
+                })
+                .ToListAsync();
+
+            return Ok(users);
         }
 
         // GET /api/users/me
@@ -193,6 +223,30 @@ namespace Digital_Scholarship_Management_System.API.Controllers
             if (user.Role != UserRole.user)
             {
                 return (null, StatusCode(StatusCodes.Status403Forbidden, "Only student accounts have a profile."));
+            }
+
+            return (user, null);
+        }
+
+        // Admin twin of FindCurrentStudentAsync. The JWT carries no app-role claim, so the
+        // role has to come from the DB row the sub maps to.
+        private async Task<(User? User, IActionResult? Error)> FindCurrentAdminAsync()
+        {
+            var sub = User.FindFirst("sub")?.Value;
+            if (sub is null)
+            {
+                return (null, Unauthorized());
+            }
+
+            var user = await _db.Users.FirstOrDefaultAsync(u => u.CognitoSub == sub);
+            if (user is null)
+            {
+                return (null, NotFound());
+            }
+
+            if (user.Role != UserRole.admin)
+            {
+                return (null, StatusCode(StatusCodes.Status403Forbidden, "Only admin accounts can access this feature."));
             }
 
             return (user, null);
