@@ -24,7 +24,7 @@ jobs:
          id: current_version
          run:  |
            CURRENT=$(aws elasticbeanstalk describe-environments \
-             --environment-names Cloudassignment-env \
+             --environment-names Cloudassigment-env \
              --region ap-southeast-2 \
              --query 'Environments[0].VersionLabel' \
              --output text)
@@ -49,7 +49,7 @@ jobs:
            aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
            aws_secret_key: ${{ secrets.AWS_SECRET_KEY_ACCESS_KEY }}
            application_name: cloud_assigment
-           environment_name: Cloudassignment-env
+           environment_name: Cloudassigment-env
            version_label: ${{ github.sha }}-${{ github.run_attempt }}
            region: ap-southeast-2
            deployment_package: deploy.zip
@@ -60,7 +60,7 @@ jobs:
          run: |
            echo "Deployment failed - rolling back to ${{ steps.current_version.outputs.version }}"
            aws elasticbeanstalk update-environment \
-             --environment-name Cloudassignment-env \
+             --environment-name Cloudassigment-env \
              --region ap-southeast-2 \
              --version-label ${{ steps.current_version.outputs.version }}
          env:
