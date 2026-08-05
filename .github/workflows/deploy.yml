@@ -6,6 +6,7 @@ on:
       -  main
     paths:
       -  "Digital-Scholarship-Management-System/Digital-Scholarship-Management-System.API/**"
+  workflow_dispatch: 
 
 jobs:
   deploy:
