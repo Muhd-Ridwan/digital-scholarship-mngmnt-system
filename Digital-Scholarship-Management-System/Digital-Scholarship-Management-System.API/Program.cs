@@ -55,6 +55,7 @@ builder.Services.AddSingleton<IAmazonDynamoDB>(
     new AmazonDynamoDBClient(awsCredentials, dynamoDbRegionEndpoint));
 
 builder.Services.AddSingleton<AuditLogService>();
+builder.Services.AddSingleton<AnnouncementService>();
 
 builder.Services.AddSingleton<IAmazonCognitoIdentityProvider>(
     new AmazonCognitoIdentityProviderClient(awsCredentials, cognitoRegionEndpoint)

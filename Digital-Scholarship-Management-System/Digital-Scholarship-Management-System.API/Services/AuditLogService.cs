@@ -26,9 +26,17 @@ namespace Digital_Scholarship_Management_System.API.Services
                 ["timestamp"] = new AttributeValue { S = now.ToString("O") },
                 ["id"] = new AttributeValue { S = Guid.NewGuid().ToString() },
                 ["user"] = new AttributeValue { S = user.FullName },
+                // Names can change, so store the id too.
+                ["userId"] = new AttributeValue { S = user.Id.ToString() },
                 ["role"] = new AttributeValue { S = ToDisplayRole(user.Role) },
                 ["action"] = new AttributeValue { S = action },
             };
+
+            // Backup id, in case the database is restored and ids change.
+            if (!string.IsNullOrWhiteSpace(user.CognitoSub))
+            {
+                item["cognitoSub"] = new AttributeValue { S = user.CognitoSub };
+            }
 
             await _dynamoDb.PutItemAsync(_tableName, item);
         }
@@ -62,8 +70,12 @@ namespace Digital_Scholarship_Management_System.API.Services
                 while (startKey is not null && startKey.Count > 0);
             }
 
-            // Neither role nor person is part of the key, so they filter after the Query.
-            IEnumerable<AuditLogItem> filtered = items;
+            // Partitions are whole UTC dates, but the caller's range is a local-time window —
+            // drop the entries that fall either side of it.
+            IEnumerable<AuditLogItem> filtered =
+                items.Where(i => i.Timestamp >= fromUtc && i.Timestamp <= toUtc);
+
+            // Neither role nor person is part of the key, so they filter after the Query too.
             if (role is not null)
             {
                 filtered = filtered.Where(i => i.Role == role);
@@ -76,9 +88,11 @@ namespace Digital_Scholarship_Management_System.API.Services
             return filtered.OrderByDescending(i => i.Timestamp).ToList();
         }
 
+        // cognitoSub is stored but not read here, so it never reaches the browser.
         private static AuditLogItem Map(Dictionary<string, AttributeValue> item) => new(
             Field(item, "id"),
             Field(item, "user"),
+            Field(item, "userId"),
             FromDisplayRole(Field(item, "role")),
             DateTime.TryParse(Field(item, "timestamp"), CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var timestamp)
                 ? timestamp
@@ -109,5 +123,5 @@ namespace Digital_Scholarship_Management_System.API.Services
         };
     }
 
-    public record AuditLogItem(string Id, string User, UserRole? Role, DateTime Timestamp, string Action);
+    public record AuditLogItem(string Id, string User, string UserId, UserRole? Role, DateTime Timestamp, string Action);
 }

@@ -42,8 +42,8 @@ namespace Digital_Scholarship_Management_System.API.Controllers
                 return errorResult!;
             }
 
-            var toUtc = to ?? DateTime.UtcNow;
-            var fromUtc = from ?? toUtc.AddDays(-DefaultRangeDays);
+            var toUtc = AsUtc(to) ?? DateTime.UtcNow;
+            var fromUtc = AsUtc(from) ?? toUtc.AddDays(-DefaultRangeDays);
 
             if (fromUtc > toUtc)
             {
@@ -58,6 +58,16 @@ namespace Digital_Scholarship_Management_System.API.Controllers
             var entries = await _auditLog.QueryAsync(fromUtc, toUtc, role, person);
             return Ok(entries);
         }
+
+        // Query-string dates bind with varying DateTimeKind. Comparing a Local or Unspecified
+        // value against a UTC timestamp silently shifts the window, so pin the kind here.
+        private static DateTime? AsUtc(DateTime? value) => value?.Kind switch
+        {
+            null => null,
+            DateTimeKind.Utc => value,
+            DateTimeKind.Local => value.Value.ToUniversalTime(),
+            _ => DateTime.SpecifyKind(value.Value, DateTimeKind.Utc),
+        };
 
         // Same pattern as UsersController.FindCurrentAdminAsync — the JWT carries no app-role
         // claim, so the role comes from the DB row the sub maps to.

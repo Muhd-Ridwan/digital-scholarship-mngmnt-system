@@ -50,6 +50,10 @@ export class Login {
         this.needsNewPassword = true;
         return;
       }
+      if (result.status === 'locked') {
+        this.toast.error('Unable to login, please contact admin for further inquiry');
+        return;
+      }
       if (result.status === 'failed') {
         this.toast.error('Sign in could not be completed');
         return;

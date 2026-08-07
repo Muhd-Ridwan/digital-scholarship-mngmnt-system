@@ -11,12 +11,14 @@
     <div>
       <label class="text-xs font-semibold tracking-wide text-mist-400 uppercase">Date range</label>
       <select
-        [value]="dateRange()"
         (change)="onDateRangeChange($any($event.target).value)"
         class="mt-1 w-full rounded-lg border border-ink-800 bg-ink-950 px-3 py-2 text-sm text-mist-100 focus:border-gold-500/50 focus:outline-none"
       >
+        <!-- selected per option: a [value] on the select is applied before @for renders them -->
         @for (option of dateRangeOptions; track option) {
-          <option [value]="option">{{ dateRangeLabels[option] }}</option>
+          <option [value]="option" [selected]="option === dateRange()">
+            {{ dateRangeLabels[option] }}
+          </option>
         }
       </select>
     </div>
@@ -63,7 +65,7 @@
           <tbody>
             @for (entry of filteredEntries(); track entry.id) {
               <tr class="border-t border-ink-800/60">
-                <td class="px-5 py-3 whitespace-nowrap text-mist-400">{{ entry.timestamp }}</td>
+                <td class="px-5 py-3 whitespace-nowrap text-mist-400">{{ formatTimestamp(entry.timestamp) }}</td>
                 <td class="px-5 py-3 font-medium text-mist-100">{{ entry.user }}</td>
                 <td class="px-5 py-3">
                   <span class="rounded-full px-2 py-0.5 text-xs font-medium" [class]="roleBadgeClasses(entry.role)">

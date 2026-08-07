@@ -27,7 +27,7 @@ export class AdminAuditLog {
 
   protected readonly roleFilter = signal<'All' | UserRole>('All');
   protected readonly personFilter = signal('');
-  protected readonly dateRange = signal<DateRangeOption>('last7');
+  protected readonly dateRange = signal<DateRangeOption>('today');
   protected readonly loading = signal(true);
 
   private readonly entries = signal<AuditEntry[]>([]);
@@ -36,17 +36,32 @@ export class AdminAuditLog {
     this.refreshEntries();
   }
 
+  // Local calendar days, not rolling 24-hour windows — "Last 7 days" is seven dates
+  // including today. Sent as UTC instants; the API trims to the exact window.
   private computeFromTo(option: DateRangeOption): { from: string; to: string } {
+    const from = new Date();
     const to = new Date();
-    const from = new Date(to);
-    if (option === 'today') {
-      from.setHours(0, 0, 0, 0);
-    } else if (option === 'last7') {
-      from.setDate(from.getDate() - 7);
-    } else {
-      from.setDate(from.getDate() - 30);
-    }
+
+    const daysBack = option === 'today' ? 0 : option === 'last7' ? 6 : 29;
+    from.setDate(from.getDate() - daysBack);
+    from.setHours(0, 0, 0, 0);
+    to.setHours(23, 59, 59, 999);
+
     return { from: from.toISOString(), to: to.toISOString() };
+  }
+
+  // Entries are stored in UTC; the admin reads them in their own timezone.
+  protected formatTimestamp(iso: string): string {
+    const date = new Date(iso);
+    return Number.isNaN(date.getTime())
+      ? iso
+      : date.toLocaleString('en-GB', {
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        });
   }
 
   private refreshEntries(): void {

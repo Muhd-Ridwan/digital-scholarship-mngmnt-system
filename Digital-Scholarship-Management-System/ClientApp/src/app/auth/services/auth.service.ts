@@ -28,7 +28,7 @@ export interface RegisterOfficerRequest {
 }
 
 export type LoginResult =
-  { status: 'signedIn' } | { status: 'newPasswordRequired' } | { status: 'failed' };
+  { status: 'signedIn' } | { status: 'newPasswordRequired' } | { status: 'locked' } | { status: 'failed' };
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -47,7 +47,18 @@ export class AuthService {
     this.profilePromise = null;
     this._profile.set(null);
 
-    const { isSignedIn, nextStep } = await signIn({ username, password });
+    let isSignedIn: boolean;
+    let nextStep: Awaited<ReturnType<typeof signIn>>['nextStep'];
+    try {
+      ({ isSignedIn, nextStep } = await signIn({ username, password }));
+    } catch (err) {
+      // A Cognito-disabled account throws NotAuthorizedException too, same as a wrong
+      // password — only the message tells them apart.
+      if (/disabled/i.test((err as Error)?.message ?? '')) {
+        return { status: 'locked' };
+      }
+      throw err;
+    }
 
     if (isSignedIn) {
       this.profilePromise = null;

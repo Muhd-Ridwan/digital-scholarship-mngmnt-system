@@ -1,10 +1,10 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, firstValueFrom, of } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 import { fetchAuthSession } from 'aws-amplify/auth';
 import { environment } from '../../../../environments/environment';
 import { User, UserRole, UserStatus } from '../../models/user.model';
-import { SponsorProfile } from '../../models/sponsor-profile.model';
+import { SponsorDecision, SponsorProfile } from '../../models/sponsor-profile.model';
 
 interface ApiUser {
   id: number;
@@ -12,6 +12,16 @@ interface ApiUser {
   email: string;
   role: UserRole;
   status: UserStatus;
+}
+
+interface ApiSponsor {
+  id: number;
+  companyName: string;
+  ssmNumber: string | null;
+  registeredAt: string;
+  status: SponsorDecision;
+  decidedAt: string | null;
+  decidedBy: string | null;
 }
 
 // Users and access. getUsers() / setStatus() are real calls. Register-officer is handled
@@ -67,8 +77,35 @@ export class UsersService {
     };
   }
 
-  // Require sponsor code/data for reference — SponsorProfile is still a placeholder
-  getPendingSponsors(): Observable<SponsorProfile[]> {
-    return of([{ id: 'sp-1', companyName: 'Green Future Sdn Bhd', ssmNumber: '202601099887' }]);
+  // Every sponsor with its decision — the screen splits pending from decided itself,
+  // so both tables come from one round trip.
+  async getSponsors(): Promise<SponsorProfile[]> {
+    const headers = await this.authHeader();
+    const sponsors = await firstValueFrom(
+      this.http.get<ApiSponsor[]>(`${environment.apiUrl}/users/sponsors`, { headers }),
+    );
+    return sponsors.map(toSponsor);
   }
+
+  async approveSponsor(id: string): Promise<SponsorProfile> {
+    const headers = await this.authHeader();
+    return toSponsor(
+      await firstValueFrom(
+        this.http.post<ApiSponsor>(`${environment.apiUrl}/users/${id}/approve-sponsor`, {}, { headers }),
+      ),
+    );
+  }
+
+  async rejectSponsor(id: string): Promise<SponsorProfile> {
+    const headers = await this.authHeader();
+    return toSponsor(
+      await firstValueFrom(
+        this.http.post<ApiSponsor>(`${environment.apiUrl}/users/${id}/reject-sponsor`, {}, { headers }),
+      ),
+    );
+  }
+}
+
+function toSponsor(sponsor: ApiSponsor): SponsorProfile {
+  return { ...sponsor, id: String(sponsor.id) };
 }

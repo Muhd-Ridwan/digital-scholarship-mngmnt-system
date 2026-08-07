@@ -3,7 +3,6 @@ import { LucideAngularModule } from 'lucide-angular';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ToastService } from '../../../shared/services/toast.service';
 import { ROLE_BADGE_CLASSES, User, UserRole, UserStatus } from '../../../shared/models/user.model';
-import { SponsorProfile } from '../../../shared/models/sponsor-profile.model';
 import { UsersService } from '../../../shared/services/api/users.service';
 import { AuthService } from '../../../auth/services/auth.service';
 
@@ -18,13 +17,11 @@ export class AdminUsers {
   private readonly usersApi = inject(UsersService);
   private readonly authApi = inject(AuthService);
 
-  protected readonly pendingSponsors = signal<SponsorProfile[]>([]);
   protected readonly users = signal<User[]>([]);
   protected readonly loadingUsers = signal(true);
   protected readonly registering = signal(false);
 
   constructor() {
-    this.usersApi.getPendingSponsors().subscribe((list) => this.pendingSponsors.set(list));
     this.refreshUsers();
   }
 
@@ -39,22 +36,6 @@ export class AdminUsers {
 
   protected roleBadgeClasses(role: UserRole): string {
     return ROLE_BADGE_CLASSES[role];
-  }
-
-  protected viewCertificate(sponsor: SponsorProfile): void {
-    this.toastService.success(
-      `Opening business-registration certificate for ${sponsor.companyName}…`,
-    );
-  }
-
-  protected approveSponsor(sponsor: SponsorProfile): void {
-    this.pendingSponsors.update((list) => list.filter((s) => s.id !== sponsor.id));
-    this.toastService.success(`${sponsor.companyName} approved — can now post scholarships`);
-  }
-
-  protected rejectSponsor(sponsor: SponsorProfile): void {
-    this.pendingSponsors.update((list) => list.filter((s) => s.id !== sponsor.id));
-    this.toastService.error(`${sponsor.companyName} onboarding rejected`);
   }
 
   protected async toggleLock(user: User): Promise<void> {

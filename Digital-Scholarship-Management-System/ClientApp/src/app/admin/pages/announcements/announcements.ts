@@ -25,6 +25,8 @@ export class AdminAnnouncements {
 
   protected readonly announcements = signal<Announcement[]>([]);
   protected readonly statusFilter = signal<StatusFilter>('All');
+  // Every action is a round trip now — without this a double-click posts twice.
+  protected readonly busy = signal(false);
 
   protected readonly visible = computed(() => {
     const filter = this.statusFilter();
@@ -33,12 +35,28 @@ export class AdminAnnouncements {
   });
 
   constructor() {
-    // MOCK read now; becomes a real HTTP GET once the backend endpoint is available.
-    this.announcementsApi.getAll().subscribe((list) => this.announcements.set(list));
+    void this.load();
+  }
+
+  private async load(): Promise<void> {
+    try {
+      this.announcements.set(await this.announcementsApi.getAll());
+    } catch {
+      this.toastService.error('Could not load announcements');
+    }
   }
 
   protected audienceLabel(audience: AnnouncementAudience): string {
     return audience === 'All' ? 'All roles' : audience;
+  }
+
+  // The API returns ISO timestamps; the row shows a readable date.
+  protected formatDate(iso: string | null): string {
+    if (!iso) return '';
+    const date = new Date(iso);
+    return Number.isNaN(date.getTime())
+      ? ''
+      : date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
   }
 
   protected setFilter(filter: StatusFilter): void {
@@ -56,83 +74,92 @@ export class AdminAnnouncements {
     }
   }
 
-  private stampToday(): string {
-    return new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  private replace(updated: Announcement): void {
+    this.announcements.update((list) => list.map((a) => (a.sk === updated.sk ? updated : a)));
   }
 
-  // Composer — publish immediately (stamps publishedAt).
-  private publishNew(title: string, body: string, audience: AnnouncementAudience): boolean {
-    const t = title.trim();
-    const b = body.trim();
-    if (!t || !b) {
-      this.toastService.error('Title and message are both required to publish');
-      return false;
-    }
-    this.announcements.update((list) => [
-      { id: `a-${Date.now()}`, title: t, body: b, audience, status: 'Published', publishedAt: this.stampToday() },
-      ...list,
-    ]);
-    this.toastService.success(`Announcement published to ${this.audienceLabel(audience)}`);
-    return true;
-  }
-
-  // Composer — save as draft (no publishedAt stamp).
-  private saveDraft(title: string, body: string, audience: AnnouncementAudience): boolean {
-    const t = title.trim();
-    if (!t) {
-      this.toastService.error('A title is required to save a draft');
-      return false;
-    }
-    this.announcements.update((list) => [
-      { id: `a-${Date.now()}`, title: t, body: body.trim(), audience, status: 'Draft', publishedAt: null },
-      ...list,
-    ]);
-    this.toastService.success('Draft saved');
-    return true;
-  }
-
-  protected onCompose(
+  protected async onCompose(
     mode: 'publish' | 'draft',
     titleInput: HTMLInputElement,
     bodyInput: HTMLTextAreaElement,
     audienceSelect: HTMLSelectElement,
-  ): void {
+  ): Promise<void> {
+    if (this.busy()) return;
+
+    const title = titleInput.value.trim();
+    const body = bodyInput.value.trim();
     const audience = audienceSelect.value as AnnouncementAudience;
-    const ok =
-      mode === 'publish'
-        ? this.publishNew(titleInput.value, bodyInput.value, audience)
-        : this.saveDraft(titleInput.value, bodyInput.value, audience);
-    if (ok) {
+
+    // The server requires both for either mode; check here so a draft doesn't round-trip to fail.
+    if (!title || !body) {
+      this.toastService.error('Title and message are both required');
+      return;
+    }
+
+    const status: AnnouncementStatus = mode === 'publish' ? 'Published' : 'Draft';
+
+    this.busy.set(true);
+    try {
+      const created = await this.announcementsApi.create(title, body, audience, status);
+      this.announcements.update((list) => [created, ...list]);
+      this.toastService.success(
+        mode === 'publish'
+          ? `Announcement published to ${this.audienceLabel(audience)}`
+          : 'Draft saved',
+      );
       titleInput.value = '';
       bodyInput.value = '';
       audienceSelect.value = 'All';
+    } catch {
+      this.toastService.error('Could not save the announcement');
+    } finally {
+      this.busy.set(false);
     }
   }
 
-  // Row action — publish an existing draft (stamps publishedAt now).
-  protected publishDraft(announcement: Announcement): void {
-    if (announcement.status !== 'Draft') return;
-    this.announcements.update((list) =>
-      list.map((a) =>
-        a.id === announcement.id ? { ...a, status: 'Published', publishedAt: this.stampToday() } : a,
-      ),
-    );
-    this.toastService.success(`"${announcement.title}" published`);
+  // Row action — publish an existing draft. The server stamps publishedAt.
+  protected async publishDraft(announcement: Announcement): Promise<void> {
+    if (announcement.status !== 'Draft' || this.busy()) return;
+
+    this.busy.set(true);
+    try {
+      this.replace(await this.announcementsApi.setStatus(announcement, 'Published'));
+      this.toastService.success(`"${announcement.title}" published`);
+    } catch {
+      this.toastService.error('Could not publish the announcement');
+    } finally {
+      this.busy.set(false);
+    }
   }
 
-  // Row action — archive a published announcement. KEEPS publishedAt as evidence.
-  protected archive(announcement: Announcement): void {
-    if (announcement.status !== 'Published') return;
-    this.announcements.update((list) =>
-      list.map((a) => (a.id === announcement.id ? { ...a, status: 'Archived' } : a)),
-    );
-    this.toastService.success(`"${announcement.title}" archived`);
+  // Row action — archive a published announcement. The server keeps publishedAt as evidence.
+  protected async archive(announcement: Announcement): Promise<void> {
+    if (announcement.status !== 'Published' || this.busy()) return;
+
+    this.busy.set(true);
+    try {
+      this.replace(await this.announcementsApi.setStatus(announcement, 'Archived'));
+      this.toastService.success(`"${announcement.title}" archived`);
+    } catch {
+      this.toastService.error('Could not archive the announcement');
+    } finally {
+      this.busy.set(false);
+    }
   }
 
-  // Row action — hard delete, allowed ONLY on a draft.
-  protected deleteDraft(announcement: Announcement): void {
-    if (announcement.status !== 'Draft') return;
-    this.announcements.update((list) => list.filter((a) => a.id !== announcement.id));
-    this.toastService.success(`Draft "${announcement.title}" deleted`);
+  // Row action — hard delete, allowed ONLY on a draft. The server enforces it too.
+  protected async deleteDraft(announcement: Announcement): Promise<void> {
+    if (announcement.status !== 'Draft' || this.busy()) return;
+
+    this.busy.set(true);
+    try {
+      await this.announcementsApi.remove(announcement);
+      this.announcements.update((list) => list.filter((a) => a.sk !== announcement.sk));
+      this.toastService.success(`Draft "${announcement.title}" deleted`);
+    } catch {
+      this.toastService.error('Could not delete the draft');
+    } finally {
+      this.busy.set(false);
+    }
   }
 }

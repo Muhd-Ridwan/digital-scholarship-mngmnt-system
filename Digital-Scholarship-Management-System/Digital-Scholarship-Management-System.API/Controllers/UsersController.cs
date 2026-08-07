@@ -311,8 +311,15 @@ namespace Digital_Scholarship_Management_System.API.Controllers
                 return BadRequest(new { message = "Full name is required." });
             }
 
+            var previousName = user.FullName;
             user.FullName = fullName;
             await _db.SaveChangesAsync();
+
+            // Log both names so older entries can still be matched to this user.
+            if (!string.Equals(previousName, fullName, StringComparison.Ordinal))
+            {
+                await _auditLog.LogAsync(user, $"Changed display name from \"{previousName}\" to \"{fullName}\"");
+            }
 
             return Ok(new
             {
@@ -333,31 +340,58 @@ namespace Digital_Scholarship_Management_System.API.Controllers
         [HttpPatch("{id:int}/status")]
         public async Task<IActionResult> SetStatus(int id, [FromBody] SetStatusRequest req)
         {
+            var (admin, errorResult) = await FindCurrentAdminAsync();
+            if (admin is null) return errorResult!;
+
             var user = await _db.Users.FindAsync(id);
             if (user is null) return NotFound();
             if (user.Role == UserRole.admin)
                 return BadRequest(new { message = "The Admin account cannot be locked." });
 
-            var userPoolId = _config["Cognito:UserPoolId"];
-            if (req.Status == UserStatus.Locked)
+            if (user.CognitoUsername is null)
             {
-                await _cognito.AdminDisableUserAsync(new AdminDisableUserRequest
-                {
-                    UserPoolId = userPoolId,
-                    Username = user.CognitoSub,
-                });
+                return StatusCode(StatusCodes.Status409Conflict,
+                    new { message = "This account has no Cognito username recorded, so it cannot be locked or unlocked." });
             }
-            else
+
+            var userPoolId = _config["Cognito:UserPoolId"];
+            try
             {
-                await _cognito.AdminEnableUserAsync(new AdminEnableUserRequest
+                if (req.Status == UserStatus.Locked)
                 {
-                    UserPoolId = userPoolId,
-                    Username = user.CognitoSub,
-                });
+                    await _cognito.AdminDisableUserAsync(new AdminDisableUserRequest
+                    {
+                        UserPoolId = userPoolId,
+                        Username = user.CognitoUsername,
+                    });
+                }
+                else
+                {
+                    await _cognito.AdminEnableUserAsync(new AdminEnableUserRequest
+                    {
+                        UserPoolId = userPoolId,
+                        Username = user.CognitoUsername,
+                    });
+                }
+            }
+            catch (UserNotFoundException)
+            {
+                _logger.LogError("No Cognito user named {Username} for user {UserId}", user.CognitoUsername, user.Id);
+                return NotFound(new { message = "No Cognito user matches this account." });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Cognito call failed while setting status for user {UserId}", user.Id);
+                return StatusCode(StatusCodes.Status502BadGateway,
+                    new { message = "Could not reach Cognito. Please try again." });
             }
 
             user.Status = req.Status;
             await _db.SaveChangesAsync();
+
+            var verb = req.Status == UserStatus.Locked ? "Locked" : "Unlocked";
+            await _auditLog.LogAsync(admin, $"{verb} account {user.Email}");
+
             return Ok(user);
         }
 
@@ -367,23 +401,144 @@ namespace Digital_Scholarship_Management_System.API.Controllers
         [HttpPost("{id:int}/approve-sponsor")]
         public async Task<IActionResult> ApproveSponsor(int id)
         {
+            var (admin, errorResult) = await FindCurrentAdminAsync();
+            if (admin is null) return errorResult!;
+
             var user = await _db.Users.FindAsync(id);
             if (user is null) return NotFound();
             if (user.Role != UserRole.sponsor)
                 return BadRequest(new { message = "Only sponsor accounts can be approved." });
 
-            await _cognito.AdminEnableUserAsync(new AdminEnableUserRequest
+            if (user.CognitoUsername is null)
             {
-                UserPoolId = _config["Cognito:UserPoolId"],
-                Username = user.CognitoSub,
-            });
+                return StatusCode(StatusCodes.Status409Conflict,
+                    new { message = "This account has no Cognito username recorded, so it cannot be approved." });
+            }
+
+            try
+            {
+                await _cognito.AdminEnableUserAsync(new AdminEnableUserRequest
+                {
+                    UserPoolId = _config["Cognito:UserPoolId"],
+                    Username = user.CognitoUsername,
+                });
+            }
+            catch (UserNotFoundException)
+            {
+                _logger.LogError("No Cognito user named {Username} for user {UserId}", user.CognitoUsername, user.Id);
+                return NotFound(new { message = "No Cognito user matches this account." });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Cognito call failed while approving sponsor {UserId}", user.Id);
+                return StatusCode(StatusCodes.Status502BadGateway,
+                    new { message = "Could not reach Cognito. Please try again." });
+            }
 
             user.Status = UserStatus.Active;
+            user.SponsorStatus = SponsorApprovalStatus.Approved;
+            user.DecidedAt = DateTime.UtcNow;
+            user.DecidedBy = admin.FullName;
             await _db.SaveChangesAsync();
-            return Ok(user);
+
+            await _auditLog.LogAsync(admin, $"Approved sponsor {user.Email}");
+
+            return Ok(Project(user));
         }
+
+        // POST /api/users/{id}/reject-sponsor — refuse posting rights, keep the account.
+        // Enables the Cognito user like approval does: registration disabled it only for the
+        // pending window, and sign-in is governed by lock/unlock, not by this decision.
+        // Pending from the Sponsor side: rejection is stored but nothing enforces it yet.
+        // POST /api/scholarships must refuse callers whose SponsorStatus is not Approved.
+        [HttpPost("{id:int}/reject-sponsor")]
+        public async Task<IActionResult> RejectSponsor(int id)
+        {
+            var (admin, errorResult) = await FindCurrentAdminAsync();
+            if (admin is null) return errorResult!;
+
+            var user = await _db.Users.FindAsync(id);
+            if (user is null) return NotFound();
+            if (user.Role != UserRole.sponsor)
+                return BadRequest(new { message = "Only sponsor accounts can be rejected." });
+
+            if (user.CognitoUsername is null)
+            {
+                return StatusCode(StatusCodes.Status409Conflict,
+                    new { message = "This account has no Cognito username recorded, so it cannot be rejected." });
+            }
+
+            try
+            {
+                await _cognito.AdminEnableUserAsync(new AdminEnableUserRequest
+                {
+                    UserPoolId = _config["Cognito:UserPoolId"],
+                    Username = user.CognitoUsername,
+                });
+            }
+            catch (UserNotFoundException)
+            {
+                _logger.LogError("No Cognito user named {Username} for user {UserId}", user.CognitoUsername, user.Id);
+                return NotFound(new { message = "No Cognito user matches this account." });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Cognito call failed while rejecting sponsor {UserId}", user.Id);
+                return StatusCode(StatusCodes.Status502BadGateway,
+                    new { message = "Could not reach Cognito. Please try again." });
+            }
+
+            user.SponsorStatus = SponsorApprovalStatus.Rejected;
+            user.DecidedAt = DateTime.UtcNow;
+            user.DecidedBy = admin.FullName;
+            await _db.SaveChangesAsync();
+
+            await _auditLog.LogAsync(admin, $"Rejected sponsor {user.Email}");
+
+            return Ok(Project(user));
+        }
+
+        // GET /api/users/sponsors — every sponsor with its decision, for both admin tables.
+        [HttpGet("sponsors")]
+        public async Task<IActionResult> GetSponsors()
+        {
+            var (admin, errorResult) = await FindCurrentAdminAsync();
+            if (admin is null) return errorResult!;
+
+            var sponsors = await _db.Users
+                .Where(u => u.Role == UserRole.sponsor)
+                .OrderByDescending(u => u.CreatedAt)
+                .Select(u => new SponsorResponse(
+                    u.Id,
+                    u.CompanyName ?? u.FullName,
+                    u.SsmNumber,
+                    u.CreatedAt,
+                    u.SponsorStatus ?? SponsorApprovalStatus.Pending,
+                    u.DecidedAt,
+                    u.DecidedBy))
+                .ToListAsync();
+
+            return Ok(sponsors);
+        }
+
+        private static SponsorResponse Project(User user) => new(
+            user.Id,
+            user.CompanyName ?? user.FullName,
+            user.SsmNumber,
+            user.CreatedAt,
+            user.SponsorStatus ?? SponsorApprovalStatus.Pending,
+            user.DecidedAt,
+            user.DecidedBy);
     }
 
     public record SetStatusRequest(UserStatus Status);
     public record UpdateProfileRequest(string FullName);
+    public record SponsorResponse(
+        int Id,
+        string CompanyName,
+        string? SsmNumber,
+        DateTime RegisteredAt,
+        SponsorApprovalStatus Status,
+        DateTime? DecidedAt,
+        string? DecidedBy);
 }

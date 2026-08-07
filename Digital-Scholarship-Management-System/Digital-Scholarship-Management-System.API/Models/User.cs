@@ -14,15 +14,29 @@ namespace Digital_Scholarship_Management_System.API.Models
         Active,
         Locked,
     }
+    // Whether a sponsor may post scholarships. Separate from UserStatus, which governs
+    // sign-in — a rejected sponsor can still log in, they just cannot post.
+    public enum SponsorApprovalStatus
+    {
+        Pending,
+        Approved,
+        Rejected,
+    }
     public class User
     {
         [Key]
         public int Id { get; set; }
         public string CognitoSub { get; set; }
+        // The Cognito username, needed separately from the sub: this pool has no sub-as-username
+        // alias, so Admin API calls fail with UserNotFoundException if given the sub.
+        public string? CognitoUsername { get; set; }
         public string Email { get; set; }
         public string FullName { get; set; }
         public UserRole Role { get; set; }
-        public bool IsApproved { get; set; }
+        // Null for every role but sponsor — the concept does not apply to them.
+        public SponsorApprovalStatus? SponsorStatus { get; set; }
+        public DateTime? DecidedAt { get; set; }
+        public string? DecidedBy { get; set; }
         public string? CompanyName { get; set; }
         public string? SsmNumber { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

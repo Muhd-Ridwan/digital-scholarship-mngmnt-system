@@ -1,34 +1,30 @@
 import { Component, computed, inject, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
 import { DashboardHeader } from '../../../shared/components/dashboard-header/dashboard-header';
 import { StatCard } from '../../../shared/components/stat-card/stat-card';
 import { ActionCard } from '../../../shared/components/action-card/action-card';
-import {
-  ManagementPanel,
-  ManagementItem,
-} from '../../components/management-panel/management-panel';
 import { AuthService } from '../../../auth/services/auth.service';
 import { ScholarshipService } from '../../../scholarships/services/scholarship.service';
 import { UsersService } from '../../../shared/services/api/users.service';
+import { ReportsService } from '../../../shared/services/api/reports.service';
 
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [DashboardHeader, StatCard, ActionCard, ManagementPanel, LucideAngularModule],
+  imports: [DashboardHeader, StatCard, ActionCard, LucideAngularModule],
   templateUrl: './admin-dashboard.html',
 })
 export class AdminDashboard {
   private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
   private readonly scholarshipsApi = inject(ScholarshipService);
   private readonly usersApi = inject(UsersService);
+  private readonly reportsApi = inject(ReportsService);
 
   readonly profile = this.auth.profile;
-  //global reference data & announcements
-  protected readonly managementItems: ManagementItem[] = [
-    { label: 'Reference Data', icon: 'list-checks', route: '/admin/reference-data' },
-    { label: 'Announcements', icon: 'bell', route: '/admin/announcements' },
-  ];
 
+  // Pending: scholarship data from the Sponsor side — reads 0 until they post any.
   // Scholarships Available — count where deadline >= today (GET /api/scholarships).
   private readonly scholarshipsAvailableCount = signal<number | null>(null);
   protected readonly scholarshipsAvailableLabel = computed(() => {
@@ -40,6 +36,23 @@ export class AdminDashboard {
   private readonly activeAccountsCount = signal<number | null>(null);
   protected readonly activeAccountsLabel = computed(() => {
     const count = this.activeAccountsCount();
+    return count === null ? '…' : String(count);
+  });
+
+  // Queue depth on the Sponsor Approvals card.
+  protected readonly pendingSponsors = signal<number | null>(null);
+
+  // Pending: application data from the Student side, approvals from the Officer.
+  // Pending Review and Total Awarded both come from GET /reports/summary.
+  private readonly pendingReviewCount = signal<number | null>(null);
+  protected readonly pendingReviewLabel = computed(() => {
+    const count = this.pendingReviewCount();
+    return count === null ? '…' : String(count);
+  });
+
+  private readonly totalAwardedCount = signal<number | null>(null);
+  protected readonly totalAwardedLabel = computed(() => {
+    const count = this.totalAwardedCount();
     return count === null ? '…' : String(count);
   });
 
@@ -55,5 +68,20 @@ export class AdminDashboard {
       const activeCount = users.filter((u) => u.status === 'Active').length;
       this.activeAccountsCount.set(activeCount);
     });
+
+    this.usersApi.getSponsors().then((sponsors) => {
+      const pending = sponsors.filter((s) => s.status === 'Pending').length;
+      this.pendingSponsors.set(pending || null);
+    });
+
+    this.reportsApi.getSummary().then((summary) => {
+      this.pendingReviewCount.set(summary.totals.pending);
+      this.totalAwardedCount.set(summary.totals.approved);
+    });
+  }
+
+  // Oversight, not a worklist — deciding applications belongs to the Officer.
+  protected openReports(): void {
+    void this.router.navigate(['/admin/reports']);
   }
 }

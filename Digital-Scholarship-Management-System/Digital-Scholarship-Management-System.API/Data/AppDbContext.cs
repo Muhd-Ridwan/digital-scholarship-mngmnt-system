@@ -14,8 +14,6 @@ namespace Digital_Scholarship_Management_System.API.Data
         public DbSet<ApplicationDocument> ApplicationDocuments => Set<ApplicationDocument>();
         public DbSet<StudentProfile> StudentProfiles => Set<StudentProfile>();
 
-        // Admin tables
-        public DbSet<Announcement> Announcements => Set<Announcement>();
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // Model Builder = Tool for telling EF Core "here's exactly how this relationship/constraint
@@ -45,8 +43,7 @@ namespace Digital_Scholarship_Management_System.API.Data
             // Store enums as strings
             modelBuilder.Entity<User>().Property(u => u.Role).HasConversion<string>();
             modelBuilder.Entity<User>().Property(u => u.Status).HasConversion<string>();
-            modelBuilder.Entity<Announcement>().Property(a => a.Audience).HasConversion<string>();
-            modelBuilder.Entity<Announcement>().Property(a => a.Status).HasConversion<string>();
+            modelBuilder.Entity<User>().Property(u => u.SponsorStatus).HasConversion<string>();
 
             // Unique email
             modelBuilder.Entity<User>().HasIndex(u => u.Email).IsUnique();

@@ -63,6 +63,9 @@ namespace Digital_Scholarship_Management_System.API.Controllers
                 return BadRequest("Role must be 'user', 'sponsor', or 'officer'.");
             }
 
+            // Set when an Admin creates the account, null when the user registers themselves.
+            User? caller = null;
+
             var isOfficer = request.Role == "officer";
             if (isOfficer)
             {
@@ -70,7 +73,7 @@ namespace Digital_Scholarship_Management_System.API.Controllers
                 // call this branch. Checked against the DB (same CognitoSub -> Role lookup as
                 // UsersController.Me()), since the JWT itself carries no app-role claim yet.
                 var callerSub = User.FindFirst("sub")?.Value;
-                var caller = callerSub is null
+                caller = callerSub is null
                     ? null
                     : await _db.Users.FirstOrDefaultAsync(u => u.CognitoSub == callerSub);
                 if (caller is null || caller.Role != UserRole.admin)
@@ -136,10 +139,11 @@ namespace Digital_Scholarship_Management_System.API.Controllers
             var user = new User
             {
                 CognitoSub = sub,
+                CognitoUsername = request.Username,
                 Email = request.Email,
                 FullName = request.FullName,
                 Role = isSponsor ? UserRole.sponsor : isOfficer ? UserRole.officer : UserRole.user,
-                IsApproved = !isSponsor,
+                SponsorStatus = isSponsor ? SponsorApprovalStatus.Pending : null,
                 CompanyName = isSponsor ? request.CompanyName : null,
                 SsmNumber = isSponsor ? request.SsmNumber : null,
                 CreatedAt = DateTime.UtcNow,
@@ -160,6 +164,16 @@ namespace Digital_Scholarship_Management_System.API.Controllers
                 throw;
             }
 
+            // Log against the Admin if they created it, otherwise against the new account.
+            if (caller is not null)
+            {
+                await _auditLog.LogAsync(caller, $"Registered {request.Role} account for {request.Email}");
+            }
+            else
+            {
+                await _auditLog.LogAsync(user, "Registered account");
+            }
+
             if (!isSponsor)
             {
                 await SendOnboardingEmailAsync(request.Email, request.Username, temporaryPassword, request.FullName);
@@ -172,13 +186,13 @@ namespace Digital_Scholarship_Management_System.API.Controllers
         {
             var user = await _db.Users.SingleOrDefaultAsync(u => u.Email == request.Email);
 
-            if (user != null)
+            if (user != null && user.CognitoUsername != null)
             {
                 var userPoolId = _config["Cognito:UserPoolId"];
                 var getUserResponse = await _cognito.AdminGetUserAsync(new AdminGetUserRequest
                 {
                     UserPoolId = userPoolId,
-                    Username = user.CognitoSub,
+                    Username = user.CognitoUsername,
                 });
 
                 var temporaryPassword = GenerateTemporaryPassword();
