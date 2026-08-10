@@ -6,6 +6,7 @@ namespace Digital_Scholarship_Management_System.API.Models
     {
         Pending,
         UnderReview,
+        Shortlisted,
         Approved,
         Rejected
     }
@@ -24,5 +25,7 @@ namespace Digital_Scholarship_Management_System.API.Models
         public DateTime SubmittedAt { get; set; } = DateTime.UtcNow;
         public DateTime? DecisionAt { get; set; }
         public ICollection<ApplicationDocument> Documents { get; set; } = new List<ApplicationDocument>();
+
+        public Interview? Interview { get; set; }
     }
 }
