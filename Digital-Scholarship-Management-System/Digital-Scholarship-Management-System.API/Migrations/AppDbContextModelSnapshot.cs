@@ -144,7 +144,7 @@ namespace Digital_Scholarship_Management_System.API.Migrations
                     b.HasIndex("ApplicationId")
                         .IsUnique();
 
-                    b.ToTable("Interview");
+                    b.ToTable("Interviews");
                 });
 
             modelBuilder.Entity("Digital_Scholarship_Management_System.API.Models.Scholarship", b =>

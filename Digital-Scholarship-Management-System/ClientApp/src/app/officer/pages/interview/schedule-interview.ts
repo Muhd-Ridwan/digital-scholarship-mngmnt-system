@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { InterviewService } from '../../services/interview.service';
 import { ToastService } from '../../../shared/services/toast.service';
 import { CommonModule } from '@angular/common';
+import { AppIcons } from '../../../shared/icons';
+import { LucideAngularModule } from 'lucide-angular';
 
 @Component({
   selector: 'app-schedule-interview',
@@ -11,7 +13,8 @@ import { CommonModule } from '@angular/common';
   imports: [
     FormsModule,
     CommonModule,
-    RouterLink
+    RouterLink,
+    LucideAngularModule
 
   ],
   templateUrl: './schedule-interview.html'
@@ -22,6 +25,7 @@ export class ScheduleInterviewComponent {
   private readonly toast = inject(ToastService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  protected readonly AppIcons = AppIcons;
 
   applicationId!: number;
 
@@ -55,7 +59,7 @@ export class ScheduleInterviewComponent {
       this.router.navigate(['/officer/applications']);
 
     } catch (error) {
-      console.error(error);
+      console.error("Schedule interview error:", error);
       this.toast.error('Could not schedule interview.');
     }
   }

@@ -1,5 +1,6 @@
 import {
   Calendar,
+  Clock,
   ChevronDown,
   Bell,
   LogOut,
@@ -37,6 +38,7 @@ import {
 
 export const AppIcons = {
   Calendar,
+  Clock,
   ChevronDown,
   Bell,
   LogOut,

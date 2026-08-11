@@ -13,6 +13,7 @@ namespace Digital_Scholarship_Management_System.API.Data
         public DbSet<StudentDocument> StudentDocuments => Set<StudentDocument>();
         public DbSet<ApplicationDocument> ApplicationDocuments => Set<ApplicationDocument>();
         public DbSet<StudentProfile> StudentProfiles => Set<StudentProfile>();
+        public DbSet<Interview> Interviews { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // Model Builder = Tool for telling EF Core "here's exactly how this relationship/constraint

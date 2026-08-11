@@ -9,15 +9,12 @@ import { PublicShell } from './shared/components/public-shell/public-shell';
 import { ScholarshipList } from './scholarships/pages/list/scholarship-list';
 import { ScholarshipDetail } from './scholarships/pages/detail/scholarship-detail';
 import { ForgotPassword } from './auth/pages/forgot-password/forgot-password';
-import { OfficerProfile } from './officer/pages/profile/officer-profile';
-import { OfficerApplicationsComponent } from './officer/pages/application/officer-application';
+
 
 export const routes: Routes = [
   { path: 'login', component: Login },
   { path: 'forgot-password', component: ForgotPassword },
   { path: 'register', component: Register },
-  { path: 'officer/profile', component: OfficerProfile }, //for officer view profile
-  { path: 'officer/applications', component: OfficerApplicationsComponent },
   {
     path: '',
     component: PublicShell,
@@ -48,11 +45,12 @@ export const routes: Routes = [
       },
       {
         path: 'officer',
-        component: OfficerDashboard,
+        //component: OfficerDashboard,
         canActivate: [authGuard],
         data: {
           role: 'officer',
         },
+        loadChildren: () => import('./officer/officer.routes').then((m) => m.OFFICER_ROUTES),
       },
       {
         path: 'sponsor',

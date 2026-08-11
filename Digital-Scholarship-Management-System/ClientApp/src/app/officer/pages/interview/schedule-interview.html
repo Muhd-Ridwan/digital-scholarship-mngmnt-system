@@ -6,118 +6,132 @@
 
   <form (ngSubmit)="submit()" class="space-y-5">
 
-```
-<!-- Interview Date -->
-<div>
-  <label class="block font-medium mb-2">
-    Interview Date
-  </label>
+    <!-- Interview Date -->
+    <div>
+      <label class="block font-medium mb-2">
+        Interview Date
+      </label>
 
-  <input
-    type="date"
-    [(ngModel)]="interviewDate"
-    name="interviewDate"
-    required
-    class="w-full border border-gray-300 rounded-lg px-3 py-2"
-  />
-</div>
+      <!-- <div class="relative">
+        <lucide-icon
+          [img]="AppIcons.Calendar"
+          [size]="18"
+          class="absolute right-3 top-1/2 -translate-y-1/2 ">
+        </lucide-icon> -->
 
-<!-- Interview Time -->
-<div>
-  <label class="block font-medium mb-2">
-    Interview Time
-  </label>
+        <input
+          type="date"
+          [(ngModel)]="interviewDate"
+          name="interviewDate"
+          required
+          class="w-full border border-gray-300 rounded-lg px-3 py-2"
+        />
+      <!-- </div> -->
+    </div>
 
-  <input
-    type="time"
-    [(ngModel)]="interviewTime"
-    name="interviewTime"
-    required
-    class="w-full border border-gray-300 rounded-lg px-3 py-2"
-  />
-</div>
+    <!-- Interview Time -->
+    <div>
+      <label class="block font-medium mb-2">
+        Interview Time
+      </label>
 
-<!-- Interview Method -->
-<div>
-  <label class="block font-medium mb-2">
-    Interview Method
-  </label>
+      <!-- <div class="relative">
+        <lucide-icon
+          [img]="AppIcons.Clock"
+          [size]="18"
+          class="absolute right-3 top-1/2 -translate-y-1/2">
+        </lucide-icon> -->
 
-  <select
-    [(ngModel)]="interviewMethod"
-    name="interviewMethod"
-    class="w-full border border-gray-300 rounded-lg px-3 py-2"
-  >
-    <option value="Online">Online</option>
-    <option value="In Person">In Person</option>
-  </select>
-</div>
+        <input
+          type="time"
+          [(ngModel)]="interviewTime"
+          name="interviewTime"
+          required
+          class="w-full border border-gray-300 rounded-lg px-3 py-2"
+        />
+      <!-- </div> -->
+    </div>
 
-<!-- Meeting Link -->
-<div *ngIf="interviewMethod === 'Online'">
-  <label class="block font-medium mb-2">
-    Meeting Link
-  </label>
+    <!-- Interview Method -->
+    <div>
+      <label class="block font-medium mb-2">
+        Interview Method
+      </label>
 
-  <input
-    type="url"
-    [(ngModel)]="meetingLink"
-    name="meetingLink"
-    placeholder="https://teams.microsoft.com/..."
-    class="w-full border border-gray-300 rounded-lg px-3 py-2"
-  />
-</div>
+      <select
+        [(ngModel)]="interviewMethod"
+        name="interviewMethod"
+        class="w-full border border-gray-300 rounded-lg px-3 py-2"
+      >
+        <option value="Online">Online</option>
+        <option value="In Person">In Person</option>
+      </select>
+    </div>
 
-<!-- Location -->
-<div *ngIf="interviewMethod === 'In Person'">
-  <label class="block font-medium mb-2">
-    Location
-  </label>
+    <!-- Meeting Link -->
+    <div *ngIf="interviewMethod === 'Online'">
+      <label class="block font-medium mb-2">
+        Meeting Link
+      </label>
 
-  <input
-    type="text"
-    [(ngModel)]="location"
-    name="location"
-    placeholder="Interview location"
-    class="w-full border border-gray-300 rounded-lg px-3 py-2"
-  />
-</div>
+      <input
+        type="url"
+        [(ngModel)]="meetingLink"
+        name="meetingLink"
+        placeholder="https://teams.microsoft.com/..."
+        class="w-full border border-gray-300 rounded-lg px-3 py-2"
+      />
+    </div>
 
-<!-- Notes -->
-<div>
-  <label class="block font-medium mb-2">
-    Notes
-  </label>
+    <!-- Location -->
+    <div *ngIf="interviewMethod === 'In Person'">
+      <label class="block font-medium mb-2">
+        Location
+      </label>
 
-  <textarea
-    [(ngModel)]="notes"
-    name="notes"
-    rows="4"
-    placeholder="Additional interview instructions or notes..."
-    class="w-full border border-gray-300 rounded-lg px-3 py-2"
-  ></textarea>
-</div>
+      <input
+        type="text"
+        [(ngModel)]="location"
+        name="location"
+        placeholder="Interview location"
+        class="w-full border border-gray-300 rounded-lg px-3 py-2"
+      />
+    </div>
 
-<!-- Buttons -->
-<div class="flex gap-3 pt-4">
+    <!-- Notes -->
+    <div>
+      <label class="block font-medium mb-2">
+        Notes
+      </label>
 
-  <button
-    type="button"
-    routerLink="/officer/applications"
-    class="px-4 py-2 border border-gray-300 rounded-lg"
-  >
-    Cancel
-  </button>
+      <textarea
+        [(ngModel)]="notes"
+        name="notes"
+        rows="4"
+        placeholder="Additional interview instructions or notes..."
+        class="w-full border border-gray-300 rounded-lg px-3 py-2"
+      ></textarea>
+    </div>
 
-  <button
-    type="submit"
-    class="bg-blue-600 text-white px-4 py-2 rounded-lg"
-  >
-    Schedule Interview
-  </button>
+    <!-- Buttons -->
+    <div class="flex gap-3 pt-4">
 
-</div>
-```
+      <button
+        type="button"
+        routerLink="/officer/applications"
+        class="px-4 py-2 border border-gray-300 rounded-lg"
+      >
+        Cancel
+      </button>
+
+      <button
+        type="submit"
+        class="bg-blue-600 text-white px-4 py-2 rounded-lg"
+      >
+        Schedule Interview
+      </button>
+
+    </div>
 
   </form>
 

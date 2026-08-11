@@ -26,7 +26,7 @@ namespace Digital_Scholarship_Management_System.API.Migrations
                 defaultValue: 0);
 
             migrationBuilder.CreateTable(
-                name: "Interview",
+                name: "Interviews",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
@@ -42,9 +42,9 @@ namespace Digital_Scholarship_Management_System.API.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Interview", x => x.Id);
+                    table.PrimaryKey("PK_Interviews", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Interview_Applications_ApplicationId",
+                        name: "FK_Interviews_Applications_ApplicationId",
                         column: x => x.ApplicationId,
                         principalTable: "Applications",
                         principalColumn: "Id",
@@ -52,8 +52,8 @@ namespace Digital_Scholarship_Management_System.API.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Interview_ApplicationId",
-                table: "Interview",
+                name: "IX_Interviews_ApplicationId",
+                table: "Interviews",
                 column: "ApplicationId",
                 unique: true);
         }
@@ -62,7 +62,7 @@ namespace Digital_Scholarship_Management_System.API.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "Interview");
+                name: "Interviews");
 
             migrationBuilder.DropColumn(
                 name: "ReviewedAt",

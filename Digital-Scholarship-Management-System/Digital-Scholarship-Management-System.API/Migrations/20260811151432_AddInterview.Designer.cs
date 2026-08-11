@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Digital_Scholarship_Management_System.API.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260810164351_AddInterview")]
+    [Migration("20260811151432_AddInterview")]
     partial class AddInterview
     {
         /// <inheritdoc />
@@ -147,7 +147,7 @@ namespace Digital_Scholarship_Management_System.API.Migrations
                     b.HasIndex("ApplicationId")
                         .IsUnique();
 
-                    b.ToTable("Interview");
+                    b.ToTable("Interviews");
                 });
 
             modelBuilder.Entity("Digital_Scholarship_Management_System.API.Models.Scholarship", b =>
