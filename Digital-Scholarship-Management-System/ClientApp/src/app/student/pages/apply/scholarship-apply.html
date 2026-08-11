@@ -1,0 +1,111 @@
+<div class="flex flex-col gap-6">
+  <a
+    [routerLink]="['/scholarships', scholarshipId]"
+    class="flex w-fit items-center gap-1 text-sm text-mist-400 hover:text-mist-100"
+  >
+    <lucide-icon name="arrow-left" class="h-4 w-4"></lucide-icon>
+    Back to scholarship
+  </a>
+
+  @if (loading()) {
+    <div class="flex animate-pulse flex-col gap-4 rounded-xl border border-ink-800 bg-ink-950 p-6">
+      <div class="h-6 w-1/2 rounded bg-ink-800"></div>
+      <div class="h-4 w-1/4 rounded bg-ink-800"></div>
+    </div>
+  } @else if (scholarship(); as s) {
+    <div>
+      <h1 class="font-display text-2xl text-mist-100">Apply: {{ s.title }}</h1>
+      <p class="mt-1 text-sm text-mist-400">
+        {{ s.sponsorName }} · {{ s.fundingAmount | currency: 'MYR' }}
+      </p>
+    </div>
+
+    <section class="rounded-2xl border border-ink-800 bg-ink-900 p-6">
+      <h2 class="text-sm font-semibold text-mist-100">Select Documents</h2>
+      <p class="mt-1 text-sm text-mist-400">
+        Choose from your uploaded documents, or upload a new one below.
+      </p>
+
+      @if (documents().length === 0) {
+        <p class="mt-4 text-sm text-mist-400">You haven't uploaded any documents yet.</p>
+      } @else {
+        <div class="mt-4 flex flex-col gap-2">
+          @for (document of documents(); track document.id) {
+            <label
+              class="flex cursor-pointer items-center gap-3 rounded-lg border border-ink-800 bg-ink-950 p-3 hover:bg-ink-800"
+            >
+              <input
+                type="checkbox"
+                [checked]="isSelected(document.id)"
+                (change)="toggleDocument(document.id)"
+                class="h-4 w-4 rounded border-ink-800 bg-ink-950"
+              />
+              <div class="min-w-0">
+                <p class="truncate text-sm font-medium text-mist-100">
+                  {{ document.fileName }}
+                </p>
+                <div class="mt-1 flex items-center gap-2">
+                  <span
+                    class="rounded-full px-2 py-0.5 text-[11px] font-semibold"
+                    [class]="documentTypeClasses(document.documentType)"
+                  >
+                    {{ documentTypeLabel(document.documentType) }}
+                  </span>
+                  <p class="text-xs text-mist-400">
+                    {{ document.uploadAt | date: 'mediumDate' }}
+                  </p>
+                </div>
+              </div>
+            </label>
+          }
+        </div>
+      }
+
+      <div class="mt-6 border-t border-ink-800 pt-4">
+        <h3 class="text-sm font-semibold text-mist-100">Upload Another Document</h3>
+        <div class="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div>
+            <label for="documentType" class="text-sm text-mist-400">Document Type</label>
+            <select
+              id="documentType"
+              (change)="onTypeChange($event)"
+              class="mt-1 w-full rounded-lg border border-ink-800 bg-ink-950 px-3 py-2 text-mist-100"
+            >
+              <option value="" disabled selected>Select Type</option>
+              <option value="bank_statement">Bank Statement</option>
+              <option value="academic_result">Academic Result</option>
+              <option value="certificate">Certificate</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="sm:col-span-2">
+            <label for="file" class="text-sm text-mist-400">File</label>
+            <input
+              id="file"
+              type="file"
+              accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
+              (change)="onFileSelected($event)"
+              class="mt-1 w-full rounded-lg border border-ink-800 bg-ink-950 px-3 py-2 text-mist-100 file:mr-3 file:rounded-md file:border-0 file:bg-ink-800 file:px-3 file:py-1.5 file:text-sm file:text-mist-100"
+            />
+          </div>
+        </div>
+        <button
+          type="button"
+          (click)="onUploadNew()"
+          [disabled]="uploading()"
+          class="mt-4 rounded-lg border border-ink-800 bg-ink-950 px-4 py-2 text-sm font-medium text-mist-100 hover:bg-ink-800 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {{ uploading() ? 'Uploading...' : 'Upload & Select' }}
+        </button>
+      </div>
+    </section>
+    <button
+      type="button"
+      (click)="onSubmit()"
+      [disabled]="submitting()"
+      class="w-full rounded-lg bg-gold-500 px-4 py-2.5 text-sm font-semibold text-ink-950 transition-colors hover:bg-gold-400 disabled:cursor-not-allowed disabled:opacity-50 sm:w-fit"
+    >
+      {{ submitting() ? 'Submitting...' : 'Submit Application' }}
+    </button>
+  }
+</div>

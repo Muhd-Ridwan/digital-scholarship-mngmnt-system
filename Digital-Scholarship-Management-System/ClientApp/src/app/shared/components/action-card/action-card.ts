@@ -24,6 +24,8 @@ export class ActionCard {
   readonly icon = input.required<string>();
   readonly route = input.required<string>();
   readonly tone = input<ActionTone>('gold');
+  // Optional queue depth. A queue you cannot see the size of is one people forget to work.
+  readonly count = input<number | null>(null);
 
   protected readonly iconToneClasses = computed(() => ICON_TONE_CLASSES[this.tone()]);
 }

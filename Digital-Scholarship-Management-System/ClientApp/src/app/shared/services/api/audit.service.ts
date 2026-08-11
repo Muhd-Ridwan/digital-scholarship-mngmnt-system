@@ -1,24 +1,64 @@
-import { Injectable } from '@angular/core';
-import { Observable, of } from 'rxjs';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
+import { fetchAuthSession } from 'aws-amplify/auth';
+import { environment } from '../../../../environments/environment';
 import { AuditEntry } from '../../models/audit.model';
+import { UserRole } from '../../models/user.model';
 
-/**
- * Audit-log API (AD3 / FR-32, FR-44). MOCK for now.
- * Phase 1/4: swap `of(...)` for `this.http.get<AuditEntry[]>(`${environment.apiUrl}/audit-log`)`,
- * which reads from DynamoDB server-side. Entries are written by every role at their action points.
- */
+interface ApiAuditEntry {
+  id: string;
+  user: string;
+  role: UserRole;
+  timestamp: string;
+  action: string;
+}
+
+export interface AuditQuery {
+  from?: string;
+  to?: string;
+  role?: UserRole;
+  person?: string;
+}
+
+// Activity log — GET /api/audit-log?from=&to=&role=&person=. Admin-only, reads DynamoDB.
 @Injectable({ providedIn: 'root' })
 export class AuditService {
-  getEntries(): Observable<AuditEntry[]> {
-    return of([
-      { id: 'e-1', timestamp: '11 Jul 2026, 14:02', user: 'Siti Lestari', role: 'Officer', action: 'Approved application A-2041' },
-      { id: 'e-2', timestamp: '11 Jul 2026, 13:40', user: 'Ganesh Kumar', role: 'Student', action: 'Submitted application A-2041' },
-      { id: 'e-3', timestamp: '11 Jul 2026, 11:15', user: 'TechCorp Sdn Bhd', role: 'Sponsor', action: 'Published scholarship "Green Energy Fund"' },
-      { id: 'e-4', timestamp: '10 Jul 2026, 09:30', user: 'Admin Rae', role: 'Admin', action: 'Locked account: Old Sponsor Bhd' },
-      { id: 'e-5', timestamp: '10 Jul 2026, 08:12', user: 'Ganesh Kumar', role: 'Student', action: 'Logged in' },
-      { id: 'e-6', timestamp: '9 Jul 2026, 19:47', user: 'Aisha Rahman', role: 'Student', action: 'Saved application as draft' },
-      { id: 'e-7', timestamp: '9 Jul 2026, 16:05', user: 'Wei Jie Tan', role: 'Student', action: 'Edited application A-2035' },
-      { id: 'e-8', timestamp: '8 Jul 2026, 10:30', user: 'Siti Lestari', role: 'Officer', action: 'Updated profile details' },
-    ]);
+  private readonly http = inject(HttpClient);
+
+  private async authHeaders(): Promise<{ Authorization: string }> {
+    const session = await fetchAuthSession();
+    const accessToken = session.tokens?.accessToken?.toString();
+
+    if (!accessToken) {
+      throw new Error('Not authenticated');
+    }
+    return { Authorization: `Bearer ${accessToken}` };
+  }
+
+  async getEntries(query: AuditQuery): Promise<AuditEntry[]> {
+    const headers = await this.authHeaders();
+    let params = new HttpParams();
+    if (query.from) params = params.set('from', query.from);
+    if (query.to) params = params.set('to', query.to);
+    if (query.role) params = params.set('role', query.role);
+    if (query.person) params = params.set('person', query.person);
+
+    const apiEntries = await firstValueFrom(
+      this.http.get<ApiAuditEntry[]>(`${environment.apiUrl}/audit-log`, { headers, params }),
+    );
+    return apiEntries.map((e) => ({
+      id: e.id,
+      user: e.user,
+      role: e.role,
+      action: e.action,
+      timestamp: new Date(e.timestamp).toLocaleString('en-GB', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
+    }));
   }
 }

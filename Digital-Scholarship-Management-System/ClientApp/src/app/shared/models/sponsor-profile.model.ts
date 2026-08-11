@@ -1,13 +1,19 @@
-/**
- * PLACEHOLDER — this type is owned by the Sponsor role.
- *
- * Admin references it for the sponsor-approval card (AD1 / FR-28). The Sponsor owner
- * expands the fields later (onboarding status, certificate S3 key, SSM validation
- * status, etc.). Admin imports the NAME only, so adding fields never breaks admin code.
- */
+// Placeholder. The sponsor side of the app owns this type and will fill in the
+// rest of the fields later. The admin screens import the name only, so those
+// additions can land without breaking anything here.
+
+// Three states, not a boolean — "not approved" has to distinguish "not looked at yet"
+// from "refused", or the decision record cannot be built.
+export type SponsorDecision = 'Pending' | 'Approved' | 'Rejected';
+
 export interface SponsorProfile {
   id: string;
   companyName: string;
-  ssmNumber: string;
-  // Sponsor owner adds: onboardingStatus, certFileKey, ssmValidationStatus, ...
+  ssmNumber: string | null;
+  registeredAt: string;
+  status: SponsorDecision;
+  // Set only once a decision is made.
+  decidedAt: string | null;
+  decidedBy: string | null;
+  // still to come: certFileKey, ssmValidationStatus, ...
 }

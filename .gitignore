@@ -13,3 +13,11 @@ obj/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Database exports - never belong in source control
+*.bacpac
+*.bacpac.zip
+
+# Coursework artefacts and personal working notes
+/Admin-Role-Presentation.pptx
+Follow up on admin plan.txt

@@ -1,5 +1,6 @@
 import {
   Calendar,
+  Clock,
   ChevronDown,
   Bell,
   LogOut,
@@ -32,10 +33,12 @@ import {
   EyeOff,
   ArrowLeft,
   ChevronLeft,
+  Trash2,
 } from 'lucide-angular';
 
 export const AppIcons = {
   Calendar,
+  Clock,
   ChevronDown,
   Bell,
   LogOut,
@@ -68,4 +71,5 @@ export const AppIcons = {
   EyeOff,
   ArrowLeft,
   ChevronLeft,
+  Trash2,
 };

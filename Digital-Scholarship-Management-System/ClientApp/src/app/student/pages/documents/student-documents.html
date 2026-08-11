@@ -1,0 +1,118 @@
+<div class="flex flex-col gap-6">
+  <a
+    routerLink="/student"
+    class="inline-flex w-fit items-center gap-1 text-sm text-mist-400 hover:text-mist-100"
+  >
+    <lucide-angular name="arrow-left" size="14"></lucide-angular>
+    Back to dashboard
+  </a>
+  <div>
+    <h1 class="font-display text-2xl text-mist-100">Documents</h1>
+    <p class="mt-1 text-sm text-mist-400">Upload supporting documents.</p>
+  </div>
+
+  <section class="rounded-2xl border border-ink-800 bg-ink-900 p-6">
+    <h2 class="text-sm font-semibold text-mist-100">Upload a Document</h2>
+    <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div>
+        <label for="documentType" class="text-sm text-mist-400">Document Type</label>
+        <select
+          id="documentType"
+          (change)="onTypeChange($event)"
+          class="mt-1 w-full rounded-lg border border-ink-800 bg-ink-950 px-3 py-2 text-mist-100"
+        >
+          <option value="" disabled selected>Select Type</option>
+          <option value="bank_statement">Bank Statement</option>
+          <option value="academic_result">Academic Result</option>
+          <option value="certificate">Certificate</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      <div class="sm:col-span-2">
+        <label for="file" class="text-sm text-mist-400">File</label>
+        <input
+          id="file"
+          type="file"
+          accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
+          (change)="onFileSelected($event)"
+          class="mt-1 w-full rounded-lg border border-ink-800 bg-ink-950 px-3 py-2 text-mist-100 file:mr-3 file:rounded-md file:border-0 file:bg-ink-800 file:px-3 file:py-1.5 file:text-sm file:text-mist-100"
+        />
+      </div>
+    </div>
+    <button
+      type="button"
+      (click)="onUpload()"
+      [disabled]="uploading()"
+      class="mt-4 w-full cursor-pointer rounded-lg bg-gold-500 px-4 py-2.5 text-sm font-medium text-ink-950 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+    >
+      {{ uploading() ? 'Uploading...' : 'Upload Document' }}
+    </button>
+  </section>
+
+  @if (loading()) {
+    <div class="flex flex-col gap-3">
+      @for (i of [1, 2, 3]; track i) {
+        <div
+          class="flex animate-pulse items-center justify-between gap-3 rounded-xl border border-ink-800 bg-ink-900 p-4"
+        >
+          <div class="flex items-center gap-3">
+            <div class="h-9 w-9 rounded-lg bg-ink-800"></div>
+            <div class="flex flex-col gap-1.5">
+              <div class="h-3 w-40 rounded-lg bg-ink-800"></div>
+              <div class="h-3 w-24 rounded-lg bg-ink-800"></div>
+            </div>
+          </div>
+          <div class="h-3 w-16 rounded bg-ink-800"></div>
+        </div>
+      }
+    </div>
+  } @else if (documents().length === 0) {
+    <p class="text-sm text-mist-400">No documents uploaded yet.</p>
+  } @else {
+    <div class="flex flex-col gap-3">
+      @for (document of documents(); track document.id) {
+        <div
+          class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-ink-800 bg-ink-900 p-4"
+        >
+          <div class="flex min-w-0 items-center gap-3">
+            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-ink-800">
+              <lucide-icon name="file-text" class="h-4 w-4 text-gold-500"></lucide-icon>
+            </div>
+            <div class="min-w-0">
+              <p class="truncate text-sm font-medium text-mist-100">{{ document.fileName }}</p>
+              <div class="mt-1 flex items-center gap-2">
+                <span
+                  class="rounded-full px-2 py-0.5 text-[11px] font-semibold"
+                  [class]="documentTypeClasses(document.documentType)"
+                >
+                  {{ documentTypeLabel(document.documentType) }}
+                </span>
+                <p class="text-xs text-mist-400">
+                  {{ document.uploadAt | date: 'mediumDate' }}
+                </p>
+              </div>
+            </div>
+          </div>
+          <div class="flex shrink-0 items-center gap-2">
+            <button
+              type="button"
+              (click)="onDownload(document.id)"
+              class="flex items-center gap-1 rounded-lg border border-ink-800 bg-ink-950 px-3 py-1.5 text-xs font-medium text-mist-100 hover:bg-ink-800"
+            >
+              <lucide-icon name="download" class="h-3.5 w-3.5"></lucide-icon>
+              Download
+            </button>
+            <button
+              type="button"
+              (click)="onDelete(document.id)"
+              class="flex items-center gap-1 rounded-lg border border-ink-800 bg-ink-950 px-3 py-1.5 text-xs font-medium text-status-danger hover:bg-ink-800"
+            >
+              <lucide-icon name="trash-2" class="h-3.5 w-3.5"></lucide-icon>
+              Delete
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

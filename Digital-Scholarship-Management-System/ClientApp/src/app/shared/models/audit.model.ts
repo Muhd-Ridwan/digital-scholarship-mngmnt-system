@@ -1,10 +1,7 @@
 import { UserRole } from './user.model';
 
-/**
- * One audit-log entry (AD3 / FR-32, FR-44). Admin owns the read/query shape; every role
- * writes entries at their action points, so the type lives in `shared/`.
- * Mirrors the DynamoDB audit item.
- */
+// One row in the activity log. Every part of the app writes these at the moment
+// an action happens; the admin screen only reads them back.
 export interface AuditEntry {
   id: string;
   timestamp: string;
