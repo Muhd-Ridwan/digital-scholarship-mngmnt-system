@@ -81,8 +81,6 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-app.UseHttpsRedirection();
-
 // This need to put before authorization to activate the policy in request pipeline.
 // So every incoming request got checked against it before proceeding further.
 app.UseCors("AllowFrontend");
