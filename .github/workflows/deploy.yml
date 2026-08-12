@@ -3,67 +3,107 @@ name: Deploy Backend to AWS EB
 on:
   push:
     branches:
-      -  main
+      - main
     paths:
-      -  "Digital-Scholarship-Management-System/Digital-Scholarship-Management-System.API/**"
-  workflow_dispatch: 
+      - "Digital-Scholarship-Management-System/Digital-Scholarship-Management-System.API/**"
+  workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      -  name: Checkout code
-         uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      -  name: Setup .NET
-         uses: actions/setup-dotnet@v4
-         with:
-           dotnet-version: "10.0.x"
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
 
-      -  name: Get current version (for rollback)
-         id: current_version
-         run:  |
-           CURRENT=$(aws elasticbeanstalk describe-environments \
-             --environment-names Cloudassigment-env \
-             --region ap-southeast-2 \
-             --query 'Environments[0].VersionLabel' \
-             --output text)
-           echo "version=$CURRENT" >> $GITHUB_OUTPUT
-         env:
-           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_KEY_ACCESS_KEY }}
-           AWS_DEFAULT_REGION: ap-southeast-2
+      - name: Get runner IP
+        id: runner_ip
+        run: echo "ip=$(curl -s https://checkip.amazonaws.com)/32" >> $GITHUB_OUTPUT
 
-      -  name: Publish backend
-         run: |
-           dotnet publish Digital-Scholarship-Management-System/Digital-Scholarship-Management-System.API/Digital-Scholarship-Management-System.API.csproj -c Release -o publish_output
+      - name: Allow runner IP into RDS security group
+        run: |
+          aws ec2 authorize-security-group-ingress \
+          --group-id sg-07fed076c9b71e4cd \
+          --protocol tcp \
+          --port 1433 \
+          --cidr ${{ steps.runner_ip.outputs.ip }} \
+          --region ap-southeast-2
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_KEY_ACCESS_KEY }}
 
-      -  name: Zip backend for deployment
-         run: |
-           cd publish_output
-           zip -r ../deploy.zip .
+      - name: Install EF Core tools
+        run: |
+          dotnet tool install --global dotnet-ef
+          echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
 
-      -  name: Deploy to Elastic Beanstalk
-         uses: einaregilsson/beanstalk-deploy@v22
-         with:
-           aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
-           aws_secret_key: ${{ secrets.AWS_SECRET_KEY_ACCESS_KEY }}
-           application_name: cloud_assigment
-           environment_name: Cloudassigment-env
-           version_label: ${{ github.sha }}-${{ github.run_attempt }}
-           region: ap-southeast-2
-           deployment_package: deploy.zip
-           wait_for_environment_recovery: 300
+      - name: Run database migrations
+        working-directory: Digital-Scholarship-Management-System/Digital-Scholarship-Management-System.API
+        run: dotnet ef database update
+        env:
+          ConnectionStrings__DefaultConnection: ${{ secrets.DB_CONNECTION_STRING }}
 
-      -  name: Rollback on failure
-         if: failure() && steps.current_version.outputs.version != 'None'
-         run: |
-           echo "Deployment failed - rolling back to ${{ steps.current_version.outputs.version }}"
-           aws elasticbeanstalk update-environment \
-             --environment-name Cloudassigment-env \
-             --region ap-southeast-2 \
-             --version-label ${{ steps.current_version.outputs.version }}
-         env:
-           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_KEY_ACCESS_KEY }}
-           AWS_DEFAULT_REGION: ap-southeast-2
+      - name: Revoke runner IP from RDS security group
+        if: always()
+        run: |
+          aws ec2 revoke-security-group-ingress \
+          --group-id sg-0f7ed076c9b71e4cd \
+          --protocol tcp \
+          --port 1433 \
+          --cidr ${{ steps.runner_ip.outputs.ip }} \
+          --region ap-southeast-2
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_KEY_ACCESS_KEY }}
+
+      - name: Get current version (for rollback)
+        id: current_version
+        run: |
+          CURRENT=$(aws elasticbeanstalk describe-environments \
+            --environment-names Cloudassigment-env \
+            --region ap-southeast-2 \
+            --query 'Environments[0].VersionLabel' \
+            --output text)
+          echo "version=$CURRENT" >> $GITHUB_OUTPUT
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_KEY_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ap-southeast-2
+
+      - name: Publish backend
+        run: |
+          dotnet publish Digital-Scholarship-Management-System/Digital-Scholarship-Management-System.API/Digital-Scholarship-Management-System.API.csproj -c Release -o publish_output
+
+      - name: Zip backend for deployment
+        run: |
+          cd publish_output
+          zip -r ../deploy.zip .
+
+      - name: Deploy to Elastic Beanstalk
+        uses: einaregilsson/beanstalk-deploy@v22
+        with:
+          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_key: ${{ secrets.AWS_SECRET_KEY_ACCESS_KEY }}
+          application_name: cloud_assigment
+          environment_name: Cloudassigment-env
+          version_label: ${{ github.sha }}-${{ github.run_attempt }}
+          region: ap-southeast-2
+          deployment_package: deploy.zip
+          wait_for_environment_recovery: 300
+
+      - name: Rollback on failure
+        if: failure() && steps.current_version.outputs.version != 'None'
+        run: |
+          echo "Deployment failed - rolling back to ${{ steps.current_version.outputs.version }}"
+          aws elasticbeanstalk update-environment \
+            --environment-name Cloudassigment-env \
+            --region ap-southeast-2 \
+            --version-label ${{ steps.current_version.outputs.version }}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_KEY_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ap-southeast-2
