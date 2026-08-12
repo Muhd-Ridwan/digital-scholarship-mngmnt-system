@@ -10,7 +10,9 @@ namespace Digital_Scholarship_Management_System.API.Data
         public DbSet<User> Users => Set<User>();
         public DbSet<Scholarship> Scholarships => Set<Scholarship>();
         public DbSet<Application> Applications => Set<Application>();
-        public DbSet<Document> Documents => Set<Document>();
+        public DbSet<StudentDocument> StudentDocuments => Set<StudentDocument>();
+        public DbSet<ApplicationDocument> ApplicationDocuments => Set<ApplicationDocument>();
+        public DbSet<StudentProfile> StudentProfiles => Set<StudentProfile>();
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // Model Builder = Tool for telling EF Core "here's exactly how this relationship/constraint
@@ -40,6 +42,36 @@ namespace Digital_Scholarship_Management_System.API.Data
             modelBuilder.Entity<User>()
                 .HasIndex(u => u.Email)
                 .IsUnique();
+
+            modelBuilder.Entity<Application>()
+                .HasIndex(a => new { a.StudentId, a.ScholarshipId })
+                .IsUnique();
+
+            modelBuilder.Entity<ApplicationDocument>()
+                .HasOne(ad => ad.Application)
+                .WithMany(a => a.Documents)
+                .HasForeignKey(ad => ad.ApplicationId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<StudentDocument>()
+                .HasOne(d => d.User)
+                .WithMany(u => u.Documents)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<StudentProfile>()
+                .HasOne(p => p.User)
+                .WithOne(u => u.StudentProfile)
+                .HasForeignKey<StudentProfile>(p => p.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<StudentProfile>()
+                .HasIndex(p => p.UserId)
+                .IsUnique();
+
+            modelBuilder.Entity<StudentProfile>()
+                .Property(p => p.HouseholdIncome)
+                .HasPrecision(18, 2);
 
         }
     }

@@ -6,7 +6,19 @@
     <h2 class="text-sm font-semibold text-mist-100">Application Progress</h2>
   </div>
 
-  @if (applications().length) {
+  @if (loading()) {
+    <div class="mt-4 flex flex-col gap-3">
+      @for (i of [1, 2, 3]; track i) {
+        <div class="animate-pulse rounded-xl border border-ink-800 bg-ink-950 p-3">
+          <div class="flex items-start justify-between gap-2">
+            <div class="h-3 w-32 rounded bg-ink-800"></div>
+            <div class="h-4 w-16 rounded-full bg-ink-800"></div>
+          </div>
+          <div class="mt-2 h-3 w-20 rounded bg-ink-800"></div>
+        </div>
+      }
+    </div>
+  } @else if (applications().length) {
     <div class="mt-4 flex flex-col gap-3">
       @for (app of applications(); track app.id) {
         <div class="rounded-xl border border-ink-800 bg-ink-950 p-3">
