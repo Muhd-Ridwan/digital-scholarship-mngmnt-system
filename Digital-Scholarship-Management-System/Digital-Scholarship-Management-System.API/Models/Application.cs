@@ -9,6 +9,11 @@ namespace Digital_Scholarship_Management_System.API.Models
         Approved,
         Rejected
     }
+
+    public enum DisbursementStatus { 
+        NotDisbursed, 
+        Disbursed 
+    }
     public class Application
     {
         [Key]
@@ -24,5 +29,10 @@ namespace Digital_Scholarship_Management_System.API.Models
         public DateTime SubmittedAt { get; set; } = DateTime.UtcNow;
         public DateTime? DecisionAt { get; set; }
         public ICollection<ApplicationDocument> Documents { get; set; } = new List<ApplicationDocument>();
+        public DisbursementStatus DisbursementStatus { get; set; } = DisbursementStatus.NotDisbursed;
+        public decimal? DisbursedAmount { get; set; }
+        public DateTime? DisbursedAt { get; set; }
+        public int? DisbursedByUserId { get; set; }
+        public User? DisbursedBy { get; set;  }
     }
 }
