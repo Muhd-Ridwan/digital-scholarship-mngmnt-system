@@ -41,6 +41,10 @@ jobs:
           dotnet tool install --global dotnet-ef
           echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
 
+      - name: Restore dependencies
+        working-directory: Digital-Scholarship-Management-System/Digital-Scholarship-Management-System.API
+        run: dotnet restore
+
       - name: Run database migrations
         working-directory: Digital-Scholarship-Management-System/Digital-Scholarship-Management-System.API
         run: dotnet ef database update
