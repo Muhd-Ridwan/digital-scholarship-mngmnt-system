@@ -27,7 +27,7 @@ jobs:
       - name: Allow runner IP into RDS security group
         run: |
           aws ec2 authorize-security-group-ingress \
-          --group-id sg-07fed076c9b71e4cd \
+          --group-id sg-0f7ed076c9b71e4cd \
           --protocol tcp \
           --port 1433 \
           --cidr ${{ steps.runner_ip.outputs.ip }} \
