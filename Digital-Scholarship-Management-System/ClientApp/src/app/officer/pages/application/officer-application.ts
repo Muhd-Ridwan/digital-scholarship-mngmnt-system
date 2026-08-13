@@ -12,7 +12,8 @@ import { ToastService } from '../../../shared/services/toast.service';
   imports: [
     CommonModule,
     DatePipe,
-    LucideAngularModule
+    LucideAngularModule,
+    
   ],
   templateUrl: './officer-application.html'
 })
@@ -43,9 +44,58 @@ export class OfficerApplicationsComponent {
     }
   }
 
-  viewApplication(id: number) {
-    this.router.navigate(['/officer/applications', id]);
+  // viewApplication(id: number): void {
+  //   this.router.navigate(['/officer/applications', id]);
+  // }
+
+  // async viewApplication(id: number): Promise<void> {
+  async viewApplication(application:any): Promise<void> {
+
+      // Only show confirmation if the application is still Pending
+    if (application.status === 'pending') {
+
+    const confirmed = window.confirm(
+      'Viewing this application will change its status to Under Review.\n\nDo you want to continue?'
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+
+      await this.applicationService.startReview(application.id);
+
+      this.toast.success('Application is now under review.');
+
+    } catch (error) {
+
+      console.error('Failed to start application review:', error);
+
+      this.toast.error(
+        'Could not change application status to Under Review.'
+      );
+
+      return;
+    }
   }
+
+  this.router.navigate([
+        '/officer/applications',
+        application.id
+      ]);
+  }
+
+  async viewDocument(documentId: number) {
+  try {
+    const url = await this.applicationService.getDocumentDownloadUrl(documentId);
+
+    window.open(url, '_blank');
+  } catch (error) {
+    console.error('Could not open document:', error);
+    this.toast.error('Could not open document.');
+  }
+}
 
   formatStatus(status: string): string {
     switch (status) {

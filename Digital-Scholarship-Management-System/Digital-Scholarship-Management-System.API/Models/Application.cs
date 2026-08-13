@@ -4,11 +4,11 @@ namespace Digital_Scholarship_Management_System.API.Models
 {
     public enum ApplicationStatus
     {
-        Pending,
-        UnderReview,
-        Shortlisted,
-        Approved,
-        Rejected
+        Pending,  //0
+        UnderReview,//1
+        Shortlisted,//2
+        Approved,//3
+        Rejected///4
     }
     public class Application
     {

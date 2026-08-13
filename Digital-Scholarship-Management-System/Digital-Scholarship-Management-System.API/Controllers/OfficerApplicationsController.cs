@@ -142,6 +142,133 @@ namespace Digital_Scholarship_Management_System.API.Controllers
         // REVIEW APPLICATION
         // ============================================================
 
+        //for under review status
+        [HttpPost("{id}/start-review")]
+        public async Task<IActionResult> StartReview(int id)
+        {
+            var officer = await GetCurrentOfficerAsync();
+
+            if (officer is null)
+                return Forbid();
+
+            var application = await _db.Applications
+                .FirstOrDefaultAsync(a => a.Id == id);
+
+            if (application is null)
+                return NotFound("Application not found.");
+
+            // Only pending applications can be moved to Under Review
+            if (application.Status != ApplicationStatus.Pending)
+            {
+                return BadRequest(
+                    "Only pending applications can be moved to under review.");
+            }
+
+            application.Status = ApplicationStatus.UnderReview;
+
+            await _db.SaveChangesAsync();
+
+            return Ok(new
+            {
+                application.Id,
+                Status = ToStatusString(application.Status)
+            });
+        }
+
+        // ============================================================
+        // SHORTLIST / REJECT APPLICATION
+        // ============================================================
+
+        [HttpPost("{id}/decision")]
+        public async Task<IActionResult> MakeApplicationDecision(
+            int id,
+            [FromQuery] ApplicationStatus status)
+        {
+            var officer = await GetCurrentOfficerAsync();
+
+            if (officer is null)
+                return Forbid();
+
+            var application = await _db.Applications
+                .FirstOrDefaultAsync(a => a.Id == id);
+
+            if (application is null)
+                return NotFound("Application not found.");
+
+            // Only UnderReview applications can be shortlisted/rejected
+            if (application.Status != ApplicationStatus.UnderReview)
+            {
+                return BadRequest(
+                    "Only applications under review can be shortlisted or rejected.");
+            }
+
+            // Only Shortlisted or Rejected are allowed here
+            if (status != ApplicationStatus.Shortlisted &&
+                status != ApplicationStatus.Rejected)
+            {
+                return BadRequest(
+                    "Application can only be Shortlisted or Rejected at this stage.");
+            }
+
+            application.Status = status;
+            application.ReviewedByUserId = officer.Id;
+            application.DecisionAt = DateTime.UtcNow;
+
+            await _db.SaveChangesAsync();
+
+            return Ok(new
+            {
+                application.Id,
+                Status = ToStatusString(application.Status),
+                application.ReviewedByUserId,
+                application.DecisionAt
+            });
+        }
+
+        // ============================================================
+        // UNDO APPLICATION DECISION
+        // ============================================================
+
+        [HttpPost("{id}/undo-decision")]
+        public async Task<IActionResult> UndoApplicationDecision(int id)
+        {
+            var officer = await GetCurrentOfficerAsync();
+
+            if (officer is null)
+                return Forbid();
+
+            var application = await _db.Applications
+                .FirstOrDefaultAsync(a => a.Id == id);
+
+            if (application is null)
+                return NotFound("Application not found.");
+
+            // Only Shortlisted or Rejected applications can be undone
+            if (application.Status != ApplicationStatus.Shortlisted &&
+                application.Status != ApplicationStatus.Rejected)
+            {
+                return BadRequest(
+                    "There is no shortlist or rejection decision to undo.");
+            }
+
+            application.Status = ApplicationStatus.UnderReview;
+
+            application.ReviewedByUserId = null;
+            application.DecisionAt = null;
+
+            await _db.SaveChangesAsync();
+
+            return Ok(new
+            {
+                application.Id,
+                Status = ToStatusString(application.Status),
+                application.ReviewedByUserId,
+                application.DecisionAt
+            });
+        }
+
+        //========================================================================
+        //for approve/reject
         [HttpPost("{id}/review")]
         public async Task<IActionResult> ReviewApplication(
             int id,

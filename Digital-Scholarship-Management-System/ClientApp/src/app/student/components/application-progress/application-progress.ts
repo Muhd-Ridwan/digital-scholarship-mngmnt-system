@@ -1,7 +1,7 @@
 import { Component, input } from '@angular/core';
 import { LucideAngularModule } from 'lucide-angular';
 
-export type ApplicationStage = 'pending' | 'under_review' | 'approved' | 'rejected';
+export type ApplicationStage = 'pending' | 'under_review' | 'shortlisted' | 'approved' | 'rejected';
 
 export interface ApplicationStatusItem {
   id: string;
@@ -13,6 +13,7 @@ export interface ApplicationStatusItem {
 export const STAGE_LABELS: Record<ApplicationStage, string> = {
   pending: 'Submitted',
   under_review: 'In Review',
+  shortlisted: 'Shortlisted',
   approved: 'Approved',
   rejected: 'Rejected',
 };
@@ -20,6 +21,7 @@ export const STAGE_LABELS: Record<ApplicationStage, string> = {
 export const STAGE_CLASSES: Record<ApplicationStage, string> = {
   pending: 'bg-mist-400/10 text-mist-400',
   under_review: 'bg-status-warning/10 text-status-warning',
+  shortlisted: 'bg-gold-500',
   approved: 'bg-status-success/10 text-status-success',
   rejected: 'bg-status-danger/10 text-status-danger',
 };

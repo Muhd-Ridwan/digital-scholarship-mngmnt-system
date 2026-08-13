@@ -48,23 +48,13 @@
         </td>
 
         <td class="px-4 py-2 border">
-          <div class="flex gap-2">
-
-            <button
-              (click)="viewApplication(application.id)"
-              class="bg-blue-500 text-white px-3 py-1 rounded"
-            >
-              View
-            </button>
-
-          </div>
+          <button
+            (click)="viewApplication(application)"
+            class="bg-blue-500 text-white px-3 py-1 rounded"
+          >
+            View Documents
+          </button>
         </td>
-
-        <button
-          *ngIf="application.status === 'shortlisted'"
-          (click)="scheduleInterview(application.id)">
-          Schedule Interview
-        </button>
 
       </tr>
     </tbody>

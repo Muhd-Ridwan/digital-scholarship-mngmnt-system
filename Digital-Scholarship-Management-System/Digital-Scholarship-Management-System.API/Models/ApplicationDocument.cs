@@ -12,7 +12,7 @@
         public DateTime UploadAt { get; set; } = DateTime.UtcNow;
 
         //officer review
-        public DateTime ReviewedAt { get; set; }
+        public DateTime? ReviewedAt { get; set; }
         public ReviewStatus Status { get; set; } = ReviewStatus.Pending;
     }
 }

@@ -51,6 +51,50 @@ export class OfficerApplicationService {
     );
   }
 
+  //for changing status to under review
+  async startReview(id: number): Promise<void> {
+    const headers = await this.authHeaders();
+
+    await firstValueFrom(
+      this.http.post(
+        `${environment.apiUrl}/officer/applications/${id}/start-review`,
+        {},
+        { headers }
+      )
+    );
+  }
+
+  //to shortlist / reject after while under review
+  async makeDecision(
+    id: number,
+    status: 'Shortlisted' | 'Rejected'
+  ): Promise<void> {
+
+    const headers = await this.authHeaders();
+
+    await firstValueFrom(
+      this.http.post(
+        `${environment.apiUrl}/officer/applications/${id}/decision?status=${status}`,
+        {},
+        { headers }
+      )
+    );
+  }
+
+  //undo decision
+  async undoDecision(id: number): Promise<void> {
+
+    const headers = await this.authHeaders();
+
+    await firstValueFrom(
+      this.http.post(
+        `${environment.apiUrl}/officer/applications/${id}/undo-decision`,
+        {},
+        { headers }
+      )
+    );
+  }
+
   // Review application
   async reviewApplication(
     id: number,
