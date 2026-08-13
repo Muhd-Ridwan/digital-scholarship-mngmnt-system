@@ -1,0 +1,40 @@
+name: Deploy Frontend to S3
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "Digital-Scholarship-Management-System/ClientApp/**"
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: Digital-Scholarship-Management-System/ClientApp/package-lock.json
+
+      - name: Install dependencies
+        working-directory: Digital-Scholarship-Management-System/ClientApp
+        run: npm ci
+
+      - name: Build Angular App
+        working-directory: Digital-Scholarship-Management-System/ClientApp
+        run: npm run build
+
+      - name: Deploy to S3
+        working-directory: Digital-Scholarship-Management-System/ClientApp
+        run: |
+          aws s3 sync dist/ClientApp/browser s3://cloud-assignment-frontend --delete
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_KEY_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ap-southeast-2
