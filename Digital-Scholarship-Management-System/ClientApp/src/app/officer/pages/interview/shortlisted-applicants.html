@@ -1,0 +1,206 @@
+<div class="p-6">
+
+  <!-- PAGE TITLE -->
+  <h2 class="text-2xl font-bold mb-2">
+    Schedule Interviews
+  </h2>
+
+  <p class="text-gray-500 mb-6">
+    Please select a shortlisted applicant to schedule an interview.
+  </p>
+
+
+  <!-- ========================================================= -->
+  <!-- SHORTLISTED APPLICANTS -->
+  <!-- ========================================================= -->
+
+  <div class="mb-10">
+
+    <h3 class="text-lg font-semibold mb-4">
+      Shortlisted Applicants
+    </h3>
+
+
+    <!-- Loading -->
+    <div
+      *ngIf="loading()"
+      class="text-gray-500"
+    >
+      Loading shortlisted applicants...
+    </div>
+
+
+    <!-- No applicants -->
+    <div
+      *ngIf="!loading() && applicants().length === 0"
+      class="text-gray-500"
+    >
+      No shortlisted applicants are currently waiting for an interview.
+    </div>
+
+
+    <!-- Applicant List -->
+    <div
+      *ngFor="let applicant of applicants()"
+      class="border rounded-lg p-4 mb-3 flex items-center justify-between"
+    >
+
+      <!-- Applicant Information -->
+      <div>
+
+        <h4 class="font-semibold">
+          {{ applicant.studentName }}
+        </h4>
+
+        <p class="text-sm text-gray-500">
+          {{ applicant.studentEmail }}
+        </p>
+
+        <p class="text-sm mt-1">
+          {{ applicant.scholarshipTitle }}
+        </p>
+
+        <p class="text-sm text-gray-500 mt-1">
+          Status:
+          {{ applicant.status }}
+        </p>
+
+      </div>
+
+
+      <!-- Schedule Button -->
+      <button
+        type="button"
+        (click)="scheduleInterview(applicant.id)"
+        class="px-4 py-2 rounded-lg text-white"
+        style="background-color: var(--color-gold-500)"
+      >
+        Schedule Interview
+      </button>
+
+    </div>
+
+  </div>
+
+
+
+  <!-- ========================================================= -->
+  <!-- UPCOMING INTERVIEWS -->
+  <!-- ========================================================= -->
+
+  <div>
+
+    <h3 class="text-lg font-semibold mb-4">
+      Upcoming Interviews
+    </h3>
+
+
+    <!-- No upcoming interviews -->
+    <div
+      *ngIf="upcomingInterviews().length === 0"
+      class="text-gray-500"
+    >
+      No upcoming interviews.
+    </div>
+
+
+    <!-- Upcoming Interview Cards -->
+    <div
+      *ngFor="let interview of upcomingInterviews()"
+      class="border rounded-lg p-5 mb-4"
+    >
+
+      <!-- Student Information -->
+      <div class="flex justify-between items-start">
+
+        <div>
+
+          <h4 class="text-lg font-semibold">
+            {{ interview.studentName }}
+          </h4>
+
+          <p class="text-sm text-gray-500">
+            {{ interview.studentEmail }}
+          </p>
+
+          <p class="text-sm mt-1">
+            {{ interview.scholarshipTitle }}
+          </p>
+
+        </div>
+
+
+        <!-- Status -->
+        <span
+          class="px-3 py-1 rounded-full text-sm"
+          style="background-color: var(--color-gold-500)"
+        >
+          Scheduled
+        </span>
+
+      </div>
+
+
+      <!-- Interview Details -->
+      <div class="mt-4 space-y-2 text-sm">
+
+        <!-- Date -->
+        <p>
+          <strong>Date:</strong>
+          {{ interview.interviewDate | date:'dd/MM/yyyy' }}
+        </p>
+
+
+        <!-- Time -->
+        <p>
+          <strong>Time:</strong>
+          {{ interview.interviewTime }}
+        </p>
+
+
+        <!-- Method -->
+        <p>
+          <strong>Method:</strong>
+          {{ interview.interviewMethod }}
+        </p>
+
+
+        <!-- Location -->
+        <p *ngIf="interview.location">
+          <strong>Location:</strong>
+          {{ interview.location }}
+        </p>
+
+
+        <!-- Meeting Link -->
+        <p *ngIf="interview.meetingLink">
+
+          <strong>Meeting Link:</strong>
+
+          <a
+            [href]="interview.meetingLink"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="underline"
+          >
+            Join Meeting
+          </a>
+
+        </p>
+
+
+        <!-- Notes -->
+        <p *ngIf="interview.notes">
+
+          <strong>Notes:</strong>
+          {{ interview.notes }}
+
+        </p>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>

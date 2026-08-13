@@ -165,7 +165,8 @@ namespace Digital_Scholarship_Management_System.API.Controllers
             }
 
             application.Status = ApplicationStatus.UnderReview;
-
+            
+            
             await _db.SaveChangesAsync();
 
             return Ok(new

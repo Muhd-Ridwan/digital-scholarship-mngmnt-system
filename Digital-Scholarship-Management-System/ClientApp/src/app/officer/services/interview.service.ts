@@ -38,6 +38,17 @@ return {
 
 }
 
+async getShortlistedApplicants(): Promise<any[]> {
+  const headers = await this.authHeaders();
+
+  return await firstValueFrom(
+    this.http.get<any[]>(
+      `${environment.apiUrl}/officer/interviews/shortlisted`,
+      { headers }
+    )
+  );
+}
+
 async scheduleInterview(
 request: ScheduleInterviewRequest
 ): Promise<any> {
@@ -53,6 +64,17 @@ return await firstValueFrom(
   )
 );
 
-
 }
+
+async getUpcomingInterviews(): Promise<any[]> {
+  const headers = await this.authHeaders();
+
+  return await firstValueFrom(
+    this.http.get<any[]>(
+      `${environment.apiUrl}/officer/interviews/upcoming`,
+      { headers }
+    )
+  );
+}
+
 }
