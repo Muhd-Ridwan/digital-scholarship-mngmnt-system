@@ -36,6 +36,7 @@ export class AuthService {
 
     if (isSignedIn) {
       this.profilePromise = null;
+      this.logLogin();
       return { status: 'signedIn' };
     }
     if (nextStep.signInStep === 'CONFIRM_SIGN_IN_WITH_NEW_PASSWORD_REQUIRED') {
@@ -48,6 +49,7 @@ export class AuthService {
     const { isSignedIn } = await confirmSignIn({ challengeResponse: newPassword });
     if (isSignedIn) {
       this.profilePromise = null;
+      this.logLogin();
     }
     return isSignedIn;
   }
@@ -56,6 +58,22 @@ export class AuthService {
     await signOut();
     this.profilePromise = null;
     this._profile.set(null);
+  }
+
+  private async logLogin(): Promise<void> {
+    try {
+      const session = await fetchAuthSession();
+      const accessToken = session.tokens?.accessToken?.toString();
+      if (!accessToken) {
+        return;
+      }
+
+      await firstValueFrom(
+        this.http.post(`${environment.apiUrl}/auth/log-login`, null, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }),
+      );
+    } catch {}
   }
 
   async register(request: RegisterRequest): Promise<void> {

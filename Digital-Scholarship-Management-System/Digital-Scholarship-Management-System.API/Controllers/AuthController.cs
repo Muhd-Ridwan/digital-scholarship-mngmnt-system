@@ -1,13 +1,15 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.Net.Http.Headers;
-using System.Net.Http.Json;
-using System.Security.Cryptography;
-using Amazon.CognitoIdentityProvider;
+﻿using Amazon.CognitoIdentityProvider;
 using Amazon.CognitoIdentityProvider.Model;
 using Digital_Scholarship_Management_System.API.Data;
 using Digital_Scholarship_Management_System.API.Models;
+using Digital_Scholarship_Management_System.API.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
+using System.Security.Cryptography;
 
 namespace Digital_Scholarship_Management_System.API.Controllers
 {
@@ -42,13 +44,15 @@ namespace Digital_Scholarship_Management_System.API.Controllers
         private readonly AppDbContext _db;
         private readonly IConfiguration _config;
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly AuditLogService _auditLog;
 
-        public AuthController(IAmazonCognitoIdentityProvider cognito, AppDbContext db, IConfiguration config, IHttpClientFactory httpClientFactory)
+        public AuthController(IAmazonCognitoIdentityProvider cognito, AppDbContext db, IConfiguration config, IHttpClientFactory httpClientFactory, AuditLogService auditLog)
         {
             _cognito = cognito;
             _db = db;
             _config = config;
             _httpClientFactory = httpClientFactory;
+            _auditLog = auditLog;
         }
 
         [HttpPost("register")]
@@ -177,7 +181,25 @@ namespace Digital_Scholarship_Management_System.API.Controllers
             return Ok(new { message = "If that email is registered, we've sent a new password to it." });
         }
 
+        [HttpPost("log-login")]
+        [Authorize]
+        public async Task<IActionResult> LogLogin()
+        {
+            var sub = User.FindFirst("sub")?.Value;
+            if (sub is null)
+            {
+                return Unauthorized();
+            }
 
+            var user = await _db.Users.FirstOrDefaultAsync(u => u.CognitoSub == sub);
+            if (user is null)
+            {
+                return NotFound();
+            }
+
+            await _auditLog.LogAsync(user, "Logged In");
+            return NoContent();
+        }
         private static string GenerateTemporaryPassword()
         {
             const string upper = "ABCDEFGHIJKLMNPQRSTUVWXYZ";

@@ -4,6 +4,7 @@ using Digital_Scholarship_Management_System.API.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
+using Digital_Scholarship_Management_System.API.Services;
 
 namespace Digital_Scholarship_Management_System.API.Controllers
 {
@@ -60,11 +61,13 @@ namespace Digital_Scholarship_Management_System.API.Controllers
     {
         private readonly AppDbContext _db;
         private readonly ILogger<UsersController> _logger;
+        private readonly AuditLogService _auditLog;
 
-        public UsersController(AppDbContext db, ILogger<UsersController> logger)
+        public UsersController(AppDbContext db, ILogger<UsersController> logger, AuditLogService auditLog)
         {
             _db = db;
             _logger = logger;
+            _auditLog = auditLog;
         }
 
         [HttpGet("me")]
@@ -178,6 +181,7 @@ namespace Digital_Scholarship_Management_System.API.Controllers
                 _logger.LogError(ex, "Failed to save student profile for user {UserId}", user.Id);
                 return StatusCode(StatusCodes.Status500InternalServerError, "Could not save your profile. Please try again.");
             }
+            await _auditLog.LogAsync(user, "Updated profile details");
             return Ok(ToResponse(profile));
         }
 

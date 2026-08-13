@@ -11,6 +11,7 @@ import { AuthService } from '../../../auth/services/auth.service';
 import { ApplicationService } from '../../services/application.service';
 import { ScholarshipService } from '../../../scholarships/services/scholarship.service';
 import { StudentProfileService } from '../../services/student-profile.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-student-dashboard',
@@ -23,6 +24,7 @@ export class StudentDashboard {
   private readonly applicationService = inject(ApplicationService);
   private readonly scholarshipService = inject(ScholarshipService);
   private readonly profileService = inject(StudentProfileService);
+  private readonly router = inject(Router);
 
   readonly profile = this.auth.profile;
   protected readonly applications = signal<ApplicationStatusItem[]>([]);
@@ -87,5 +89,9 @@ export class StudentDashboard {
 
     const diffWeeks = Math.round(diffDays / 7);
     return `${diffWeeks} week${diffWeeks === 1 ? '' : 's'} ago`;
+  }
+
+  onViewApplications() {
+    this.router.navigate(['/student/applications']);
   }
 }
