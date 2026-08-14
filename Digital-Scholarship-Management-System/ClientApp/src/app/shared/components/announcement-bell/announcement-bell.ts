@@ -21,7 +21,7 @@ export class AnnouncementBell {
   protected readonly failed = signal(false);
   // Which row is expanded to full text. Bodies are clamped to 2 lines otherwise, or one long
   // notice fills the panel and the list stops being scannable.
-  protected readonly expandedId = signal<string | null>(null);
+  protected readonly expandedId = signal<number | null>(null);
 
   // Admin authors announcements and manages them at /admin/announcements — receiving your own
   // broadcast back as an unread badge is noise. Hidden rather than empty, and it skips the

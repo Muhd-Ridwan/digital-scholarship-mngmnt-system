@@ -75,7 +75,7 @@ export class AdminAnnouncements {
   }
 
   private replace(updated: Announcement): void {
-    this.announcements.update((list) => list.map((a) => (a.sk === updated.sk ? updated : a)));
+    this.announcements.update((list) => list.map((a) => (a.id === updated.id ? updated : a)));
   }
 
   protected async onCompose(
@@ -147,6 +147,22 @@ export class AdminAnnouncements {
     }
   }
 
+  // Row action — put an archived announcement back in the feed. The server clears its read
+  // markers, so it returns as unread rather than silently invisible.
+  protected async unarchive(announcement: Announcement): Promise<void> {
+    if (announcement.status !== 'Archived' || this.busy()) return;
+
+    this.busy.set(true);
+    try {
+      this.replace(await this.announcementsApi.setStatus(announcement, 'Published'));
+      this.toastService.success(`"${announcement.title}" is live again`);
+    } catch {
+      this.toastService.error('Could not unarchive the announcement');
+    } finally {
+      this.busy.set(false);
+    }
+  }
+
   // Row action — hard delete, allowed ONLY on a draft. The server enforces it too.
   protected async deleteDraft(announcement: Announcement): Promise<void> {
     if (announcement.status !== 'Draft' || this.busy()) return;
@@ -154,7 +170,7 @@ export class AdminAnnouncements {
     this.busy.set(true);
     try {
       await this.announcementsApi.remove(announcement);
-      this.announcements.update((list) => list.filter((a) => a.sk !== announcement.sk));
+      this.announcements.update((list) => list.filter((a) => a.id !== announcement.id));
       this.toastService.success(`Draft "${announcement.title}" deleted`);
     } catch {
       this.toastService.error('Could not delete the draft');

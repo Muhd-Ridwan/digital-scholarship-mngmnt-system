@@ -10,8 +10,7 @@ import {
   FeedAnnouncement,
 } from '../../models/announcement.model';
 
-// Announcements, backed by DynamoDB. The item key is (audience, sk), so updates and deletes
-// send both — an id on its own cannot locate a row.
+// Announcements, backed by SQL. Rows are addressed by their integer id.
 @Injectable({ providedIn: 'root' })
 export class AnnouncementsService {
   private readonly http = inject(HttpClient);
@@ -44,7 +43,7 @@ export class AnnouncementsService {
 
   // One marker per (user, announcement). Repeating it overwrites the same key, so it is safe
   // to call again if a click is retried.
-  async markRead(announcementId: string): Promise<void> {
+  async markRead(announcementId: number): Promise<void> {
     const headers = await this.authHeader();
     await firstValueFrom(
       this.http.post<void>(
@@ -75,22 +74,17 @@ export class AnnouncementsService {
     const headers = await this.authHeader();
     return firstValueFrom(
       this.http.put<Announcement>(
-        `${environment.apiUrl}/announcements`,
-        { audience: item.audience, sk: item.sk, status },
+        `${environment.apiUrl}/announcements/${item.id}`,
+        { status },
         { headers },
       ),
     );
   }
 
-  // sk contains '#', which would terminate the URL — encode it or every delete 404s.
   async remove(item: Announcement): Promise<void> {
     const headers = await this.authHeader();
-    const sk = encodeURIComponent(item.sk);
     await firstValueFrom(
-      this.http.delete<void>(
-        `${environment.apiUrl}/announcements?audience=${item.audience}&sk=${sk}`,
-        { headers },
-      ),
+      this.http.delete<void>(`${environment.apiUrl}/announcements/${item.id}`, { headers }),
     );
   }
 }
