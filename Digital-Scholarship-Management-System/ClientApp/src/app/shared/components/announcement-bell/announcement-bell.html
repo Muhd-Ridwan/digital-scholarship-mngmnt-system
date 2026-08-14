@@ -1,0 +1,84 @@
+@if (visible()) {
+<div class="relative">
+  <button
+    type="button"
+    (click)="toggle()"
+    [attr.aria-label]="
+      unread() > 0 ? 'Announcements, ' + unread() + ' unread' : 'Announcements'
+    "
+    class="relative flex h-9 w-9 items-center justify-center rounded-lg text-mist-400 transition-colors hover:bg-ink-900 hover:text-mist-100"
+  >
+    <lucide-icon name="bell" class="h-4 w-4"></lucide-icon>
+    @if (unread() > 0) {
+      <span
+        class="absolute -top-0.5 -right-0.5 flex min-w-4 items-center justify-center rounded-full bg-gold-500 px-1 text-[10px] leading-4 font-semibold text-mist-100"
+      >
+        {{ badge() }}
+      </span>
+    }
+  </button>
+
+  @if (open()) {
+    <button
+      type="button"
+      class="fixed inset-0 z-40 cursor-default"
+      (click)="close()"
+      aria-label="Close announcements"
+    ></button>
+    <div
+      class="absolute right-0 z-50 mt-2 w-80 overflow-hidden rounded-xl border border-ink-800 bg-ink-900 shadow-lg"
+    >
+      <div class="flex items-center justify-between border-b border-ink-800 px-4 py-3">
+        <p class="text-sm font-semibold text-mist-100">Announcements</p>
+        @if (unread() > 0) {
+          <span class="text-xs text-mist-400">{{ unread() }} unread</span>
+        }
+      </div>
+      <!-- Caps the panel height so 10 items scroll rather than run off the screen -->
+      <div class="max-h-96 overflow-y-auto">
+        @for (item of items(); track item.id) {
+          <button
+            type="button"
+            (click)="onSelect(item)"
+            [attr.aria-expanded]="expandedId() === item.id"
+            class="flex w-full flex-col gap-1 border-b border-ink-800 px-4 py-3 text-left transition-colors last:border-b-0 hover:bg-ink-800"
+          >
+            <span class="flex items-start gap-2">
+              @if (!item.read) {
+                <span class="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-gold-500"></span>
+              }
+              <span class="text-sm text-mist-100" [class.font-semibold]="!item.read">
+                {{ item.title }}
+              </span>
+            </span>
+            <!-- Clamped to 2 lines until selected, so one long notice can't fill the panel -->
+            <span
+              class="text-xs whitespace-pre-line text-mist-400"
+              [class.line-clamp-2]="expandedId() !== item.id"
+            >
+              {{ item.body }}
+            </span>
+            <span class="flex items-center gap-1.5 text-xs text-mist-400">
+              @if (item.publishedAt) {
+                {{ formatDate(item.publishedAt) }}
+              }
+              <lucide-icon
+                [name]="expandedId() === item.id ? 'chevron-up' : 'chevron-down'"
+                class="h-3 w-3"
+              ></lucide-icon>
+            </span>
+          </button>
+        } @empty {
+          <p class="px-4 py-6 text-sm text-mist-400">
+            @if (failed()) {
+              Could not load announcements.
+            } @else {
+              No announcements yet.
+            }
+          </p>
+        }
+      </div>
+    </div>
+  }
+</div>
+}

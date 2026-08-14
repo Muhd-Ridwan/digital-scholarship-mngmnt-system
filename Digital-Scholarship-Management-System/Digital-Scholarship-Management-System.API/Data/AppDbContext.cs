@@ -13,6 +13,7 @@ namespace Digital_Scholarship_Management_System.API.Data
         public DbSet<StudentDocument> StudentDocuments => Set<StudentDocument>();
         public DbSet<ApplicationDocument> ApplicationDocuments => Set<ApplicationDocument>();
         public DbSet<StudentProfile> StudentProfiles => Set<StudentProfile>();
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // Model Builder = Tool for telling EF Core "here's exactly how this relationship/constraint
@@ -39,10 +40,13 @@ namespace Digital_Scholarship_Management_System.API.Data
                 .Property(s => s.FundingAmount)
                 .HasPrecision(18, 2);
 
-            modelBuilder.Entity<User>()
-                .HasIndex(u => u.Email)
-                .IsUnique();
+            // Store enums as strings
+            modelBuilder.Entity<User>().Property(u => u.Role).HasConversion<string>();
+            modelBuilder.Entity<User>().Property(u => u.Status).HasConversion<string>();
+            modelBuilder.Entity<User>().Property(u => u.SponsorStatus).HasConversion<string>();
 
+            // Unique email
+            modelBuilder.Entity<User>().HasIndex(u => u.Email).IsUnique();
             modelBuilder.Entity<Application>()
                 .HasIndex(a => new { a.StudentId, a.ScholarshipId })
                 .IsUnique();

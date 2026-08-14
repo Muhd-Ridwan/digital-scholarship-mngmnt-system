@@ -2,63 +2,78 @@
   <app-dashboard-header
     [fullName]="profile()?.fullName ?? ''"
     subtitle="Here's an overview of scholarship management."
-    primaryActionLabel="View All Applications"
-    primaryActionIcon="calendar"
+    primaryActionLabel="View Reports"
+    primaryActionIcon="chart-column"
+    (primaryAction)="openReports()"
   />
 
   <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
     <app-stat-card
       label="Scholarships Available"
-      value="12"
+      [value]="scholarshipsAvailableLabel()"
       icon="graduation-cap"
       description="Open for application"
     />
     <app-stat-card
       label="Pending Review"
-      value="24"
+      [value]="pendingReviewLabel()"
       icon="file-text"
       tone="warning"
       description="Awaiting decision"
     />
-    <app-stat-card label="Active Users" value="85" icon="users" description="Across all roles" />
+    <app-stat-card
+      label="Active Accounts"
+      [value]="activeAccountsLabel()"
+      icon="users"
+      description="Not locked"
+    />
     <app-stat-card
       label="Total Awarded"
-      value="132"
+      [value]="totalAwardedLabel()"
       icon="circle-check"
       tone="success"
       description="Scholarships granted"
     />
   </div>
 
-  <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
-    <div class="flex flex-col gap-3 lg:col-span-2">
-      <div class="flex items-center gap-2">
-        <lucide-icon name="zap" class="h-4 w-4 text-gold-500"></lucide-icon>
-        <h2 class="text-sm font-semibold text-mist-100">My Actions</h2>
-      </div>
-      <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <app-action-card
-          label="Users & Access"
-          description="Register reviewers, lock accounts, approve sponsors"
-          icon="users"
-          route="/admin/users"
-        />
-        <app-action-card
-          label="Reports"
-          description="View scholarship analytics"
-          icon="chart-column"
-          route="/admin/reports"
-        />
-        <app-action-card
-          label="Audit Log"
-          description="Review recent system activity"
-          icon="history"
-          route="/admin/audit-log"
-          tone="warning"
-        />
-      </div>
+  <div class="flex flex-col gap-3">
+    <div class="flex items-center gap-2">
+      <lucide-icon name="zap" class="h-4 w-4 text-gold-500"></lucide-icon>
+      <h2 class="text-sm font-semibold text-mist-100">My Actions</h2>
     </div>
-
-    <app-management-panel [items]="managementItems" />
+    <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
+      <app-action-card
+        label="Users & Access"
+        description="Lock accounts, register officers"
+        icon="users"
+        route="/admin/users"
+      />
+      <app-action-card
+        label="Sponsor Approvals"
+        description="Approve or reject sponsor approvals"
+        icon="shield-check"
+        route="/admin/sponsors"
+        [count]="pendingSponsors()"
+      />
+      <app-action-card
+        label="Audit Log"
+        description="Review recent system activity"
+        icon="history"
+        route="/admin/audit-log"
+        tone="warning"
+      />
+      <app-action-card
+        label="Announcements"
+        description="Publish notices to roles"
+        icon="bell"
+        route="/admin/announcements"
+      />
+      <app-action-card
+        label="Profile Settings"
+        description="Update your personal details"
+        icon="user"
+        route="/admin/profile"
+      />
+    </div>
   </div>
 </div>

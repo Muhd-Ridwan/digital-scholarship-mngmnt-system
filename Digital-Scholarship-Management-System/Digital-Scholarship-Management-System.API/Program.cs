@@ -7,6 +7,7 @@ using Digital_Scholarship_Management_System.API.Data;
 using Digital_Scholarship_Management_System.API.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json.Serialization;
 using Microsoft.IdentityModel.Tokens;
 using System.Text.Json.Serialization;
 
@@ -54,6 +55,7 @@ builder.Services.AddSingleton<IAmazonDynamoDB>(
     new AmazonDynamoDBClient(awsCredentials, dynamoDbRegionEndpoint));
 
 builder.Services.AddSingleton<AuditLogService>();
+builder.Services.AddSingleton<AnnouncementService>();
 
 builder.Services.AddSingleton<IAmazonCognitoIdentityProvider>(
     new AmazonCognitoIdentityProviderClient(awsCredentials, cognitoRegionEndpoint)
