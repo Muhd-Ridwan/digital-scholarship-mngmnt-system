@@ -34,7 +34,6 @@ export class ScheduleInterviewComponent {
   interviewMethod = 'Online';
   location = '';
   meetingLink = '';
-  notes = '';
 
   constructor() {
     this.applicationId = Number(
@@ -51,7 +50,7 @@ export class ScheduleInterviewComponent {
         interviewMethod: this.interviewMethod,
         location: this.location,
         meetingLink: this.meetingLink,
-        notes: this.notes
+        
       });
 
       this.toast.success('Interview scheduled successfully.');

@@ -5,6 +5,8 @@ using Digital_Scholarship_Management_System.API.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
 
 namespace Digital_Scholarship_Management_System.API.Controllers
 {
@@ -17,14 +19,20 @@ namespace Digital_Scholarship_Management_System.API.Controllers
         private readonly IAmazonS3 _s3;
         private readonly string _bucketName;
 
+        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly IConfiguration _config;
+
         public OfficerApplicationsController(
             AppDbContext db,
             IAmazonS3 s3,
-            IConfiguration config)
+            IConfiguration config,
+            IHttpClientFactory httpClientFactory)
         {
             _db = db;
             _s3 = s3;
             _bucketName = config["S3:BucketName"]!;
+            _config = config;
+            _httpClientFactory = httpClientFactory;
         }
 
         // ============================================================
@@ -139,10 +147,10 @@ namespace Digital_Scholarship_Management_System.API.Controllers
         }
 
         // ============================================================
-        // REVIEW APPLICATION
+        // START REVIEW
+        // Pending → Under Review
         // ============================================================
 
-        //for under review status
         [HttpPost("{id}/start-review")]
         public async Task<IActionResult> StartReview(int id)
         {
@@ -152,6 +160,8 @@ namespace Digital_Scholarship_Management_System.API.Controllers
                 return Forbid();
 
             var application = await _db.Applications
+                .Include(a => a.Student)
+                .Include(a => a.Scholarship)
                 .FirstOrDefaultAsync(a => a.Id == id);
 
             if (application is null)
@@ -165,9 +175,14 @@ namespace Digital_Scholarship_Management_System.API.Controllers
             }
 
             application.Status = ApplicationStatus.UnderReview;
-            
-            
+
             await _db.SaveChangesAsync();
+
+            await SendApplicationStatusEmailAsync(
+                application.Student.Email,
+                application.Student.FullName,
+                application.Scholarship.Title,
+                "under_review");
 
             return Ok(new
             {
@@ -178,6 +193,7 @@ namespace Digital_Scholarship_Management_System.API.Controllers
 
         // ============================================================
         // SHORTLIST / REJECT APPLICATION
+        // Under Review → Shortlisted / Rejected
         // ============================================================
 
         [HttpPost("{id}/decision")]
@@ -191,12 +207,14 @@ namespace Digital_Scholarship_Management_System.API.Controllers
                 return Forbid();
 
             var application = await _db.Applications
+                .Include(a => a.Student)
+                .Include(a => a.Scholarship)
                 .FirstOrDefaultAsync(a => a.Id == id);
 
             if (application is null)
                 return NotFound("Application not found.");
 
-            // Only UnderReview applications can be shortlisted/rejected
+            // Only Under Review applications can be decided
             if (application.Status != ApplicationStatus.UnderReview)
             {
                 return BadRequest(
@@ -217,6 +235,12 @@ namespace Digital_Scholarship_Management_System.API.Controllers
 
             await _db.SaveChangesAsync();
 
+            await SendApplicationStatusEmailAsync(
+                application.Student.Email,
+                application.Student.FullName,
+                application.Scholarship.Title,
+                ToStatusString(status));
+
             return Ok(new
             {
                 application.Id,
@@ -228,6 +252,7 @@ namespace Digital_Scholarship_Management_System.API.Controllers
 
         // ============================================================
         // UNDO APPLICATION DECISION
+        // Shortlisted / Rejected → Under Review
         // ============================================================
 
         [HttpPost("{id}/undo-decision")]
@@ -263,50 +288,6 @@ namespace Digital_Scholarship_Management_System.API.Controllers
             {
                 application.Id,
                 Status = ToStatusString(application.Status),
-                application.ReviewedByUserId,
-                application.DecisionAt
-            });
-        }
-
-        //========================================================================
-        //for approve/reject
-        [HttpPost("{id}/review")]
-        public async Task<IActionResult> ReviewApplication(
-            int id,
-            [FromQuery] ApplicationStatus status,
-            [FromQuery] string? reviewNotes)
-        {
-            var officer = await GetCurrentOfficerAsync();
-
-            if (officer is null)
-                return Forbid();
-
-            var application = await _db.Applications
-                .FirstOrDefaultAsync(a => a.Id == id);
-
-            if (application is null)
-                return NotFound("Application not found.");
-
-            // Only these statuses should be final decisions
-            if (status != ApplicationStatus.Approved &&
-                status != ApplicationStatus.Rejected)
-            {
-                return BadRequest(
-                    "Application can only be Approved or Rejected during final review.");
-            }
-
-            application.Status = status;
-            application.ReviewNotes = reviewNotes;
-            application.ReviewedByUserId = officer.Id;
-            application.DecisionAt = DateTime.UtcNow;
-
-            await _db.SaveChangesAsync();
-
-            return Ok(new
-            {
-                application.Id,
-                Status = ToStatusString(application.Status),
-                application.ReviewNotes,
                 application.ReviewedByUserId,
                 application.DecisionAt
             });
@@ -357,6 +338,72 @@ namespace Digital_Scholarship_Management_System.API.Controllers
                 ApplicationStatus.Rejected => "rejected",
                 _ => status.ToString().ToLowerInvariant()
             };
+        }
+
+        private async Task SendApplicationStatusEmailAsync(
+            string toEmail,
+            string fullName,
+            string scholarshipTitle,
+            string status)
+        {
+            var client = _httpClientFactory.CreateClient();
+
+            client.BaseAddress = new Uri("https://api.resend.com/");
+
+            client.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue(
+                    "Bearer",
+                    _config["Resend:ApiKey"]);
+
+            string subject;
+            string message;
+
+            switch (status)
+            {
+                case "under_review":
+                    subject = "Your Scholarship Application is Under Review";
+                    message =
+                        $"Your application for <strong>{scholarshipTitle}</strong> " +
+                        "is now under review by our scholarship officer.";
+                    break;
+
+                case "shortlisted":
+                    subject = "Congratulations! Your Scholarship Application Has Been Shortlisted";
+                    message =
+                        $"We are pleased to inform you that your application for " +
+                        $"<strong>{scholarshipTitle}</strong> has been shortlisted.";
+                    break;
+
+                case "rejected":
+                    subject = "Scholarship Application Status Update";
+                    message =
+                        $"We regret to inform you that your application for " +
+                        $"<strong>{scholarshipTitle}</strong> has not been successful.";
+                    break;
+
+                case "approved":
+                    subject = "Congratulations! Your Scholarship Application Has Been Approved";
+                    message =
+                        $"Congratulations! Your application for " +
+                        $"<strong>{scholarshipTitle}</strong> has been approved.";
+                    break;
+
+                default:
+                    return;
+            }
+
+            await client.PostAsJsonAsync("emails", new
+            {
+                from = "scholarship@dev-r.org",
+                to = new[] { toEmail },
+                subject = subject,
+                html =
+                    $"<p>Hi {fullName},</p>" +
+                    $"<p>{message}</p>" +
+                    $"<p>Please log in to the Scholarship Management System " +
+                    $"to view more details.</p>" +
+                    $"<p>Regards,<br>Scholarship Management System</p>"
+            });
         }
     }
 }

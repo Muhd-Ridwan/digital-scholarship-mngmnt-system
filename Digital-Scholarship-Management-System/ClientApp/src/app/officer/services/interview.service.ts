@@ -77,4 +77,59 @@ async getUpcomingInterviews(): Promise<any[]> {
   );
 }
 
+async getAllInterviews(): Promise<any[]> {
+
+  const headers = await this.authHeaders();
+
+  return await firstValueFrom(
+    this.http.get<any[]>(
+      `${environment.apiUrl}/officer/interviews`,
+      { headers }
+    )
+  );
+}
+
+async getPastInterviews(): Promise<any[]> {
+  const headers = await this.authHeaders();
+
+  return await firstValueFrom(
+    this.http.get<any[]>(
+      `${environment.apiUrl}/officer/interviews/past`,
+      { headers }
+    )
+  );
+}
+
+async makeFinalDecision(
+  applicationId: number,
+  status: 'approved' | 'rejected'
+): Promise<any> {
+
+  const headers = await this.authHeaders();
+
+  return await firstValueFrom(
+    this.http.post(
+      `${environment.apiUrl}/officer/interviews/${applicationId}/decision?status=${status}`,
+      {},
+      { headers }
+    )
+  );
+}
+
+async updateInterviewNotes(
+  interviewId: number,
+  notes: string
+): Promise<any> {
+
+  const headers = await this.authHeaders();
+
+  return await firstValueFrom(
+    this.http.put(
+      `${environment.apiUrl}/officer/interviews/${interviewId}/notes`,
+      { notes },
+      { headers }
+    )
+  );
+}
+
 }

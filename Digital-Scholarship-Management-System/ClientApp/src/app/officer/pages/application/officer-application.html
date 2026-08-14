@@ -1,4 +1,14 @@
 <div class="p-6">
+
+  <button
+    type="button"
+    routerLink="/officer"
+    class="mb-5 flex items-center gap-2 text-sm text-mist-400 hover:text-mist-100"
+  >
+    <lucide-icon name="arrow-left" class="h-4 w-4"></lucide-icon>
+    Back to Dashboard
+  </button>
+
   <h2 class="text-xl font-bold mb-4">Review Applications</h2>
 
   <div *ngIf="loading()" class="text-gray-500">

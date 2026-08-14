@@ -7,7 +7,7 @@ export interface ReviewQueueItem {
   applicantName: string;
   scholarshipName: string;
   submittedAt: string;
-  priority: 'normal' | 'urgent';
+  status: string;
 }
 
 @Component({

@@ -1,6 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
 
 import { OfficerApplicationService } from '../../services/officer-application.service';
@@ -13,6 +13,7 @@ import { ToastService } from '../../../shared/services/toast.service';
     CommonModule,
     DatePipe,
     LucideAngularModule,
+    RouterLink
     
   ],
   templateUrl: './officer-application.html'

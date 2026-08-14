@@ -10,7 +10,6 @@
         public DateTime InterviewDate { get; set; }
 
         public string InterviewTime { get; set; } = string.Empty;
-
         public string InterviewMethod { get; set; } = string.Empty;
         // e.g. "Online", "In Person"
 
