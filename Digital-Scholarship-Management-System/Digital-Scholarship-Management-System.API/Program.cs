@@ -55,7 +55,8 @@ builder.Services.AddSingleton<IAmazonDynamoDB>(
     new AmazonDynamoDBClient(awsCredentials, dynamoDbRegionEndpoint));
 
 builder.Services.AddSingleton<AuditLogService>();
-builder.Services.AddSingleton<AnnouncementService>();
+// Scoped, not singleton: it depends on AppDbContext, which is scoped.
+builder.Services.AddScoped<AnnouncementService>();
 
 builder.Services.AddSingleton<IAmazonCognitoIdentityProvider>(
     new AmazonCognitoIdentityProviderClient(awsCredentials, cognitoRegionEndpoint)
