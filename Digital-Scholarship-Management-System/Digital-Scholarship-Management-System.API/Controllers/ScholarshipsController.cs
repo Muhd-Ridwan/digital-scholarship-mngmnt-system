@@ -41,6 +41,8 @@ namespace Digital_Scholarship_Management_System.API.Controllers
             _db = db;
             _auditLog = auditLog;
         }
+
+        // For students
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
@@ -93,6 +95,73 @@ namespace Digital_Scholarship_Management_System.API.Controllers
             return Ok(scholarship);
         }
 
+        // For sponsors
+        [HttpGet("mine/{id}")]
+        [Authorize]
+        public async Task<IActionResult> GetMineById(int id)
+        {
+            var (sponsor, errorResult) = await FindCurrentSponsorAsync();
+            if (sponsor is null)
+            {
+                return errorResult!;
+            }
+
+            var scholarship = await _db.Scholarships
+                .Where(s => s.Id == id && s.SponsorId == sponsor.Id)
+                .Select(s => new
+                {
+                    s.Id,
+                    s.Title,
+                    s.Description,
+                    s.EligibilityCriteria,
+                    s.FundType,
+                    s.StudyLocation,
+                    s.OrganisationType,
+                    s.FundingAmount,
+                    s.Deadline,
+                    Status = ToStatusString(s.Status),
+                    Applications = s.Applications.Count()
+                })
+                .FirstOrDefaultAsync();
+
+            if (scholarship is null)
+            {
+                return NotFound("Scholarship not found");
+            }
+
+            return Ok(scholarship);
+        }
+
+        [HttpGet("mine")]
+        [Authorize]
+        public async Task<IActionResult> GetMine()
+        {
+            var (sponsor, errorResult) = await FindCurrentSponsorAsync();
+            if (sponsor is null)
+            {
+                return errorResult!;
+            }
+
+            var scholarships = await _db.Scholarships
+                .Where(s => s.SponsorId == sponsor.Id)
+                .Select(s => new
+                {
+                    s.Id,
+                    s.Title,
+                    s.Description,
+                    s.FundType,
+                    s.StudyLocation,
+                    s.OrganisationType,
+                    s.FundingAmount,
+                    s.Deadline,
+                    Status = ToStatusString(s.Status),
+                    Applications = s.Applications.Count()
+                })
+                .ToListAsync();
+
+            return Ok(scholarships);
+        }
+
         private async Task<(User? User, IActionResult? Error)> FindCurrentSponsorAsync()
         {
             var sub = User.FindFirst("sub")?.Value;
@@ -114,6 +183,14 @@ namespace Digital_Scholarship_Management_System.API.Controllers
             }
             return (user, null);
         }
+
+        private static string ToStatusString(ScholarshipStatus status) => status switch
+        {
+            ScholarshipStatus.Draft => "draft",
+            ScholarshipStatus.Active => "active",
+            ScholarshipStatus.Closed => "closed",
+            _ => status.ToString().ToLowerInvariant(),
+        };
 
         [HttpPost]
         [Authorize]
@@ -149,44 +226,6 @@ namespace Digital_Scholarship_Management_System.API.Controllers
 
             await _auditLog.LogAsync(sponsor, $"Create scholarship listing: {scholarship.Title} (ID: {scholarship.Id})");
             return Ok(new { scholarship.Id, message = "Scholarship created successfully." });
-        }
-
-        private static string ToStatusString(ScholarshipStatus status) => status switch
-        {
-            ScholarshipStatus.Draft => "draft",
-            ScholarshipStatus.Active => "active",
-            ScholarshipStatus.Closed => "closed",
-            _ => status.ToString().ToLowerInvariant(),
-        };
-
-        [HttpGet("mine")]
-        [Authorize]
-        public async Task<IActionResult> GetMine()
-        {
-            var (sponsor, errorResult) = await FindCurrentSponsorAsync();
-            if (sponsor is null)
-            {
-                return errorResult!;
-            }
-
-            var scholarships = await _db.Scholarships
-                .Where(s => s.SponsorId == sponsor.Id)
-                .Select(s => new
-                {
-                    s.Id,
-                    s.Title,
-                    s.Description,
-                    s.FundType,
-                    s.StudyLocation,
-                    s.OrganisationType,
-                    s.FundingAmount,
-                    s.Deadline,
-                    Status = ToStatusString(s.Status),
-                    Applications = s.Applications.Count()
-                })
-                .ToListAsync();
-
-            return Ok(scholarships);
         }
 
         [HttpPost("{id}/publish")]
