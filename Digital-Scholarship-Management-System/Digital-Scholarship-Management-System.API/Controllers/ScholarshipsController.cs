@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Amazon.S3.Model;
 using Digital_Scholarship_Management_System.API.Data;
 using Digital_Scholarship_Management_System.API.Models;
 using Digital_Scholarship_Management_System.API.Services;
@@ -11,7 +12,7 @@ namespace Digital_Scholarship_Management_System.API.Controllers
     
     public class CreateScholarshipRequest
     {
-        [Required]
+        [Required] 
         public string Title { get; set; } = string.Empty;
         [Required]
         public string Description { get; set; } = string.Empty;
@@ -45,6 +46,7 @@ namespace Digital_Scholarship_Management_System.API.Controllers
         {
             var scholarships = await _db.Scholarships
                 .Include(s => s.Sponsor)
+                .Where(s => s.Status == ScholarshipStatus.Active)
                 .Select(s => new
                 {
                     s.Id,
@@ -67,7 +69,7 @@ namespace Digital_Scholarship_Management_System.API.Controllers
         {
             var scholarship = await _db.Scholarships
                 .Include(s => s.Sponsor)
-                .Where(s => s.Id == id)
+                .Where(s => s.Id == id && s.Status == ScholarshipStatus.Active)
                 .Select(s => new
                 {
                     s.Id,
@@ -118,11 +120,13 @@ namespace Digital_Scholarship_Management_System.API.Controllers
         public async Task<IActionResult> Create([FromBody] CreateScholarshipRequest request)
         {
             var (sponsor, errorResult) = await FindCurrentSponsorAsync();
-            if (sponsor == null) {
+            if (sponsor == null)
+            {
                 return errorResult!;
             }
 
-            if (request.Deadline < DateTime.UtcNow) {
+            if (request.Deadline < DateTime.UtcNow)
+            {
                 return BadRequest("Deadline cannot be in the past.");
             }
 
@@ -145,6 +149,130 @@ namespace Digital_Scholarship_Management_System.API.Controllers
 
             await _auditLog.LogAsync(sponsor, $"Create scholarship listing: {scholarship.Title} (ID: {scholarship.Id})");
             return Ok(new { scholarship.Id, message = "Scholarship created successfully." });
+        }
+
+        private static string ToStatusString(ScholarshipStatus status) => status switch
+        {
+            ScholarshipStatus.Draft => "draft",
+            ScholarshipStatus.Active => "active",
+            ScholarshipStatus.Closed => "closed",
+            _ => status.ToString().ToLowerInvariant(),
+        };
+
+        [HttpGet("mine")]
+        [Authorize]
+        public async Task<IActionResult> GetMine()
+        {
+            var (sponsor, errorResult) = await FindCurrentSponsorAsync();
+            if (sponsor is null)
+            {
+                return errorResult!;
+            }
+
+            var scholarships = await _db.Scholarships
+                .Where(s => s.SponsorId == sponsor.Id)
+                .Select(s => new
+                {
+                    s.Id,
+                    s.Title,
+                    s.Description,
+                    s.FundType,
+                    s.StudyLocation,
+                    s.OrganisationType,
+                    s.FundingAmount,
+                    s.Deadline,
+                    Status = ToStatusString(s.Status),
+                    Applications = s.Applications.Count()
+                })
+                .ToListAsync();
+
+            return Ok(scholarships);
+        }
+
+        [HttpPost("{id}/publish")]
+        [Authorize]
+        public async Task<IActionResult> Publish(int id)
+        {
+            var (sponsor, errorResult) = await FindCurrentSponsorAsync();
+            if (sponsor is null)
+            {
+                return errorResult!;
+            }
+
+            var scholarship = await _db.Scholarships.FirstOrDefaultAsync(s => s.Id == id && s.SponsorId == sponsor.Id);
+
+            if (scholarship is null) {
+                return NotFound("Scholarship not found");
+            }
+
+            if (scholarship.Status != ScholarshipStatus.Draft) {
+                return BadRequest("Only draft listings can be published.");
+            }
+
+            scholarship.Status = ScholarshipStatus.Active;
+            await _db.SaveChangesAsync();
+
+            await _auditLog.LogAsync(sponsor, $"Published scholarship listing '{scholarship.Title}' (ID {scholarship.Id})");
+
+            return Ok(new { scholarship.Id, Status = ToStatusString(scholarship.Status) });
+        }
+
+        [HttpPost("{id}/close")]
+        [Authorize]
+        public async Task<IActionResult> Close(int id) {
+            var (sponsor, errorResult) = await FindCurrentSponsorAsync();
+            if (sponsor is null) {
+                return errorResult!;
+            }
+
+            var scholarship = await _db.Scholarships.FirstOrDefaultAsync(s => s.Id == id && s.SponsorId == sponsor.Id);
+
+            if (scholarship is null)
+            {
+                return NotFound("Scholarship not found");
+            }
+
+            if (scholarship.Status != ScholarshipStatus.Active)
+            {
+                return BadRequest("Only active listings can be closed.");
+            }
+
+            scholarship.Status = ScholarshipStatus.Closed;
+            await _db.SaveChangesAsync();
+
+            await _auditLog.LogAsync(sponsor, $"Closed scholarship listing '{scholarship.Title}' (ID {scholarship.Id})");
+
+            return Ok(new { scholarship.Id, Status = ToStatusString(scholarship.Status) });
+        }
+
+        [HttpDelete("{id}")]
+        [Authorize]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var (sponsor, errorResult) = await FindCurrentSponsorAsync();
+            if (sponsor is null)
+            {
+                return errorResult!;
+            }
+
+            var scholarship = await _db.Scholarships.FirstOrDefaultAsync(s => s.Id == id && s.SponsorId == sponsor.Id);
+
+            if (scholarship is null)
+            {
+                return NotFound("Scholarship not found");
+            }
+
+            if (scholarship.Status != ScholarshipStatus.Draft)
+            {
+                return BadRequest("Only draft listings can be deleted.");
+            }
+
+            _db.Scholarships.Remove(scholarship);
+            await _db.SaveChangesAsync();
+
+            await _auditLog.LogAsync(sponsor, $"Delete scholarship listing '{scholarship.Title}' (ID {scholarship.Id})");
+
+            return Ok(new { message = "Scholarship deleted." });
         }
 
     }
