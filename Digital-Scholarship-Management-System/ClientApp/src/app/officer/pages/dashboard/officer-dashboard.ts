@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { LucideAngularModule } from 'lucide-angular';
 import { DashboardHeader } from '../../../shared/components/dashboard-header/dashboard-header';
 import { StatCard } from '../../../shared/components/stat-card/stat-card';
@@ -6,6 +6,7 @@ import { ActionCard } from '../../../shared/components/action-card/action-card';
 import { ReviewQueue, ReviewQueueItem } from '../../components/review-queue/review-queue';
 import { AuthService } from '../../../auth/services/auth.service';
 import { OfficerApplicationService } from '../../services/officer-application.service';
+import { ScholarshipService } from '../../../scholarships/services/scholarship.service';
 
 @Component({
   selector: 'app-officer-dashboard',
@@ -25,18 +26,187 @@ export class OfficerDashboard {
   private readonly applicationService =
     inject(OfficerApplicationService);
 
+  private readonly scholarshipService = inject(ScholarshipService);
+
   readonly profile = this.auth.profile;
 
-  protected reviewQueue: ReviewQueueItem[] = [];
+  protected readonly reviewQueue = signal<ReviewQueueItem[]>([]);
 
-  protected scholarshipsAvailable = 0;
-  protected assignedToYou = 0;
-  protected reviewedThisWeek = 0;
-  protected approvalRate = 0;
+  protected readonly scholarshipsAvailable = signal(0);
+  protected readonly assignedToYou = signal(0);
+  protected readonly reviewedThisWeek = signal(0);
+  protected readonly approvalRate = signal(0);
 
 
   async ngOnInit(): Promise<void> {
     await this.loadReviewQueue();
+    await this.loadScholarshipsAvailable();
+    await this.loadAssignedToYou();
+    await this.loadReviewedThisWeek();
+    await this.loadApprovalRate();
+  }
+
+  //=============================================================
+  //SCHOLARSHIPS AVAILABLE
+  //=============================================================
+    async loadScholarshipsAvailable(): Promise<void> {
+
+    try {
+
+      const scholarships =
+        await this.scholarshipService.getAll();
+
+      const now = new Date();
+
+      const available =
+        scholarships.filter(
+          scholarship =>
+            new Date(scholarship.deadline) > now
+        );
+
+      this.scholarshipsAvailable.set(
+        available.length
+      );
+
+    } catch (error) {
+
+      console.error(
+        'Failed to load available scholarships:',
+        error
+      );
+
+    }
+  }
+
+  //=============================================================
+  // ASSIGNED TO ME (like number of pending applications)
+  //=============================================================
+  async loadAssignedToYou(): Promise<void> {
+
+    try {
+
+      const applications =
+        await this.applicationService.getAllApplications();
+
+      const assigned =
+        applications.filter(application =>
+          application.status === 'pending' ||
+          application.status === 'under_review'
+        );
+
+      this.assignedToYou.set(assigned.length);
+
+    } catch (error) {
+
+      console.error(
+        'Failed to load assigned applications:',
+        error
+      );
+
+    }
+  }
+
+  //=============================================================
+  // REVIEWED THIS WEEK
+  //=============================================================
+
+  async loadReviewedThisWeek(): Promise<void> {
+
+    try {
+
+      const applications =
+        await this.applicationService.getAllApplications();
+
+      const now = new Date();
+
+      // Get the start of the current week (Monday)
+      const startOfWeek = new Date(now);
+      const day = startOfWeek.getDay();
+
+      const daysFromMonday =
+        day === 0 ? 6 : day - 1;
+
+      startOfWeek.setDate(
+        startOfWeek.getDate() - daysFromMonday
+      );
+
+      startOfWeek.setHours(0, 0, 0, 0);
+
+      const reviewed =
+        applications.filter(application => {
+
+          if (!application.decisionAt) {
+            return false;
+          }
+
+          const decisionDate =
+            new Date(application.decisionAt);
+
+          return decisionDate >= startOfWeek &&
+                decisionDate <= now;
+        });
+
+      this.reviewedThisWeek.set(
+        reviewed.length
+      );
+
+    } catch (error) {
+
+      console.error(
+        'Failed to load reviewed applications:',
+        error
+      );
+
+    }
+  }
+
+  //=============================================================
+  // APPROVAL RATE % BAR
+  //=============================================================
+  async loadApprovalRate(): Promise<void> {
+
+    try {
+
+      const applications =
+        await this.applicationService.getAllApplications();
+
+      const approved =
+        applications.filter(
+          application =>
+            application.status === 'approved'
+        ).length;
+
+      const rejected =
+        applications.filter(
+          application =>
+            application.status === 'rejected'
+        ).length;
+
+      const totalDecisions =
+        approved + rejected;
+
+      if (totalDecisions === 0) {
+
+        this.approvalRate.set(0);
+
+        return;
+      }
+
+      const rate =
+        Math.round(
+          (approved / totalDecisions) * 100
+        );
+
+      this.approvalRate.set(rate);
+
+    } catch (error) {
+
+      console.error(
+        'Failed to calculate approval rate:',
+        error
+      );
+
+    }
   }
 
 
@@ -52,6 +222,7 @@ export class OfficerDashboard {
         await this.applicationService.getAllApplications();
 
 
+
          // Show applications that still require
       // officer attention.
       const relevantApplications =
@@ -64,7 +235,7 @@ export class OfficerDashboard {
 
       // Convert backend application data
       // into the format expected by ReviewQueue.
-      this.reviewQueue =
+      this.reviewQueue.set(
         relevantApplications.map(application => ({
           id: application.id.toString(),
 
@@ -81,7 +252,9 @@ export class OfficerDashboard {
 
           status:
             application.status
-        }));
+        })));
+
+        console.log('review queue: ', this.reviewQueue)
 
 
     } catch (error) {
@@ -147,19 +320,5 @@ export class OfficerDashboard {
     } ago`;
   }
 
-
-  // ============================================================
-  // PRIORITY
-  // ============================================================
-
-  private getPriority(
-    application: any
-  ): 'urgent' | 'normal' {
-
-    if (application.status === 'pending') {
-      return 'urgent';
-    }
-
-    return 'normal';
-  }
+  
 }

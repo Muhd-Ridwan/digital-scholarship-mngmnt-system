@@ -1,5 +1,6 @@
 ﻿using Digital_Scholarship_Management_System.API.Data;
 using Digital_Scholarship_Management_System.API.Models;
+using Digital_Scholarship_Management_System.API.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -17,15 +18,18 @@ namespace Digital_Scholarship_Management_System.API.Controllers
         private readonly AppDbContext _db;
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IConfiguration _config;
+        private readonly AuditLogService _auditLogService;
 
         public OfficerInterviewsController(
              AppDbContext db,
              IHttpClientFactory httpClientFactory,
-             IConfiguration config)
+             IConfiguration config,
+             AuditLogService auditLogService)
         {
             _db = db;
             _httpClientFactory = httpClientFactory;
             _config = config;
+            _auditLogService = auditLogService;
         }
 
         // ============================================================
@@ -474,6 +478,10 @@ namespace Digital_Scholarship_Management_System.API.Controllers
             }
 
             application.Status = status;
+            await _auditLogService.LogAsync(
+                officer,
+                $"Application #{application.Id} status changed to {ToStatusString(status)}"
+            );
             application.ReviewedByUserId = officer.Id;
             application.DecisionAt = DateTime.UtcNow;
 

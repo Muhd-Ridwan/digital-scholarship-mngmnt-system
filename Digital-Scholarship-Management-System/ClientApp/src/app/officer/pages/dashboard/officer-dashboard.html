@@ -2,32 +2,35 @@
   <app-dashboard-header
     [fullName]="profile()?.fullName ?? ''"
     subtitle="Here's what's waiting for your review."
-    primaryActionLabel="Review Queue"
-    primaryActionIcon="list-checks"
   />
 
   <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
     <app-stat-card
       label="Scholarships Available"
-      value="12"
+      [value]="scholarshipsAvailable().toString()"
       icon="folder-open"
       description="Open for application"
     />
     <app-stat-card
       label="Assigned to You"
-      value="8"
+      [value]="assignedToYou().toString()"
       icon="file-text"
       tone="warning"
       description="Pending your review"
     />
     <app-stat-card
       label="Reviewed This Week"
-      value="15"
+      [value]="reviewedThisWeek().toString()"
       icon="circle-check"
       tone="success"
       description="Decisions made"
     />
-    <app-stat-card label="Approval Rate" value="72%" icon="target" [progress]="72" />
+    <app-stat-card 
+      label="Approval Rate" 
+      [value]="approvalRate() + '%'"
+      icon="target" 
+      [progress]="approvalRate()"
+    />
   </div>
 
   <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -44,8 +47,8 @@
           route="/officer/applications"
         />
         <app-action-card
-          label="Schedule Interviews"
-          description="Set up applicant interviews"
+          label="Manage Interviews"
+          description="Schedule and track applicant interviews"
           icon="calendar"
           route="/officer/interviews"  
 
@@ -66,7 +69,7 @@
       </div>
     </div>
 
-    <app-review-queue [items]="reviewQueue" viewAllRoute="/officer/applications" />
+    <app-review-queue [items]="reviewQueue()" viewAllRoute="/officer/applications" />
   </div>
 </div>
 

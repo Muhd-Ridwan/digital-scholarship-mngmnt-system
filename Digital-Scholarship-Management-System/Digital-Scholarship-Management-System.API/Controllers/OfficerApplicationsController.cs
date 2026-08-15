@@ -2,6 +2,7 @@
 using Amazon.S3.Model;
 using Digital_Scholarship_Management_System.API.Data;
 using Digital_Scholarship_Management_System.API.Models;
+using Digital_Scholarship_Management_System.API.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -21,18 +22,22 @@ namespace Digital_Scholarship_Management_System.API.Controllers
 
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IConfiguration _config;
+        private readonly AuditLogService _auditLogService;
 
         public OfficerApplicationsController(
             AppDbContext db,
             IAmazonS3 s3,
             IConfiguration config,
-            IHttpClientFactory httpClientFactory)
+            IHttpClientFactory httpClientFactory,
+            AuditLogService auditLogService)
+
         {
             _db = db;
             _s3 = s3;
             _bucketName = config["S3:BucketName"]!;
             _config = config;
             _httpClientFactory = httpClientFactory;
+            _auditLogService = auditLogService;
         }
 
         // ============================================================
@@ -176,6 +181,12 @@ namespace Digital_Scholarship_Management_System.API.Controllers
 
             application.Status = ApplicationStatus.UnderReview;
 
+            await _auditLogService.LogAsync(
+                officer,
+                $"Application #{application.Id} status changed to Under Review"
+            );
+            application.DecisionAt = DateTime.UtcNow;
+
             await _db.SaveChangesAsync();
 
             await SendApplicationStatusEmailAsync(
@@ -230,6 +241,11 @@ namespace Digital_Scholarship_Management_System.API.Controllers
             }
 
             application.Status = status;
+
+            await _auditLogService.LogAsync(
+                officer,
+                $"Application #{application.Id} status changed to {ToStatusString(status)}"
+            );
             application.ReviewedByUserId = officer.Id;
             application.DecisionAt = DateTime.UtcNow;
 
@@ -278,6 +294,10 @@ namespace Digital_Scholarship_Management_System.API.Controllers
             }
 
             application.Status = ApplicationStatus.UnderReview;
+            await _auditLogService.LogAsync(
+                officer,
+                $"Application #{application.Id} status changed to Under Review"
+            );
 
             application.ReviewedByUserId = null;
             application.DecisionAt = null;
