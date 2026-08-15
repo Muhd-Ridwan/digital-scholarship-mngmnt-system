@@ -40,3 +40,7 @@ export interface ScholarshipSummary {
 export interface ScholarshipDetail extends ScholarshipSummary {
   eligibilityCriteria: string;
 }
+
+export interface SponsorScholarshipDetail extends Scholarship {
+  eligibilityCriteria: string;
+}

@@ -1,7 +1,6 @@
 import { Routes } from '@angular/router';
 import { DashboardShell } from './shared/components/dashboard-shell/dashboard-shell';
 import { OfficerDashboard } from './officer/pages/dashboard/officer-dashboard';
-import { SponsorDashboard } from './sponsor/pages/dashboard/sponsor-dashboard';
 import { Login } from './auth/pages/login/login';
 import { authGuard } from './auth/guards/auth.guards';
 import { Register } from './auth/pages/register/register';
@@ -52,11 +51,9 @@ export const routes: Routes = [
       },
       {
         path: 'sponsor',
-        component: SponsorDashboard,
-        canActivate: [authGuard],
-        data: {
-          role: 'sponsor',
-        },
+        canActivateChild: [authGuard],
+        data: { role: 'sponsor' },
+        loadChildren: () => import('./sponsor/sponsor.routes').then((m) => m.SPONSOR_ROUTES),
       },
       { path: '', redirectTo: 'student', pathMatch: 'full' },
     ],

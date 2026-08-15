@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { fetchAuthSession } from 'aws-amplify/auth';
 import { environment } from '../../../environments/environment';
-import { CreateScholarshipRequest, Scholarship, ScholarshipDetail, ScholarshipStatus, ScholarshipSummary } from '../models/scholarship.model';
+import { CreateScholarshipRequest, Scholarship, ScholarshipDetail, ScholarshipStatus, ScholarshipSummary, SponsorScholarshipDetail } from '../models/scholarship.model';
 
 @Injectable({ providedIn: 'root' })
   export class ScholarshipService {
@@ -25,6 +25,13 @@ import { CreateScholarshipRequest, Scholarship, ScholarshipDetail, ScholarshipSt
             this.http.get<Scholarship[]>(`${this.baseUrl}/mine`, { headers }),
         );
     }
+
+    async getMineById(id: number): Promise<SponsorScholarshipDetail> {
+    const headers = await this.authHeaders();
+    return firstValueFrom(
+      this.http.get<SponsorScholarshipDetail>(`${this.baseUrl}/mine/${id}`, { headers }),
+    );
+  }
 
     async create(request: CreateScholarshipRequest): Promise<{ id: number; message: string }> {
         const headers = await this.authHeaders();
