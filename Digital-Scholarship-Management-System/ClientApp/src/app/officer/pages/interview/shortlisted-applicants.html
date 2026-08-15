@@ -1,0 +1,543 @@
+<div class="p-6">
+
+  <!-- ========================================================= -->
+  <!-- BACK BUTTON -->
+  <!-- ========================================================= -->
+
+  <button
+    type="button"
+    routerLink="/officer"
+    class="mb-5 flex items-center gap-2 text-sm text-mist-400 hover:text-mist-100"
+  >
+    <lucide-icon name="arrow-left" class="h-4 w-4"></lucide-icon>
+    Back to Dashboard
+  </button>
+
+
+  <!-- ========================================================= -->
+  <!-- PAGE TITLE -->
+  <!-- ========================================================= -->
+
+  <h2 class="text-2xl font-bold mb-2">
+    Schedule Interviews
+  </h2>
+
+  <p class="text-gray-500 mb-6">
+    Please select a shortlisted applicant to schedule an interview.
+  </p>
+
+
+  <!-- ========================================================= -->
+  <!-- SHORTLISTED APPLICANTS -->
+  <!-- ========================================================= -->
+
+  <div class="mb-10">
+
+    <h3 class="text-lg font-semibold mb-4">
+      Shortlisted Applicants
+    </h3>
+
+
+    <!-- Loading -->
+
+    <div
+      *ngIf="loading()"
+      class="text-gray-500"
+    >
+      Loading shortlisted applicants...
+    </div>
+
+
+    <!-- No applicants -->
+
+    <div
+      *ngIf="!loading() && applicants().length === 0"
+      class="text-gray-500"
+    >
+      No shortlisted applicants are currently waiting for an interview.
+    </div>
+
+
+    <!-- Applicant List -->
+
+    <div
+      *ngFor="let applicant of applicants()"
+      class="border rounded-lg p-4 mb-3 flex items-center justify-between"
+    >
+
+      <!-- Applicant Information -->
+
+      <div>
+
+        <h4 class="font-semibold">
+          {{ applicant.studentName }}
+        </h4>
+
+        <p class="text-sm text-gray-500">
+          {{ applicant.studentEmail }}
+        </p>
+
+        <p class="text-sm mt-1">
+          {{ applicant.scholarshipTitle }}
+        </p>
+
+        <p class="text-sm text-gray-500 mt-1">
+          Status:
+          {{ applicant.status }}
+        </p>
+
+      </div>
+
+
+      <!-- Schedule Button -->
+
+      <button
+        type="button"
+        (click)="scheduleInterview(applicant.id)"
+        class="px-4 py-2 rounded-lg text-white"
+        style="background-color: var(--color-gold-500)"
+      >
+        Schedule Interview
+      </button>
+
+    </div>
+
+  </div>
+
+
+
+  <!-- ========================================================= -->
+  <!-- UPCOMING INTERVIEWS -->
+  <!-- ========================================================= -->
+
+  <div class="mb-10">
+
+    <h3 class="text-lg font-semibold mb-4">
+      Upcoming Interviews
+    </h3>
+
+
+    <!-- No Upcoming Interviews -->
+
+    <div
+      *ngIf="upcomingInterviews().length === 0"
+      class="text-gray-500"
+    >
+      No upcoming interviews.
+    </div>
+
+
+    <!-- Upcoming Interview Cards -->
+
+    <div
+      *ngFor="let interview of upcomingInterviews()"
+      class="border rounded-lg p-5 mb-4"
+    >
+
+      <!-- Student Information -->
+
+      <div class="flex justify-between items-start">
+
+        <div>
+
+          <h4 class="text-lg font-semibold">
+            {{ interview.studentName }}
+          </h4>
+
+          <p class="text-sm text-gray-500">
+            {{ interview.studentEmail }}
+          </p>
+
+          <p class="text-sm mt-1">
+            {{ interview.scholarshipTitle }}
+          </p>
+
+        </div>
+
+
+        <!-- Status -->
+
+        <span
+          class="px-3 py-1 rounded-full text-sm text-gray-800"
+          style="background-color: var(--color-gold-500)"
+        >
+          Scheduled
+        </span>
+
+      </div>
+
+
+      <!-- Interview Details -->
+
+      <div class="mt-4 space-y-2 text-sm">
+
+        <!-- Date -->
+
+        <p>
+          <strong>Date:</strong>
+          {{ interview.interviewDate | date:'dd/MM/yyyy' }}
+        </p>
+
+
+        <!-- Time -->
+
+        <p>
+          <strong>Time:</strong>
+          {{ interview.interviewTime }}
+        </p>
+
+
+        <!-- Method -->
+
+        <p>
+          <strong>Method:</strong>
+          {{ interview.interviewMethod }}
+        </p>
+
+
+        <!-- Location -->
+
+        <p *ngIf="interview.location">
+          <strong>Location:</strong>
+          {{ interview.location }}
+        </p>
+
+
+        <!-- Meeting Link -->
+
+        <p *ngIf="interview.meetingLink">
+
+          <strong>Meeting Link:</strong>
+
+          <a
+            [href]="interview.meetingLink"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="underline"
+          >
+            Join Meeting
+          </a>
+
+        </p>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+
+  <!-- ========================================================= -->
+  <!-- PAST INTERVIEWS -->
+  <!-- ========================================================= -->
+
+  <div class="mt-10">
+
+    <h3 class="text-xl font-semibold mb-2">
+      Past Interviews
+    </h3>
+
+    <p class="text-gray-500 mb-5">
+      Review completed interviews and record the final application decision.
+    </p>
+
+
+    <!-- No Past Interviews -->
+
+    <div
+      *ngIf="pastInterviews().length === 0"
+      class="text-gray-500"
+    >
+      No past interviews.
+    </div>
+
+
+    <!-- Past Interview Cards -->
+
+    <div
+      *ngFor="let interview of pastInterviews()"
+      class="border rounded-xl p-5 mb-4"
+    >
+
+      <!-- ===================================================== -->
+      <!-- STUDENT INFORMATION -->
+      <!-- ===================================================== -->
+
+      <div class="flex justify-between items-start">
+
+        <div>
+
+          <h4 class="text-lg font-semibold">
+            {{ interview.studentName }}
+          </h4>
+
+          <p class="text-sm text-gray-500">
+            {{ interview.studentEmail }}
+          </p>
+
+          <p class="text-sm mt-1">
+            {{ interview.scholarshipTitle }}
+          </p>
+
+        </div>
+
+
+        <!-- ================================================= -->
+        <!-- CURRENT DECISION -->
+        <!-- ================================================= -->
+
+        <div>
+
+          <!-- Approved -->
+
+          <span
+            *ngIf="interview.applicationStatus === 'approved'"
+            class="px-3 py-1 rounded-full text-sm bg-green-100 text-green-700"
+          >
+            Approved
+          </span>
+
+
+          <!-- Rejected -->
+
+          <span
+            *ngIf="interview.applicationStatus === 'rejected'"
+            class="px-3 py-1 rounded-full text-sm bg-red-100 text-red-700"
+          >
+            Rejected
+          </span>
+
+        </div>
+
+      </div>
+
+
+
+      <!-- ===================================================== -->
+      <!-- INTERVIEW DETAILS -->
+      <!-- ===================================================== -->
+
+      <div class="mt-4 space-y-2 text-sm">
+
+        <p>
+          <strong>Date:</strong>
+          {{ interview.interviewDate | date:'dd/MM/yyyy' }}
+        </p>
+
+        <p>
+          <strong>Time:</strong>
+          {{ interview.interviewTime }}
+        </p>
+
+        <p>
+          <strong>Method:</strong>
+          {{ interview.interviewMethod }}
+        </p>
+
+        <p *ngIf="interview.location">
+          <strong>Location:</strong>
+          {{ interview.location }}
+        </p>
+
+        <p *ngIf="interview.meetingLink">
+
+          <strong>Meeting Link:</strong>
+
+          <a
+            [href]="interview.meetingLink"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="underline"
+          >
+            Join Meeting
+          </a>
+
+        </p>
+
+      </div>
+
+
+
+      <!-- ===================================================== -->
+      <!-- INTERVIEW NOTES -->
+      <!-- ===================================================== -->
+
+      <div class="mt-5">
+
+        <label class="block font-medium mb-2">
+          Interview Notes
+        </label>
+
+
+        <textarea
+          [(ngModel)]="interview.notes"
+          rows="4"
+          placeholder="Enter interview notes..."
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2"
+        ></textarea>
+
+
+        <button
+          type="button"
+          (click)="saveNotes(interview)"
+          class="mt-2 px-4 py-2 rounded-lg text-white"
+          style="background-color: var(--color-gold-500)"
+        >
+          Save Notes
+        </button>
+
+      </div>
+
+
+
+      <!-- ===================================================== -->
+      <!-- APPROVE / REJECT BUTTONS -->
+      <!-- ===================================================== -->
+
+      <div
+        *ngIf="
+          interview.applicationStatus !== 'approved' &&
+          interview.applicationStatus !== 'rejected'
+        "
+        class="flex gap-3 mt-5"
+      >
+
+        <!-- Approve -->
+
+        <button
+          type="button"
+          (click)="confirmDecision(interview, 'approved')"
+          class="px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700"
+        >
+          Approve Application
+        </button>
+
+
+        <!-- Reject -->
+
+        <button
+          type="button"
+          (click)="confirmDecision(interview, 'rejected')"
+          class="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700"
+        >
+          Reject Application
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+
+  <!-- ========================================================= -->
+  <!-- DECISION CONFIRMATION POPUP-->
+  <!-- ========================================================= -->
+
+  <div
+    *ngIf="showDecisionPopup()"
+    class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4"
+  >
+
+    <!-- BOX -->
+
+    <div
+      class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6"
+    >
+
+      <!-- Title -->
+
+      <h3 class="text-xl text-black font-semibold mb-3">
+        Confirm Application Decision
+      </h3>
+
+
+      <!-- Confirmation Message -->
+
+      <p class="text-gray-600 mb-5">
+
+        Are you sure you want to
+
+        <strong>
+          {{ selectedDecision() === 'approved'
+            ? 'approve'
+            : 'reject'
+          }}
+        </strong>
+
+        this application?
+
+      </p>
+
+
+      <!-- Selected Applicant -->
+
+      <div
+        *ngIf="selectedInterview()"
+        class="bg-gray-100 text-black rounded-lg p-4 mb-5"
+      >
+
+        <p>
+          <strong>Student:</strong>
+          {{ selectedInterview()?.studentName }}
+        </p>
+
+        <p class="mt-1">
+          <strong>Scholarship:</strong>
+          {{ selectedInterview()?.scholarshipTitle }}
+        </p>
+
+      </div>
+
+
+      <!-- Warning -->
+
+      <p class="text-sm text-gray-500 mb-6">
+        This will update the student's application status.
+      </p>
+
+
+      <!-- Modal Buttons -->
+
+      <div class="flex justify-end gap-3">
+
+        <!-- Cancel -->
+
+        <button
+          type="button"
+          (click)="cancelDecision()"
+          class="px-4 py-2 border text-black border-black rounded-lg hover:bg-gray-300"
+        >
+          Cancel
+        </button>
+
+
+        <!-- Confirm -->
+
+        <button
+          type="button"
+          (click)="applyDecision()"
+          [ngClass]="{
+            'bg-green-600 hover:bg-green-700':
+              selectedDecision() === 'approved',
+
+            'bg-red-600 hover:bg-red-700':
+              selectedDecision() === 'rejected'
+          }"
+          class="px-4 py-2 text-white rounded-lg"
+        >
+          {{ selectedDecision() === 'approved'
+            ? 'Approve Application'
+            : 'Reject Application'
+          }}
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>

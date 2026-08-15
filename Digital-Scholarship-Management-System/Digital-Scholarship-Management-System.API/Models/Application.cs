@@ -4,10 +4,11 @@ namespace Digital_Scholarship_Management_System.API.Models
 {
     public enum ApplicationStatus
     {
-        Pending,
-        UnderReview,
-        Approved,
-        Rejected
+        Pending,  //0
+        UnderReview,//1
+        Shortlisted,//2
+        Approved,//3
+        Rejected///4
     }
     public class Application
     {
@@ -24,5 +25,7 @@ namespace Digital_Scholarship_Management_System.API.Models
         public DateTime SubmittedAt { get; set; } = DateTime.UtcNow;
         public DateTime? DecisionAt { get; set; }
         public ICollection<ApplicationDocument> Documents { get; set; } = new List<ApplicationDocument>();
+
+        public Interview? Interview { get; set; }
     }
 }

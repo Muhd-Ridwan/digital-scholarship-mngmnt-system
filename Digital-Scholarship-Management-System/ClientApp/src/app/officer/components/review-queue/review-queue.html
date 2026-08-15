@@ -26,13 +26,29 @@
         >
           <div class="flex items-start justify-between gap-2">
             <p class="text-sm font-medium text-mist-100">{{ item.applicantName }}</p>
-            @if (item.priority === 'urgent') {
-              <span
-                class="shrink-0 rounded-full bg-status-danger/10 px-2 py-0.5 text-[11px] font-semibold text-status-danger"
-              >
-                Urgent
-              </span>
-            }
+           @if (item.status === 'pending') {
+          <span
+            class="shrink-0 rounded-full bg-yellow-500/10 px-2 py-0.5 text-[11px] font-semibold text-yellow-500"
+          >
+            Pending
+          </span>
+        }
+
+        @if (item.status === 'under_review') {
+          <span
+            class="shrink-0 rounded-full bg-blue-500/10 px-2 py-0.5 text-[11px] font-semibold text-blue-500"
+          >
+            Under Review
+          </span>
+        }
+
+        @if (item.status === 'shortlisted') {
+          <span
+            class="shrink-0 rounded-full bg-green-500/10 px-2 py-0.5 text-[11px] font-semibold text-green-500"
+          >
+            Shortlisted
+          </span>
+        }
           </div>
           <p class="mt-0.5 text-xs text-mist-400">{{ item.scholarshipName }}</p>
           <p class="mt-1 text-xs text-mist-400">Submitted {{ item.submittedAt }}</p>

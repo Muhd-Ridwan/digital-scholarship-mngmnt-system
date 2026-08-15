@@ -2,12 +2,15 @@ import { Component, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
 
+export type ApplicationStatus = 'pending' | 'under_review' | 'shortlisted' | 'approved' | 'rejected';
+
+
 export interface ReviewQueueItem {
   id: string;
   applicantName: string;
   scholarshipName: string;
   submittedAt: string;
-  priority: 'normal' | 'urgent';
+  status: ApplicationStatus;
 }
 
 @Component({

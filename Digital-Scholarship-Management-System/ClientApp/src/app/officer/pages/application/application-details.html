@@ -1,0 +1,111 @@
+<div *ngIf="application()">
+
+  <h3 class="text-lg font-semibold mb-3">
+    Application Documents
+  </h3>
+
+  <!-- Documents available -->
+  <div
+    *ngIf="application()?.documents?.length > 0; else noDocuments"
+  >
+    <div
+      *ngFor="let document of application()?.documents"
+      class="flex justify-between items-center border rounded-lg p-4 mb-2"
+    >
+      <div>
+        <p class="font-medium">
+          {{ document.fileName }}
+        </p>
+
+        <p class="text-sm text-gray-500">
+          {{ document.documentType }}
+        </p>
+      </div>
+
+      <button
+        type="button"
+        (click)="viewDocument(document.id)"
+        class="bg-blue-500 text-white px-3 py-1 rounded"
+      >
+        View Document
+      </button>
+    </div>
+  </div>
+
+  <!-- No documents -->
+  <ng-template #noDocuments>
+    <div class="border rounded-lg p-4 text-gray-500">
+      No documents to view.
+    </div>
+  </ng-template>
+
+  <!-- Application Decision -->
+  <div class="mt-6 border-t pt-6">
+
+    <h3 class="text-lg font-semibold mb-3">
+      Application Decision
+    </h3>
+
+    <!-- Under Review -->
+    <div *ngIf="application()?.status === 'under_review'"
+        class="flex gap-3">
+
+      <button
+        type="button"
+        (click)="makeDecision('Shortlisted')"
+        class="bg-gold-500 text-black px-4 py-2 rounded-lg hover:bg-yellow-500"
+      >
+        Shortlist Application
+      </button>
+
+      <button
+        type="button"
+        (click)="makeDecision('Rejected')"
+        class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700"
+      >
+        Reject Application
+      </button>
+
+    </div>
+
+
+    <!-- Shortlisted -->
+    <div *ngIf="application()?.status === 'shortlisted'"
+        class="space-y-3">
+
+      <p class="text-green-600 font-medium">
+        Application has been shortlisted.
+      </p>
+
+      <button
+        type="button"
+        (click)="undoDecision()"
+        class="border border-gray-400 px-4 py-2 rounded-lg"
+      >
+        Undo
+      </button>
+
+    </div>
+
+
+    <!-- Rejected -->
+    <div *ngIf="application()?.status === 'rejected'"
+        class="space-y-3">
+
+      <p class="text-red-600 font-medium">
+        Application has been rejected.
+      </p>
+
+      <button
+        type="button"
+        (click)="undoDecision()"
+        class="border border-gray-400 px-4 py-2 rounded-lg"
+      >
+        Undo
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
