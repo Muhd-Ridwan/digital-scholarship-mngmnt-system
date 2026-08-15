@@ -34,16 +34,16 @@ export class AdminSponsors {
   );
 
   protected readonly approvedCount = computed(
-    () => this.decided().filter((s) => s.status === 'Approved').length,
+    () => this.decided().filter((r) => r.status === 'Approved').length,
   );
   protected readonly rejectedCount = computed(
-    () => this.decided().filter((s) => s.status === 'Rejected').length,
+    () => this.decided().filter((r) => r.status === 'Rejected').length,
   );
 
   protected readonly visibleRecord = computed(() => {
     const filter = this.recordFilter();
     const list = this.decided();
-    return filter === 'All' ? list : list.filter((s) => s.status === filter);
+    return filter === 'All' ? list : list.filter((r) => r.status === filter);
   });
 
   constructor() {
@@ -86,18 +86,13 @@ export class AdminSponsors {
     }
   }
 
-  protected viewCertificate(sponsor: SponsorProfile): void {
-    this.toastService.success(
-      `Opening business-registration certificate for ${sponsor.companyName}…`,
-    );
-  }
-
   // The row moves from the queue to the record rather than disappearing — a refused
   // company still applied, and that is worth keeping.
   private replace(updated: SponsorProfile): void {
     this.sponsors.update((list) => list.map((s) => (s.id === updated.id ? updated : s)));
   }
 
+  // The decision targets the sponsor account, not any listing it has posted.
   protected async approve(sponsor: SponsorProfile): Promise<void> {
     if (this.busy()) return;
 

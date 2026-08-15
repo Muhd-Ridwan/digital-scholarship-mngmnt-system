@@ -17,7 +17,6 @@ interface ApiUser {
 interface ApiSponsor {
   id: number;
   companyName: string;
-  ssmNumber: string | null;
   registeredAt: string;
   status: SponsorDecision;
   decidedAt: string | null;

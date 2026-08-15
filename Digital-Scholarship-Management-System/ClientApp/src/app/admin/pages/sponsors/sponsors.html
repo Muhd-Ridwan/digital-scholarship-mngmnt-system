@@ -16,39 +16,27 @@
       <table class="w-full min-w-[640px] text-left text-sm">
         <thead>
           <tr class="border-b border-ink-800 text-xs tracking-wide text-mist-400 uppercase">
-            <th class="py-2 pr-4 font-medium">Company</th>
-            <th class="py-2 pr-4 font-medium">SSM number</th>
+            <th class="py-2 pr-4 font-medium">Sponsor</th>
             <th class="py-2 pr-4 font-medium">Registered</th>
-            <th class="py-2 pr-4 font-medium">Certificate</th>
             <th class="py-2 text-right font-medium">Decision</th>
           </tr>
         </thead>
         <tbody>
-          @for (sponsor of pending(); track sponsor.id) {
+          @for (row of pending(); track row.id) {
             <tr class="border-b border-ink-800/60">
-              <td class="py-2.5 pr-4 text-mist-100">{{ sponsor.companyName }}</td>
-              <td class="py-2.5 pr-4 text-mist-400 tabular-nums">{{ sponsor.ssmNumber }}</td>
-              <td class="py-2.5 pr-4 text-mist-400">{{ formatDate(sponsor.registeredAt) }}</td>
-              <td class="py-2.5 pr-4">
-                <button
-                  type="button"
-                  (click)="viewCertificate(sponsor)"
-                  class="rounded-lg border border-ink-800 px-3 py-1.5 text-xs font-medium text-mist-100 transition-colors hover:bg-ink-800"
-                >
-                  View
-                </button>
-              </td>
+              <td class="py-2.5 pr-4 text-mist-100">{{ row.companyName }}</td>
+              <td class="py-2.5 pr-4 text-mist-400">{{ formatDate(row.registeredAt) }}</td>
               <td class="py-2.5 text-right whitespace-nowrap">
                 <button
                   type="button"
-                  (click)="reject(sponsor)"
+                  (click)="reject(row)"
                   class="rounded-lg border border-status-danger/40 px-3 py-1.5 text-xs font-medium text-status-danger transition-colors hover:bg-status-danger/10"
                 >
                   Reject
                 </button>
                 <button
                   type="button"
-                  (click)="approve(sponsor)"
+                  (click)="approve(row)"
                   class="ml-2 rounded-lg bg-gold-500 px-3 py-1.5 text-xs font-semibold text-mist-100 transition-colors hover:bg-gold-500/90"
                 >
                   Approve
@@ -57,7 +45,7 @@
             </tr>
           } @empty {
             <tr>
-              <td colspan="5" class="py-6 text-sm text-mist-400">
+              <td colspan="3" class="py-6 text-sm text-mist-400">
                 {{ loading() ? 'Loading…' : 'No sponsors awaiting approval.' }}
               </td>
             </tr>
@@ -96,32 +84,30 @@
       <table class="w-full min-w-[640px] text-left text-sm">
         <thead>
           <tr class="border-b border-ink-800 text-xs tracking-wide text-mist-400 uppercase">
-            <th class="py-2 pr-4 font-medium">Company</th>
-            <th class="py-2 pr-4 font-medium">SSM number</th>
+            <th class="py-2 pr-4 font-medium">Sponsor</th>
             <th class="py-2 pr-4 font-medium">Outcome</th>
             <th class="py-2 pr-4 font-medium">Decided</th>
             <th class="py-2 font-medium">By</th>
           </tr>
         </thead>
         <tbody>
-          @for (sponsor of visibleRecord(); track sponsor.id) {
+          @for (row of visibleRecord(); track row.id) {
             <tr class="border-b border-ink-800/60">
-              <td class="py-2.5 pr-4 text-mist-100">{{ sponsor.companyName }}</td>
-              <td class="py-2.5 pr-4 text-mist-400 tabular-nums">{{ sponsor.ssmNumber }}</td>
+              <td class="py-2.5 pr-4 text-mist-100">{{ row.companyName }}</td>
               <td class="py-2.5 pr-4">
                 <span
                   class="rounded-full px-2 py-0.5 text-xs font-medium"
-                  [class]="badgeClass(sponsor.status)"
+                  [class]="badgeClass(row.status)"
                 >
-                  {{ sponsor.status }}
+                  {{ row.status }}
                 </span>
               </td>
-              <td class="py-2.5 pr-4 text-mist-400">{{ formatDate(sponsor.decidedAt) }}</td>
-              <td class="py-2.5 text-mist-400">{{ sponsor.decidedBy ?? '—' }}</td>
+              <td class="py-2.5 pr-4 text-mist-400">{{ formatDate(row.decidedAt) }}</td>
+              <td class="py-2.5 text-mist-400">{{ row.decidedBy ?? '—' }}</td>
             </tr>
           } @empty {
             <tr>
-              <td colspan="5" class="py-6 text-sm text-mist-400">
+              <td colspan="4" class="py-6 text-sm text-mist-400">
                 {{ loading() ? 'Loading…' : 'No decisions in this view.' }}
               </td>
             </tr>

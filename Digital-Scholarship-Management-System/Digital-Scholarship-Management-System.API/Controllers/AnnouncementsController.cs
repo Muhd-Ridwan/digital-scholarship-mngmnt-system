@@ -7,14 +7,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Digital_Scholarship_Management_System.API.Controllers
 {
-    // Platform announcements, stored in DynamoDB. Lifecycle: Draft -> Published -> Archived.
+    // Platform announcements, stored in SQL. Lifecycle: Draft -> Published -> Archived.
     [Route("api/announcements")]
     [ApiController]
     [Authorize]
     public class AnnouncementsController : ControllerBase
     {
-        // The bell fetches 10 and renders 5 — a Limit of 5 would cap the derived unread count
-        // at 5 and make the "9+" badge unreachable.
+        // The bell fetches 10 and renders 10 — the badge and the list agree at that number.
         private const int FeedLimit = 10;
 
         private readonly AppDbContext _db;
@@ -57,12 +56,12 @@ namespace Digital_Scholarship_Management_System.API.Controllers
             }
 
             var items = await _announcements.FeedAsync(ToAudience(user.Role), FeedLimit);
-            // The read flag is resolved server-side — one Query — so the client just counts
-            // !read rather than shipping every marker to the browser to do set maths.
-            var readIds = await _announcements.ReadIdsAsync(user.CognitoSub);
+            // The read flag is resolved server-side so the client just counts !read rather than
+            // receiving every marker and doing set maths.
+            var readIds = await _announcements.ReadIdsAsync(user.Id);
 
             return Ok(items.Select(i => new AnnouncementFeedItem(
-                i.Id, i.Sk, i.Title, i.Body, i.Audience, i.Status,
+                i.Id, i.Title, i.Body, i.Audience, i.Status,
                 i.PublishedAt, i.CreatedAt, i.CreatedBy, readIds.Contains(i.Id))));
         }
 
@@ -77,12 +76,12 @@ namespace Digital_Scholarship_Management_System.API.Controllers
                 return errorResult!;
             }
 
-            if (string.IsNullOrWhiteSpace(req.AnnouncementId))
+            if (await _announcements.GetAsync(req.AnnouncementId) is null)
             {
-                return BadRequest(new { message = "announcementId is required." });
+                return NotFound();
             }
 
-            await _announcements.MarkReadAsync(user.CognitoSub, req.AnnouncementId);
+            await _announcements.MarkReadAsync(user.Id, req.AnnouncementId);
             return NoContent();
         }
 
@@ -114,10 +113,9 @@ namespace Digital_Scholarship_Management_System.API.Controllers
             return Created($"/api/announcements/{item.Id}", item);
         }
 
-        // PUT /api/announcements — status transition and/or edit.
-        // The key is (audience, sk), so both travel in the body; an id alone cannot locate an item.
-        [HttpPut]
-        public async Task<IActionResult> Update([FromBody] UpdateAnnouncementRequest req)
+        // PUT /api/announcements/{id} — status transition and/or edit
+        [HttpPut("{id:int}")]
+        public async Task<IActionResult> Update(int id, [FromBody] UpdateAnnouncementRequest req)
         {
             var (admin, errorResult) = await FindCurrentAdminAsync();
             if (admin is null)
@@ -125,7 +123,7 @@ namespace Digital_Scholarship_Management_System.API.Controllers
                 return errorResult!;
             }
 
-            var item = await _announcements.GetAsync(req.Audience, req.Sk);
+            var item = await _announcements.GetAsync(id);
             if (item is null) return NotFound();
 
             var title = req.Title is not null ? req.Title.Trim() : item.Title;
@@ -152,31 +150,31 @@ namespace Digital_Scholarship_Management_System.API.Controllers
                 }
             }
 
-            var updated = item with
-            {
-                Title = title,
-                Body = body,
-                Status = status,
-                PublishedAt = publishedAt,
-            };
+            var isUnarchive = item.Status == AnnouncementStatus.Archived &&
+                              status == AnnouncementStatus.Published;
 
-            await _announcements.PutAsync(updated);
+            var updated = await _announcements.UpdateAsync(id, title, body, status, publishedAt);
+            if (updated is null) return NotFound();
+
+            // Without this it returns already-read for everyone who saw it before archiving.
+            if (isUnarchive)
+            {
+                await _announcements.ClearReadsAsync(id);
+            }
 
             if (status != item.Status &&
                 (status == AnnouncementStatus.Published || status == AnnouncementStatus.Archived))
             {
-                await _auditLog.LogAsync(admin, $"{status} announcement \"{updated.Title}\"");
+                var verb = isUnarchive ? "Unarchived" : status.ToString();
+                await _auditLog.LogAsync(admin, $"{verb} announcement \"{updated.Title}\"");
             }
 
             return Ok(updated);
         }
 
-        // DELETE /api/announcements?audience=All&sk=... — only a Draft may be hard-deleted.
-        // Query params rather than a path segment: sk contains '#', which terminates a URL path.
-        [HttpDelete]
-        public async Task<IActionResult> Delete(
-            [FromQuery] AnnouncementAudience audience,
-            [FromQuery] string sk)
+        // DELETE /api/announcements/{id} — only a Draft may be hard-deleted.
+        [HttpDelete("{id:int}")]
+        public async Task<IActionResult> Delete(int id)
         {
             var (admin, errorResult) = await FindCurrentAdminAsync();
             if (admin is null)
@@ -184,12 +182,7 @@ namespace Digital_Scholarship_Management_System.API.Controllers
                 return errorResult!;
             }
 
-            if (string.IsNullOrWhiteSpace(sk))
-            {
-                return BadRequest(new { message = "sk is required." });
-            }
-
-            var item = await _announcements.GetAsync(audience, sk);
+            var item = await _announcements.GetAsync(id);
             if (item is null) return NotFound();
 
             if (item.Status != AnnouncementStatus.Draft)
@@ -197,20 +190,22 @@ namespace Digital_Scholarship_Management_System.API.Controllers
                 return Conflict(new { message = "Only draft announcements can be deleted; published ones must be archived." });
             }
 
-            await _announcements.DeleteAsync(audience, sk);
+            await _announcements.DeleteAsync(id);
             return NoContent();
         }
 
-        // Draft -> Published -> Archived, one way. Archived is terminal.
+        // Draft -> Published -> Archived, plus Archived -> Published to undo a takedown.
+        // A draft can never be reached again once published — there is no unpublish.
         private static bool IsAllowedTransition(AnnouncementStatus from, AnnouncementStatus to) =>
             (from, to) switch
             {
                 (AnnouncementStatus.Draft, AnnouncementStatus.Published) => true,
                 (AnnouncementStatus.Published, AnnouncementStatus.Archived) => true,
+                (AnnouncementStatus.Archived, AnnouncementStatus.Published) => true,
                 _ => false,
             };
 
-        // Any signed-in account with a DB row — the feed is FR-35, every role reads it.
+        // Any signed-in account with a DB row — every role reads the feed.
         private async Task<(User? User, IActionResult? Error)> FindCurrentUserAsync()
         {
             var sub = User.FindFirst("sub")?.Value;
@@ -261,8 +256,7 @@ namespace Digital_Scholarship_Management_System.API.Controllers
     // The feed's shape differs from the admin list's: read is per-caller, so it only makes
     // sense here.
     public record AnnouncementFeedItem(
-        string Id,
-        string Sk,
+        int Id,
         string Title,
         string Body,
         AnnouncementAudience Audience,
@@ -272,13 +266,8 @@ namespace Digital_Scholarship_Management_System.API.Controllers
         string CreatedBy,
         bool Read);
 
-    public record MarkReadRequest(string AnnouncementId);
+    public record MarkReadRequest(int AnnouncementId);
 
     public record CreateAnnouncementRequest(string Title, string Body, AnnouncementAudience Audience, AnnouncementStatus Status);
-    public record UpdateAnnouncementRequest(
-        AnnouncementAudience Audience,
-        string Sk,
-        string? Title,
-        string? Body,
-        AnnouncementStatus? Status);
+    public record UpdateAnnouncementRequest(string? Title, string? Body, AnnouncementStatus? Status);
 }

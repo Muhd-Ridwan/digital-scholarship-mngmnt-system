@@ -13,6 +13,8 @@ namespace Digital_Scholarship_Management_System.API.Data
         public DbSet<StudentDocument> StudentDocuments => Set<StudentDocument>();
         public DbSet<ApplicationDocument> ApplicationDocuments => Set<ApplicationDocument>();
         public DbSet<StudentProfile> StudentProfiles => Set<StudentProfile>();
+        public DbSet<Announcement> Announcements => Set<Announcement>();
+        public DbSet<AnnouncementRead> AnnouncementReads => Set<AnnouncementRead>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -54,6 +56,25 @@ namespace Digital_Scholarship_Management_System.API.Data
             modelBuilder.Entity<User>().Property(u => u.Role).HasConversion<string>();
             modelBuilder.Entity<User>().Property(u => u.Status).HasConversion<string>();
             modelBuilder.Entity<User>().Property(u => u.SponsorStatus).HasConversion<string>();
+            modelBuilder.Entity<Announcement>().Property(a => a.Audience).HasConversion<string>();
+            modelBuilder.Entity<Announcement>().Property(a => a.Status).HasConversion<string>();
+
+            modelBuilder.Entity<AnnouncementRead>()
+                .HasOne(r => r.User)
+                .WithMany()
+                .HasForeignKey(r => r.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<AnnouncementRead>()
+                .HasOne(r => r.Announcement)
+                .WithMany(a => a.Reads)
+                .HasForeignKey(r => r.AnnouncementId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Makes marking read twice a no-op instead of a duplicate row.
+            modelBuilder.Entity<AnnouncementRead>()
+                .HasIndex(r => new { r.UserId, r.AnnouncementId })
+                .IsUnique();
 
             // Unique email
             modelBuilder.Entity<User>().HasIndex(u => u.Email).IsUnique();

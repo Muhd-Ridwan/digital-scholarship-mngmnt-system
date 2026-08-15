@@ -55,7 +55,8 @@ builder.Services.AddSingleton<IAmazonDynamoDB>(
     new AmazonDynamoDBClient(awsCredentials, dynamoDbRegionEndpoint));
 
 builder.Services.AddSingleton<AuditLogService>();
-builder.Services.AddSingleton<AnnouncementService>();
+// Scoped, not singleton: it depends on AppDbContext, which is scoped.
+builder.Services.AddScoped<AnnouncementService>();
 
 builder.Services.AddSingleton<IAmazonCognitoIdentityProvider>(
     new AmazonCognitoIdentityProviderClient(awsCredentials, cognitoRegionEndpoint)
@@ -108,8 +109,6 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
-
-app.UseHttpsRedirection();
 
 // This need to put before authorization to activate the policy in request pipeline.
 // So every incoming request got checked against it before proceeding further.

@@ -129,6 +129,23 @@ namespace Digital_Scholarship_Management_System.API.Controllers
             });
         }
 
+        [HttpGet("me/profile")]
+        public async Task<IActionResult> GetMyProfile()
+        {
+            var (user, errorResult) = await FindCurrentStudentAsync();
+            if (user is null)
+            {
+                return errorResult!;
+            }
+
+            if (user.StudentProfile is null)
+            {
+                return NotFound("Profile has not been created yet.");
+            }
+
+            return Ok(ToResponse(user.StudentProfile));
+        }
+
         [HttpPut("me/profile")]
         public async Task<IActionResult> UpdateMyProfile([FromBody] UpdateStudentProfileRequest request)
         {
@@ -511,7 +528,6 @@ namespace Digital_Scholarship_Management_System.API.Controllers
                 .Select(u => new SponsorResponse(
                     u.Id,
                     u.CompanyName ?? u.FullName,
-                    u.SsmNumber,
                     u.CreatedAt,
                     u.SponsorStatus ?? SponsorApprovalStatus.Pending,
                     u.DecidedAt,
@@ -524,7 +540,6 @@ namespace Digital_Scholarship_Management_System.API.Controllers
         private static SponsorResponse Project(User user) => new(
             user.Id,
             user.CompanyName ?? user.FullName,
-            user.SsmNumber,
             user.CreatedAt,
             user.SponsorStatus ?? SponsorApprovalStatus.Pending,
             user.DecidedAt,
@@ -536,7 +551,6 @@ namespace Digital_Scholarship_Management_System.API.Controllers
     public record SponsorResponse(
         int Id,
         string CompanyName,
-        string? SsmNumber,
         DateTime RegisteredAt,
         SponsorApprovalStatus Status,
         DateTime? DecidedAt,

@@ -9,7 +9,6 @@ export type SponsorDecision = 'Pending' | 'Approved' | 'Rejected';
 export interface SponsorProfile {
   id: string;
   companyName: string;
-  ssmNumber: string | null;
   registeredAt: string;
   status: SponsorDecision;
   // Set only once a decision is made.

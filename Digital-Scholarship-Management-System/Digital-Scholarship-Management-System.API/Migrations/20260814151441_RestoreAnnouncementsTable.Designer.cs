@@ -4,6 +4,7 @@ using Digital_Scholarship_Management_System.API.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Digital_Scholarship_Management_System.API.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260814151441_RestoreAnnouncementsTable")]
+    partial class RestoreAnnouncementsTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -99,19 +102,6 @@ namespace Digital_Scholarship_Management_System.API.Migrations
                     b.Property<DateTime?>("DecisionAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<decimal?>("DisbursedAmount")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<DateTime?>("DisbursedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int?>("DisbursedByUserId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("DisbursementStatus")
-                        .HasColumnType("int");
-
                     b.Property<string>("ReviewNotes")
                         .HasColumnType("nvarchar(max)");
 
@@ -131,8 +121,6 @@ namespace Digital_Scholarship_Management_System.API.Migrations
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("DisbursedByUserId");
 
                     b.HasIndex("ReviewedByUserId");
 
@@ -215,9 +203,6 @@ namespace Digital_Scholarship_Management_System.API.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("SponsorId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Status")
                         .HasColumnType("int");
 
                     b.Property<string>("StudyLocation")
@@ -464,11 +449,6 @@ namespace Digital_Scholarship_Management_System.API.Migrations
 
             modelBuilder.Entity("Digital_Scholarship_Management_System.API.Models.Application", b =>
                 {
-                    b.HasOne("Digital_Scholarship_Management_System.API.Models.User", "DisbursedBy")
-                        .WithMany()
-                        .HasForeignKey("DisbursedByUserId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.HasOne("Digital_Scholarship_Management_System.API.Models.User", "ReviewedBy")
                         .WithMany()
                         .HasForeignKey("ReviewedByUserId")
@@ -485,8 +465,6 @@ namespace Digital_Scholarship_Management_System.API.Migrations
                         .HasForeignKey("StudentId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.Navigation("DisbursedBy");
 
                     b.Navigation("ReviewedBy");
 
