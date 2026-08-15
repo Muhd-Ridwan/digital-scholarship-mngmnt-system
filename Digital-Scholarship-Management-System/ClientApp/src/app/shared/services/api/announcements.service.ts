@@ -1,31 +1,90 @@
-import { Injectable } from '@angular/core';
-import { Observable, of } from 'rxjs';
-import { Announcement } from '../../models/announcement.model';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
+import { fetchAuthSession } from 'aws-amplify/auth';
+import { environment } from '../../../../environments/environment';
+import {
+  Announcement,
+  AnnouncementAudience,
+  AnnouncementStatus,
+  FeedAnnouncement,
+} from '../../models/announcement.model';
 
-/**
- * Announcements API (AD2 / FR-31, FR-35). MOCK for now.
- * Phase 1: swap `of(...)` for `this.http.get<Announcement[]>(`${environment.apiUrl}/announcements`)`.
- */
+// Announcements, backed by SQL. Rows are addressed by their integer id.
 @Injectable({ providedIn: 'root' })
 export class AnnouncementsService {
-  getAll(): Observable<Announcement[]> {
-    return of([
-      {
-        id: 'a-1',
-        title: 'Scheduled maintenance this weekend',
-        body: 'The platform will be briefly unavailable on Saturday 02:00–03:00 for maintenance.',
-        audience: 'All',
-        status: 'Published',
-        publishedAt: '10 Jul 2026',
-      },
-      {
-        id: 'a-2',
-        title: 'New sponsor onboarding guidelines',
-        body: 'Sponsors must upload an updated SSM certificate before posting new listings.',
-        audience: 'Sponsor',
-        status: 'Draft',
-        publishedAt: null,
-      },
-    ]);
+  private readonly http = inject(HttpClient);
+
+  private async authHeader(): Promise<{ Authorization: string }> {
+    const session = await fetchAuthSession();
+    const accessToken = session.tokens?.accessToken?.toString();
+    if (!accessToken) {
+      throw new Error('Not authenticated.');
+    }
+    return { Authorization: `Bearer ${accessToken}` };
+  }
+
+  // Admin view — every status, every audience.
+  async getAll(): Promise<Announcement[]> {
+    const headers = await this.authHeader();
+    return firstValueFrom(
+      this.http.get<Announcement[]>(`${environment.apiUrl}/announcements`, { headers }),
+    );
+  }
+
+  // Published items for the caller's own role. The server derives the audience from the
+  // token — there is no parameter to pass, and that is deliberate.
+  async getFeed(): Promise<FeedAnnouncement[]> {
+    const headers = await this.authHeader();
+    return firstValueFrom(
+      this.http.get<FeedAnnouncement[]>(`${environment.apiUrl}/announcements/feed`, { headers }),
+    );
+  }
+
+  // One marker per (user, announcement). Repeating it overwrites the same key, so it is safe
+  // to call again if a click is retried.
+  async markRead(announcementId: number): Promise<void> {
+    const headers = await this.authHeader();
+    await firstValueFrom(
+      this.http.post<void>(
+        `${environment.apiUrl}/announcements/read`,
+        { announcementId },
+        { headers },
+      ),
+    );
+  }
+
+  async create(
+    title: string,
+    body: string,
+    audience: AnnouncementAudience,
+    status: AnnouncementStatus,
+  ): Promise<Announcement> {
+    const headers = await this.authHeader();
+    return firstValueFrom(
+      this.http.post<Announcement>(
+        `${environment.apiUrl}/announcements`,
+        { title, body, audience, status },
+        { headers },
+      ),
+    );
+  }
+
+  async setStatus(item: Announcement, status: AnnouncementStatus): Promise<Announcement> {
+    const headers = await this.authHeader();
+    return firstValueFrom(
+      this.http.put<Announcement>(
+        `${environment.apiUrl}/announcements/${item.id}`,
+        { status },
+        { headers },
+      ),
+    );
+  }
+
+  async remove(item: Announcement): Promise<void> {
+    const headers = await this.authHeader();
+    await firstValueFrom(
+      this.http.delete<void>(`${environment.apiUrl}/announcements/${item.id}`, { headers }),
+    );
   }
 }

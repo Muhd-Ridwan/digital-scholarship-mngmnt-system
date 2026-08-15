@@ -9,6 +9,7 @@ export interface UserProfile {
   email: string;
   fullName: string;
   role: string;
+  createdAt: string;
 }
 
 export interface RegisterRequest {
@@ -20,8 +21,14 @@ export interface RegisterRequest {
   ssmNumber?: string;
 }
 
+export interface RegisterOfficerRequest {
+  username: string;
+  email: string;
+  fullName: string;
+}
+
 export type LoginResult =
-  { status: 'signedIn' } | { status: 'newPasswordRequired' } | { status: 'failed' };
+  { status: 'signedIn' } | { status: 'newPasswordRequired' } | { status: 'locked' } | { status: 'failed' };
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -32,7 +39,26 @@ export class AuthService {
   readonly profile = this._profile.asReadonly();
 
   async login(username: string, password: string): Promise<LoginResult> {
-    const { isSignedIn, nextStep } = await signIn({ username, password });
+    // Clear any stale session first — signIn() throws UserAlreadyAuthenticatedException
+    // otherwise, stranding the user on /login until they clear site data by hand.
+    try {
+      await signOut();
+    } catch {}
+    this.profilePromise = null;
+    this._profile.set(null);
+
+    let isSignedIn: boolean;
+    let nextStep: Awaited<ReturnType<typeof signIn>>['nextStep'];
+    try {
+      ({ isSignedIn, nextStep } = await signIn({ username, password }));
+    } catch (err) {
+      // A Cognito-disabled account throws NotAuthorizedException too, same as a wrong
+      // password — only the message tells them apart.
+      if (/disabled/i.test((err as Error)?.message ?? '')) {
+        return { status: 'locked' };
+      }
+      throw err;
+    }
 
     if (isSignedIn) {
       this.profilePromise = null;
@@ -82,6 +108,41 @@ export class AuthService {
 
   async forgotPassword(email: string): Promise<void> {
     await firstValueFrom(this.http.post(`${environment.apiUrl}/auth/forgot-password`, { email }));
+  }
+
+  // Admin-only — the officer branch of the same /auth/register endpoint, gated server-side
+  // on the caller's own bearer token being an Admin (AuthController.Register).
+  async registerOfficer(request: RegisterOfficerRequest): Promise<void> {
+    const session = await fetchAuthSession();
+    const accessToken = session.tokens?.accessToken?.toString();
+    if (!accessToken) {
+      throw new Error('Not authenticated.');
+    }
+    await firstValueFrom(
+      this.http.post(
+        `${environment.apiUrl}/auth/register`,
+        { ...request, role: 'officer' },
+        { headers: { Authorization: `Bearer ${accessToken}` } },
+      ),
+    );
+  }
+
+  // Admin edits their own full name; email/password stay Cognito-owned.
+  async updateFullName(fullName: string): Promise<UserProfile> {
+    const session = await fetchAuthSession();
+    const accessToken = session.tokens?.accessToken?.toString();
+    if (!accessToken) {
+      throw new Error('Not authenticated.');
+    }
+    const updated = await firstValueFrom(
+      this.http.put<UserProfile>(
+        `${environment.apiUrl}/users/me`,
+        { fullName },
+        { headers: { Authorization: `Bearer ${accessToken}` } },
+      ),
+    );
+    this._profile.set(updated);
+    return updated;
   }
 
   async getCurrentUsername(): Promise<string | null> {

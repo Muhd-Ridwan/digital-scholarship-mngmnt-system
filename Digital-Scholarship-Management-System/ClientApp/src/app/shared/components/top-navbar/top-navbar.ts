@@ -2,6 +2,7 @@ import { Component, computed, inject, input, output, signal } from '@angular/cor
 import { Router, RouterLink } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
 import { ThemeService } from '../../services/theme.service';
+import { AnnouncementBell } from '../announcement-bell/announcement-bell';
 
 export interface NavLink {
   label: string;
@@ -12,7 +13,7 @@ export interface NavLink {
 @Component({
   selector: 'app-top-navbar',
   standalone: true,
-  imports: [RouterLink, LucideAngularModule],
+  imports: [RouterLink, LucideAngularModule, AnnouncementBell],
   templateUrl: './top-navbar.html',
 })
 export class TopNavbar {
