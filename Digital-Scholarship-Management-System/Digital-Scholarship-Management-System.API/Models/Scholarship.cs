@@ -4,7 +4,7 @@ namespace Digital_Scholarship_Management_System.API.Models
 {
     public enum ScholarshipStatus { 
         Draft,
-        Active,
+        Open,
         Closed
     }
     public class Scholarship

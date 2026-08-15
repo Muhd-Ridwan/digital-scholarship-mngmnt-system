@@ -8,10 +8,10 @@ import { STATUS_LABELS, STATUS_CLASSES } from '../../components/sponsor-listings
 import { LucideAngularModule } from 'lucide-angular';
 
 @Component({
-selector: 'app-sponsor-scholarship-detail',
-standalone: true,
-imports: [RouterLink, DatePipe, CurrencyPipe, LucideAngularModule],
-templateUrl: './sponsor-scholarship-detail.html',
+    selector: 'app-sponsor-scholarship-detail',
+    standalone: true,
+    imports: [RouterLink, DatePipe, CurrencyPipe, LucideAngularModule],
+    templateUrl: './sponsor-scholarship-detail.html',
 })
 export class SponsorScholarshipDetail {
     private readonly route = inject(ActivatedRoute);

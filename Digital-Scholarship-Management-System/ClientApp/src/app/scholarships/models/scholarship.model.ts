@@ -1,4 +1,4 @@
-export type ScholarshipStatus = 'draft' | 'active' | 'closed';
+export type ScholarshipStatus = 'draft' | 'open' | 'closed';
 
 export interface Scholarship {
   id: number;

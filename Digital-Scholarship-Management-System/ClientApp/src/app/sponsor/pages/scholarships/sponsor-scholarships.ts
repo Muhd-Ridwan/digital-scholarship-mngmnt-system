@@ -9,10 +9,10 @@ import { LucideAngularModule } from 'lucide-angular';
 
 
 @Component({
-selector: 'app-sponsor-scholarships',
-standalone: true,
-imports: [RouterLink, DatePipe, CurrencyPipe, LucideAngularModule],
-templateUrl: './sponsor-scholarships.html',
+    selector: 'app-sponsor-scholarships',
+    standalone: true,
+    imports: [RouterLink, DatePipe, CurrencyPipe, LucideAngularModule],
+    templateUrl: './sponsor-scholarships.html',
 })
 export class SponsorScholarships {
     private readonly scholarshipsApi = inject(ScholarshipService);

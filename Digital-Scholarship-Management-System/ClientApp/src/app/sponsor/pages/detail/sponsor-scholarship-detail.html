@@ -1,6 +1,6 @@
 <div class="flex flex-col gap-6">
   <a
-    routerLink="/sponsor/scholarships"
+    routerLink="/sponsor"
     class="flex w-fit items-center gap-1 text-sm text-mist-400 hover:text-mist-100"
   >
     <lucide-icon name="arrow-left" class="h-4 w-4"></lucide-icon>
@@ -89,7 +89,7 @@
             Delete
           </button>
         }
-        @if (s.status === 'active') {
+        @if (s.status === 'open') {
           <button
             type="button"
             (click)="onClose()"

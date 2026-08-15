@@ -48,7 +48,7 @@ namespace Digital_Scholarship_Management_System.API.Controllers
         {
             var scholarships = await _db.Scholarships
                 .Include(s => s.Sponsor)
-                .Where(s => s.Status == ScholarshipStatus.Active)
+                .Where(s => s.Status == ScholarshipStatus.Open)
                 .Select(s => new
                 {
                     s.Id,
@@ -71,7 +71,7 @@ namespace Digital_Scholarship_Management_System.API.Controllers
         {
             var scholarship = await _db.Scholarships
                 .Include(s => s.Sponsor)
-                .Where(s => s.Id == id && s.Status == ScholarshipStatus.Active)
+                .Where(s => s.Id == id && s.Status == ScholarshipStatus.Open)
                 .Select(s => new
                 {
                     s.Id,
@@ -187,7 +187,7 @@ namespace Digital_Scholarship_Management_System.API.Controllers
         private static string ToStatusString(ScholarshipStatus status) => status switch
         {
             ScholarshipStatus.Draft => "draft",
-            ScholarshipStatus.Active => "active",
+            ScholarshipStatus.Open => "open",
             ScholarshipStatus.Closed => "closed",
             _ => status.ToString().ToLowerInvariant(),
         };
@@ -248,7 +248,7 @@ namespace Digital_Scholarship_Management_System.API.Controllers
                 return BadRequest("Only draft listings can be published.");
             }
 
-            scholarship.Status = ScholarshipStatus.Active;
+            scholarship.Status = ScholarshipStatus.Open;
             await _db.SaveChangesAsync();
 
             await _auditLog.LogAsync(sponsor, $"Published scholarship listing '{scholarship.Title}' (ID {scholarship.Id})");
@@ -271,9 +271,9 @@ namespace Digital_Scholarship_Management_System.API.Controllers
                 return NotFound("Scholarship not found");
             }
 
-            if (scholarship.Status != ScholarshipStatus.Active)
+            if (scholarship.Status != ScholarshipStatus.Open)
             {
-                return BadRequest("Only active listings can be closed.");
+                return BadRequest("Only open listings can be closed.");
             }
 
             scholarship.Status = ScholarshipStatus.Closed;
