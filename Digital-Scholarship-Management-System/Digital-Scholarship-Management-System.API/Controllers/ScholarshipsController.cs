@@ -42,6 +42,36 @@ namespace Digital_Scholarship_Management_System.API.Controllers
             _auditLog = auditLog;
         }
 
+        [HttpGet("mine")]
+        [Authorize]
+        public async Task<IActionResult> GetMine()
+        {
+            var (sponsor, errorResult) = await FindCurrentSponsorAsync();
+            if (sponsor is null)
+            {
+                return errorResult!;
+            }
+
+            var scholarships = await _db.Scholarships
+                .Where(s => s.SponsorId == sponsor.Id)
+                .Select(s => new
+                {
+                    s.Id,
+                    s.Title,
+                    s.Description,
+                    s.FundType,
+                    s.StudyLocation,
+                    s.OrganisationType,
+                    s.FundingAmount,
+                    s.Deadline,
+                    Status = ToStatusString(s.Status),
+                    Applications = s.Applications.Count()
+                })
+                .ToListAsync();
+
+            return Ok(scholarships);
+        }
+
         // For students
         [HttpGet]
         public async Task<IActionResult> GetAll()
@@ -130,36 +160,6 @@ namespace Digital_Scholarship_Management_System.API.Controllers
             }
 
             return Ok(scholarship);
-        }
-
-        [HttpGet("mine")]
-        [Authorize]
-        public async Task<IActionResult> GetMine()
-        {
-            var (sponsor, errorResult) = await FindCurrentSponsorAsync();
-            if (sponsor is null)
-            {
-                return errorResult!;
-            }
-
-            var scholarships = await _db.Scholarships
-                .Where(s => s.SponsorId == sponsor.Id)
-                .Select(s => new
-                {
-                    s.Id,
-                    s.Title,
-                    s.Description,
-                    s.FundType,
-                    s.StudyLocation,
-                    s.OrganisationType,
-                    s.FundingAmount,
-                    s.Deadline,
-                    Status = ToStatusString(s.Status),
-                    Applications = s.Applications.Count()
-                })
-                .ToListAsync();
-
-            return Ok(scholarships);
         }
 
         private async Task<(User? User, IActionResult? Error)> FindCurrentSponsorAsync()
