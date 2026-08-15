@@ -10,13 +10,13 @@ export interface SponsorListingItem {
   applicantCount: number;
 }
 
-const STATUS_LABELS: Record<ScholarshipStatus, string> = {
+export const STATUS_LABELS: Record<ScholarshipStatus, string> = {
   draft: 'Draft',
   active: 'Active',
   closed: 'Closed',
 };
 
-const STATUS_CLASSES: Record<ScholarshipStatus, string> = {
+export const STATUS_CLASSES: Record<ScholarshipStatus, string> = {
   draft: 'bg-status-warning/10 text-status-warning',
   active: 'bg-status-success/10 text-status-success',
   closed: 'bg-mist-400/10 text-mist-400',
