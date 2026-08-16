@@ -473,15 +473,6 @@ namespace Digital_Scholarship_Management_System.API.Controllers
                     new { message = "Could not reach Cognito. Please try again." });
             }
 
-            var temporaryPassword = GenerateTemporaryPassword();
-            await _cognito.AdminSetUserPasswordAsync(new AdminSetUserPasswordRequest
-            {
-                UserPoolId = _config["Cognito:UserPoolId"],
-                Username = user.CognitoUsername,
-                Password = temporaryPassword,
-                Permanent = false,
-            });
-
             user.Status = UserStatus.Active;
             user.SponsorStatus = SponsorApprovalStatus.Approved;
             user.DecidedAt = DateTime.UtcNow;
@@ -490,7 +481,15 @@ namespace Digital_Scholarship_Management_System.API.Controllers
 
             await _auditLog.LogAsync(admin, $"Approved sponsor {user.Email}");
 
-            await SendOnboardingEmailAsync(user.Email, user.CognitoUsername, temporaryPassword, user.FullName);
+            try
+            {
+                var httpClientFactory = HttpContext.RequestServices.GetRequiredService<IHttpClientFactory>();
+                await AuthController.SendOnboardingEmailAsync(httpClientFactory, _config, user.Email, user.CognitoUsername, temporaryPassword, user.FullName);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Approved sponsor {UserId} but the credentials email failed", user.Id);
+            }
 
             return Ok(Project(user));
         }
