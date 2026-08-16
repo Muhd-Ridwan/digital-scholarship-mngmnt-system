@@ -18,6 +18,7 @@
           <tr class="border-b border-ink-800 text-xs tracking-wide text-mist-400 uppercase">
             <th class="py-2 pr-4 font-medium">Sponsor</th>
             <th class="py-2 pr-4 font-medium">Registered</th>
+            <th class="py-2 pr-4 font-medium">Certificate</th>
             <th class="py-2 text-right font-medium">Decision</th>
           </tr>
         </thead>
@@ -26,6 +27,15 @@
             <tr class="border-b border-ink-800/60">
               <td class="py-2.5 pr-4 text-mist-100">{{ row.companyName }}</td>
               <td class="py-2.5 pr-4 text-mist-400">{{ formatDate(row.registeredAt) }}</td>
+              <td class="py-2.5 pr-4">
+                <button
+                  type="button"
+                  (click)="viewCertificate(row)"
+                  class="text-xs font-medium text-gold-500 underline hover:text-mist-100"
+                >
+                  View
+                </button>
+              </td>
               <td class="py-2.5 text-right whitespace-nowrap">
                 <button
                   type="button"
@@ -45,7 +55,7 @@
             </tr>
           } @empty {
             <tr>
-              <td colspan="3" class="py-6 text-sm text-mist-400">
+              <td colspan="4" class="py-6 text-sm text-mist-400">
                 {{ loading() ? 'Loading…' : 'No sponsors awaiting approval.' }}
               </td>
             </tr>

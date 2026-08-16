@@ -11,6 +11,7 @@ export interface Scholarship {
   deadline: string;
   status: ScholarshipStatus;
   applications: number;
+  disbursed: number;
 }
 
 export interface CreateScholarshipRequest {

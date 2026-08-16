@@ -65,7 +65,10 @@ namespace Digital_Scholarship_Management_System.API.Controllers
                     s.FundingAmount,
                     s.Deadline,
                     Status = ToStatusString(s.Status),
-                    Applications = s.Applications.Count()
+                    Applications = s.Applications.Count(),
+                    Disbursed = s.Applications
+                      .Where(a => a.DisbursementStatus == DisbursementStatus.Disbursed)
+                      .Sum(a => (decimal?)a.DisbursedAmount) ?? 0,
                 })
                 .ToListAsync();
 

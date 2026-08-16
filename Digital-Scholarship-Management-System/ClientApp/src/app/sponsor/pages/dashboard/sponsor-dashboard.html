@@ -2,32 +2,30 @@
   <app-dashboard-header
     [fullName]="profile()?.fullName ?? ''"
     subtitle="Here's an overview of your sponsored scholarships."
-    primaryActionLabel="Create Scholarship"
-    primaryActionIcon="circle-plus"
   />
 
   <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
     <app-stat-card
       label="Scholarships Available"
-      value="5"
+      [value]="openCount().toString()"
       icon="graduation-cap"
       description="Currently open"
     />
     <app-stat-card
       label="Total Applicants"
-      value="47"
+      [value]="totalApplicants().toString()"
       icon="users"
       description="Across all listings"
     />
     <app-stat-card
       label="Total Funded"
-      value="RM 25,000"
+      [value]="(totalFunded() | currency: 'MYR') ?? 'RM 0.00'"
       icon="hand-coins"
-      description="This year"
+      description="All time"
     />
     <app-stat-card
       label="Closed Listings"
-      value="2"
+      [value]="closedCount().toString()"
       icon="history"
       tone="warning"
       description="No longer accepting"
