@@ -1,15 +1,17 @@
-﻿using Amazon.CognitoIdentityProvider;
+﻿using System.ComponentModel.DataAnnotations;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
+using System.Security.Cryptography;
+using Amazon.CognitoIdentityProvider;
 using Amazon.CognitoIdentityProvider.Model;
+using Amazon.S3;
+using Amazon.S3.Model;
 using Digital_Scholarship_Management_System.API.Data;
 using Digital_Scholarship_Management_System.API.Models;
 using Digital_Scholarship_Management_System.API.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.ComponentModel.DataAnnotations;
-using System.Net.Http.Headers;
-using System.Net.Http.Json;
-using System.Security.Cryptography;
 
 namespace Digital_Scholarship_Management_System.API.Controllers
 {
@@ -27,8 +29,14 @@ namespace Digital_Scholarship_Management_System.API.Controllers
         public string Role { get; set; } = string.Empty;
 
         public string? CompanyName { get; set; }
+
+        [RegularExpression(@"^\d{7}-[A-Z]$|^\d{12}$", ErrorMessage = "SSM number must be either 7 digits + a letter (e.g. 1456789 - A) or 12 digits.")]
         public string? SsmNumber { get; set; }
+
+        public IFormFile? Certificate { get; set; }
     }
+
+
 
     public class ForgotPasswordRequest
     {
@@ -40,38 +48,50 @@ namespace Digital_Scholarship_Management_System.API.Controllers
     [Route("api/auth")]
     public class AuthController : ControllerBase // Because only use it as API, no view so thats why have Base
     {
+        private static readonly string[] AllowedExtensions = { ".pdf", ".doc", ".docx", ".png", ".jpg", ".jpeg" };
+        private const long MaxFileSizeBytes = 10 * 1024 * 1024; // 10MB
+        private static readonly Dictionary<string, byte[][]> FileSignatures = new()
+        {
+            [".pdf"] = new[] { new byte[] { 0x25, 0x50, 0x44, 0x46 } },
+            [".png"] = new[] { new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A } },
+            [".jpg"] = new[] { new byte[] { 0xFF, 0xD8, 0xFF } },
+            [".jpeg"] = new[] { new byte[] { 0xFF, 0xD8, 0xFF } },
+            [".docx"] = new[] { new byte[] { 0x50, 0x4B, 0x03, 0x04 } },
+            [".doc"] = new[] { new byte[] { 0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1 } },
+        };
+
         private readonly IAmazonCognitoIdentityProvider _cognito;
         private readonly AppDbContext _db;
         private readonly IConfiguration _config;
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly AuditLogService _auditLog;
+        private readonly IAmazonS3 _s3;
+        private readonly string _bucketName;
 
-        public AuthController(IAmazonCognitoIdentityProvider cognito, AppDbContext db, IConfiguration config, IHttpClientFactory httpClientFactory, AuditLogService auditLog)
+        public AuthController(IAmazonCognitoIdentityProvider cognito, AppDbContext db, IConfiguration config, IHttpClientFactory httpClientFactory, AuditLogService auditLog, IAmazonS3 s3)
         {
             _cognito = cognito;
             _db = db;
             _config = config;
             _httpClientFactory = httpClientFactory;
             _auditLog = auditLog;
+            _s3 = s3;
+            _bucketName = config["S3:BucketName"]!;
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegisterRequest request)
+        public async Task<IActionResult> Register([FromForm] RegisterRequest request)
         {
-            if(request.Role != "user" && request.Role != "sponsor" && request.Role != "officer")
+            if (request.Role != "user" && request.Role != "sponsor" && request.Role != "officer")
             {
                 return BadRequest("Role must be 'user', 'sponsor', or 'officer'.");
             }
 
-            // Set when an Admin creates the account, null when the user registers themselves.
             User? caller = null;
 
             var isOfficer = request.Role == "officer";
             if (isOfficer)
             {
-                // Officer accounts cannot self-register — only an authenticated Admin may
-                // call this branch. Checked against the DB (same CognitoSub -> Role lookup as
-                // UsersController.Me()), since the JWT itself carries no app-role claim yet.
                 var callerSub = User.FindFirst("sub")?.Value;
                 caller = callerSub is null
                     ? null
@@ -82,9 +102,42 @@ namespace Digital_Scholarship_Management_System.API.Controllers
                 }
             }
 
-            if (request.Role == "sponsor" && (string.IsNullOrWhiteSpace(request.CompanyName) || string.IsNullOrWhiteSpace(request.SsmNumber)))
+            var isSponsor = request.Role == "sponsor";
+
+            if (isSponsor && (string.IsNullOrWhiteSpace(request.CompanyName) || string.IsNullOrWhiteSpace(request.SsmNumber)))
             {
                 return BadRequest("Company name and SSM number are required for sponsor registration.");
+            }
+
+            if (isSponsor && (request.Certificate is null || request.Certificate.Length == 0))
+            {
+                return BadRequest("A registration certificate is required for sponsor registration.");
+            }
+
+            string? certExtension = null;
+            if (isSponsor)
+            {
+                var file = request.Certificate!;
+                if (file.Length > MaxFileSizeBytes)
+                {
+                    return BadRequest("Certificate exceeds the 10 MB size limit.");
+                }
+
+                certExtension = Path.GetExtension(file.FileName).ToLowerInvariant();
+                if (!AllowedExtensions.Contains(certExtension))
+                {
+                    return BadRequest("Unsupported file type. Allowed types: .pdf, .doc, .docx, .png, .jpg, .jpeg");
+                }
+
+                await using var stream = file.OpenReadStream();
+                var header = new byte[8];
+                await stream.ReadAsync(header, 0, header.Length);
+                stream.Position = 0;
+
+                if (!HasValidSignature(header, certExtension))
+                {
+                    return BadRequest("Certificate content does not match its extension.");
+                }
             }
 
             if (await _db.Users.AnyAsync(u => u.Email == request.Email))
@@ -104,10 +157,10 @@ namespace Digital_Scholarship_Management_System.API.Controllers
                     Username = request.Username,
                     MessageAction = MessageActionType.SUPPRESS,
                     UserAttributes = new List<AttributeType>
-                    {
-                        new() { Name = "email", Value = request.Email },
-                        new() { Name = "email_verified", Value = "true" },
-                    },
+              {
+                  new() { Name = "email", Value = request.Email },
+                  new() { Name = "email_verified", Value = "true" },
+              },
                 });
             }
             catch (UsernameExistsException)
@@ -117,6 +170,34 @@ namespace Digital_Scholarship_Management_System.API.Controllers
 
             var sub = createUserResponse.User.Attributes.First(a => a.Name == "sub").Value;
 
+            // S3 Key creation for certificate, add into folder sponsorcertificate in S3.
+            string? certificateS3Key = null;
+            if (isSponsor)
+            {
+                var file = request.Certificate!;
+                certificateS3Key = $"sponsorcertificate/{sub}/{Guid.NewGuid()}{certExtension}";
+                try
+                {
+                    await using var stream = file.OpenReadStream();
+                    await _s3.PutObjectAsync(new PutObjectRequest
+                    {
+                        BucketName = _bucketName,
+                        Key = certificateS3Key,
+                        InputStream = stream,
+                        ContentType = file.ContentType,
+                    });
+                }
+                catch (Exception ex)
+                {
+                    await _cognito.AdminDeleteUserAsync(new AdminDeleteUserRequest
+                    {
+                        UserPoolId = userPoolId,
+                        Username = request.Username,
+                    });
+                    return StatusCode(StatusCodes.Status500InternalServerError, "Could not upload the certificate. Please try again.");
+                }
+            }
+
             await _cognito.AdminSetUserPasswordAsync(new AdminSetUserPasswordRequest
             {
                 UserPoolId = userPoolId,
@@ -124,8 +205,6 @@ namespace Digital_Scholarship_Management_System.API.Controllers
                 Password = temporaryPassword,
                 Permanent = false,
             });
-
-            var isSponsor = request.Role == "sponsor";
 
             if (isSponsor)
             {
@@ -146,6 +225,8 @@ namespace Digital_Scholarship_Management_System.API.Controllers
                 SponsorStatus = isSponsor ? SponsorApprovalStatus.Pending : null,
                 CompanyName = isSponsor ? request.CompanyName : null,
                 SsmNumber = isSponsor ? request.SsmNumber : null,
+                CertificateS3Key = certificateS3Key,
+                CertificateFileName = isSponsor ? request.Certificate!.FileName : null,
                 CreatedAt = DateTime.UtcNow,
             };
 
@@ -161,10 +242,13 @@ namespace Digital_Scholarship_Management_System.API.Controllers
                     UserPoolId = userPoolId,
                     Username = request.Username,
                 });
+                if (certificateS3Key is not null)
+                {
+                    await _s3.DeleteObjectAsync(_bucketName, certificateS3Key);
+                }
                 throw;
             }
 
-            // Log against the Admin if they created it, otherwise against the new account.
             if (caller is not null)
             {
                 await _auditLog.LogAsync(caller, $"Registered {request.Role} account for {request.Email}");
@@ -179,6 +263,15 @@ namespace Digital_Scholarship_Management_System.API.Controllers
                 await SendOnboardingEmailAsync(_httpClientFactory, _config, request.Email, request.Username, temporaryPassword, request.FullName);
             }
             return Ok(new { message = "Registration successful." });
+        }
+
+        private static bool HasValidSignature(byte[] header, string extension)
+        {
+            if (!FileSignatures.TryGetValue(extension, out var signatures))
+            {
+                return false;
+            }
+            return signatures.Any(sig => header.Length >= sig.Length && header.Take(sig.Length).SequenceEqual(sig));
         }
 
         [HttpPost("forgot-password")]

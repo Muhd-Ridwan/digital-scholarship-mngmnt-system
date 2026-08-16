@@ -33,6 +33,16 @@ namespace Digital_Scholarship_Management_System.API.Data
                 .HasForeignKey(a => a.ReviewedByUserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            modelBuilder.Entity<Application>()
+                .HasOne(a => a.DisbursedBy)
+                .WithMany()
+                .HasForeignKey(a => a.DisbursedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Application>()
+                .Property(a => a.DisbursedAmount)
+                .HasPrecision(18, 2);
+
             modelBuilder.Entity<Scholarship>()
                 .HasOne(s => s.Sponsor)
                 .WithMany(u => u.Scholarships)

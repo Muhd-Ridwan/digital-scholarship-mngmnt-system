@@ -39,6 +39,8 @@ namespace Digital_Scholarship_Management_System.API.Models
         public string? DecidedBy { get; set; }
         public string? CompanyName { get; set; }
         public string? SsmNumber { get; set; }
+        public string? CertificateS3Key { get; set; }
+        public string? CertificateFileName { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public UserStatus Status {  get; set; } = UserStatus.Active;
 

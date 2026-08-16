@@ -103,6 +103,14 @@ export class UsersService {
       ),
     );
   }
+
+  async getCertificateUrl(id: string): Promise<string> {
+    const headers = await this.authHeader();
+    const { url } = await firstValueFrom(
+      this.http.get<{ url: string }>(`${environment.apiUrl}/users/${id}/certificate`, { headers }),
+    );
+    return url;
+  }
 }
 
 function toSponsor(sponsor: ApiSponsor): SponsorProfile {

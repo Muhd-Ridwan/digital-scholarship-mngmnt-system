@@ -1,12 +1,17 @@
+using System.ComponentModel.DataAnnotations;
+using System.Net.Http.Headers;
+using System.Security.Cryptography;
 using Amazon.CognitoIdentityProvider;
 using Amazon.CognitoIdentityProvider.Model;
+using Amazon.Runtime;
+using Amazon.S3;
+using Amazon.S3.Model;
 using Digital_Scholarship_Management_System.API.Data;
 using Digital_Scholarship_Management_System.API.Models;
+using Digital_Scholarship_Management_System.API.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.ComponentModel.DataAnnotations;
-using Digital_Scholarship_Management_System.API.Services;
 
 namespace Digital_Scholarship_Management_System.API.Controllers
 {
@@ -66,14 +71,20 @@ namespace Digital_Scholarship_Management_System.API.Controllers
         private readonly AuditLogService _auditLog;
         private readonly IAmazonCognitoIdentityProvider _cognito;
         private readonly IConfiguration _config;
+        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly IAmazonS3 _s3;
+        private readonly string _bucketName;
 
-        public UsersController(AppDbContext db, ILogger<UsersController> logger, AuditLogService auditLog, IAmazonCognitoIdentityProvider cognito, IConfiguration config)
+        public UsersController(AppDbContext db, ILogger<UsersController> logger, AuditLogService auditLog, IAmazonCognitoIdentityProvider cognito, IConfiguration config, IHttpClientFactory httpClientFactory, IAmazonS3 s3)
         {
             _db = db;
             _logger = logger;
             _auditLog = auditLog;
             _cognito = cognito;
             _config = config;
+            _httpClientFactory = httpClientFactory;
+            _s3 = s3;
+            _bucketName = config["S3:BucketName"]!;
         }
 
         // GET /api/users — admin only. [Authorize] alone would let any signed-in student
@@ -462,6 +473,15 @@ namespace Digital_Scholarship_Management_System.API.Controllers
                     new { message = "Could not reach Cognito. Please try again." });
             }
 
+            var temporaryPassword = GenerateTemporaryPassword();
+            await _cognito.AdminSetUserPasswordAsync(new AdminSetUserPasswordRequest
+            {
+                UserPoolId = _config["Cognito:UserPoolId"],
+                Username = user.CognitoUsername,
+                Password = temporaryPassword,
+                Permanent = false,
+            });
+
             user.Status = UserStatus.Active;
             user.SponsorStatus = SponsorApprovalStatus.Approved;
             user.DecidedAt = DateTime.UtcNow;
@@ -470,22 +490,34 @@ namespace Digital_Scholarship_Management_System.API.Controllers
 
             await _auditLog.LogAsync(admin, $"Approved sponsor {user.Email}");
 
-            try
-            {
-                var httpClientFactory = HttpContext.RequestServices.GetRequiredService<IHttpClientFactory>();
-                await AuthController.SendOnboardingEmailAsync(httpClientFactory, _config, user.Email, user.CognitoUsername, temporaryPassword, user.FullName);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Approved sponsor {UserId} but the credentials email failed", user.Id);
-            }
+            await SendOnboardingEmailAsync(user.Email, user.CognitoUsername, temporaryPassword, user.FullName);
 
             return Ok(Project(user));
         }
 
-        // POST /api/users/{id}/reject-sponsor — refuse the application outright. Deletes the
-        // Cognito user so sign-in is impossible, and keeps the database row as the record of
-        // the decision.
+        [HttpGet("{id}/certificate")]
+        public async Task<IActionResult> GetCertificateUrl(int id)
+        {
+            var (admin, errorResult) = await FindCurrentAdminAsync();
+            if (admin is null) return errorResult!;
+
+            var user = await _db.Users.FindAsync(id);
+            if (user?.CertificateS3Key is null) return NotFound();
+
+            var url = await _s3.GetPreSignedURLAsync(new GetPreSignedUrlRequest
+            {
+                BucketName = _bucketName,
+                Key = user.CertificateS3Key,
+                Expires = DateTime.UtcNow.AddMinutes(15),
+            });
+            return Ok(new { url });
+        }
+
+        // POST /api/users/{id}/reject-sponsor — refuse posting rights, keep the account.
+        // Enables the Cognito user like approval does: registration disabled it only for the
+        // pending window, and sign-in is governed by lock/unlock, not by this decision.
+        // Pending from the Sponsor side: rejection is stored but nothing enforces it yet.
+        // POST /api/scholarships must refuse callers whose SponsorStatus is not Approved.
         [HttpPost("{id:int}/reject-sponsor")]
         public async Task<IActionResult> RejectSponsor(int id)
         {
@@ -589,8 +621,53 @@ namespace Digital_Scholarship_Management_System.API.Controllers
             user.CreatedAt,
             user.SponsorStatus ?? SponsorApprovalStatus.Pending,
             user.DecidedAt,
-            user.DecidedBy);
+            user.DecidedBy
+        );
+
+        private static string GenerateTemporaryPassword()
+        {
+            const string upper = "ABCDEFGHIJKLMNPQRSTUVWXYZ";
+            const string lower = "abcdefghijklmnpqrstuvwxyz";
+            const string digits = "23456789";
+            const string symbols = "!@#$%^&*";
+            const string all = upper + lower + digits + symbols;
+
+            var chars = new char[12];
+            for (var i = 0; i < chars.Length; i++)
+            {
+                chars[i] = all[RandomNumberGenerator.GetInt32(all.Length)];
+            }
+            chars[0] = upper[RandomNumberGenerator.GetInt32(upper.Length)];
+            chars[1] = lower[RandomNumberGenerator.GetInt32(lower.Length)];
+            chars[2] = digits[RandomNumberGenerator.GetInt32(digits.Length)];
+            chars[3] = symbols[RandomNumberGenerator.GetInt32(symbols.Length)];
+
+            return new string(chars);
+        }
+
+
+        // For sponsor, to send email temp password at approval time from admin.
+        private async Task SendOnboardingEmailAsync(string toEmail, string username, string temporaryPassword, string fullName)
+        {
+            var loginUrl = $"{_config["Frontend:BaseUrl"]}/login";
+            var client = _httpClientFactory.CreateClient();
+            client.BaseAddress = new Uri("https://api.resend.com/");
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _config["Resend:ApiKey"]);
+
+            await client.PostAsJsonAsync("emails", new
+            {
+                from = "scholarship@dev-r.org",
+                to = new[] { toEmail },
+                subject = "Your Scholarship Management System account",
+                html = $"<p>Hi {fullName},</p><p>Username: <strong>{username}</strong><p>Temporary password: <strong>{temporaryPassword}</strong></p>" +
+                $"<p>You'll be asked to set a new password the first time you log in.</p>" +
+                $"<p>You must signed in and changed password within 7 Days</p>" +
+                $"<p>Click <a href=\"{loginUrl}\">here</a> to login</p>"
+            });
+        }
     }
+
+
 
     public record SetStatusRequest(UserStatus Status);
     public record UpdateProfileRequest(string FullName);
@@ -600,5 +677,6 @@ namespace Digital_Scholarship_Management_System.API.Controllers
         DateTime RegisteredAt,
         SponsorApprovalStatus Status,
         DateTime? DecidedAt,
-        string? DecidedBy);
+        string? DecidedBy
+    );
 }

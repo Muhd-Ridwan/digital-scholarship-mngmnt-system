@@ -102,8 +102,17 @@ export class AuthService {
     } catch {}
   }
 
-  async register(request: RegisterRequest): Promise<void> {
-    await firstValueFrom(this.http.post(`${environment.apiUrl}/auth/register`, request));
+  async register(request: RegisterRequest, certificate?: File): Promise<void> {
+    const formData = new FormData();
+    formData.append('username', request.username);
+    formData.append('email', request.email);
+    formData.append('fullName', request.fullName);
+    formData.append('role', request.role);
+    if (request.companyName) formData.append('companyName', request.companyName);
+    if (request.ssmNumber) formData.append('ssmNumber', request.ssmNumber);
+    if (certificate) formData.append('certificate', certificate);
+
+    await firstValueFrom(this.http.post(`${environment.apiUrl}/auth/register`, formData));
   }
 
   async forgotPassword(email: string): Promise<void> {
@@ -118,10 +127,17 @@ export class AuthService {
     if (!accessToken) {
       throw new Error('Not authenticated.');
     }
+
+    const formData = new FormData();
+    formData.append('username', request.username);
+    formData.append('email', request.email);
+    formData.append('fullName', request.fullName);
+    formData.append('role', 'officer');
+
     await firstValueFrom(
       this.http.post(
         `${environment.apiUrl}/auth/register`,
-        { ...request, role: 'officer' },
+        formData,
         { headers: { Authorization: `Bearer ${accessToken}` } },
       ),
     );

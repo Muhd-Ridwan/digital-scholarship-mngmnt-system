@@ -11,8 +11,8 @@
           formControlName="username"
           class="mt-1 w-full rounded-lg border border-ink-800 bg-ink-950 px-3 py-2 text-mist-100"
         />
-        @if (form.controls.username.invalid && form.controls.username.touched) {
-          <p class="mt-1 text-xs text-status-danger">Username is required</p>
+        @if (form.controls.username.errors?.['pattern'] && form.controls.username.touched) {
+          <p class="mt-1 text-xs text-status-danger">Username cannot contain spaces or unsupported characters.</p>
         }
       </div>
       <div>
@@ -62,7 +62,7 @@
             id="companyName"
             type="text"
             formControlName="companyName"
-            class="mt-1 w-full rounded-lg border border-ink-800 bg-ink-900 px-3 py-2 text-mist-100"
+            class="mt-1 w-full rounded-lg border border-ink-800 bg-ink-950 px-3 py-2 text-mist-100"
           />
           @if (form.controls.companyName.invalid && form.controls.companyName.touched) {
             <p class="mt-1 text-xs text-status-danger">Company name is required</p>
@@ -80,6 +80,21 @@
           @if (form.controls.ssmNumber.invalid && form.controls.ssmNumber.touched) {
             <p class="mt-1 text-xs text-status-danger">SSM number is required</p>
           }
+          @if (form.controls.ssmNumber.errors?.['pattern'] && form.controls.ssmNumber.touched) {
+            <p class="mt-1 text-xs text-status-danger">Format: 1234567-X or 202601234567</p>
+          }
+        </div>
+
+        <div>
+          <label for="certificate" class="text-sm text-mist-400">Registration Certificate</label>
+          <input
+            id="certificate"
+            type="file"
+            accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
+            (change)="onCertificateChange($event)"
+            class="mt-1 w-full rounded-lg border border-ink-800 bg-ink-950 px-3 py-2 text-mist-100 file:mr-3 file:rounded-md file:border-0 file:bg-ink-800 file:px-3 file:py-1.5 file:text-sm file:text-mist-100"
+          />
+          <p class="mt-1 text-xs text-mist-400">PDF, DOC, DOCX, PNG, or JPG — max 10MB</p>
         </div>
       }
       <p class="mt-4 text-center text-sm text-mist-400">
