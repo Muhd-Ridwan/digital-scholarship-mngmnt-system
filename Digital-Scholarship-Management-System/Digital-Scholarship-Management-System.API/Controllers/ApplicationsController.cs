@@ -129,6 +129,10 @@ namespace Digital_Scholarship_Management_System.API.Controllers
                 {
                     await _s3.DeleteObjectAsync(_bucketName, key);
                 }
+                // Delete ApplicationDocument records first
+                _db.ApplicationDocuments.RemoveRange(newApplicationDocuments);
+                //during merge accept this - jenna
+                // Then delete the Application
                 _db.Applications.Remove(application);
                 await _db.SaveChangesAsync();
 

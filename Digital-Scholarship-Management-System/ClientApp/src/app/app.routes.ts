@@ -9,6 +9,7 @@ import { ScholarshipList } from './scholarships/pages/list/scholarship-list';
 import { ScholarshipDetail } from './scholarships/pages/detail/scholarship-detail';
 import { ForgotPassword } from './auth/pages/forgot-password/forgot-password';
 
+
 export const routes: Routes = [
   { path: 'login', component: Login },
   { path: 'forgot-password', component: ForgotPassword },
@@ -43,11 +44,12 @@ export const routes: Routes = [
       },
       {
         path: 'officer',
-        component: OfficerDashboard,
+        //component: OfficerDashboard,
         canActivate: [authGuard],
         data: {
           role: 'officer',
         },
+        loadChildren: () => import('./officer/officer.routes').then((m) => m.OFFICER_ROUTES),
       },
       {
         path: 'sponsor',

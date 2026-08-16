@@ -4,10 +4,11 @@ namespace Digital_Scholarship_Management_System.API.Models
 {
     public enum ApplicationStatus
     {
-        Pending,
-        UnderReview,
-        Approved,
-        Rejected
+        Pending,  //0
+        UnderReview,//1
+        Shortlisted,//2
+        Approved,//3
+        Rejected///4
     }
 
     public enum DisbursementStatus { 
@@ -34,5 +35,7 @@ namespace Digital_Scholarship_Management_System.API.Models
         public DateTime? DisbursedAt { get; set; }
         public int? DisbursedByUserId { get; set; }
         public User? DisbursedBy { get; set;  }
+
+        public Interview? Interview { get; set; }
     }
 }
