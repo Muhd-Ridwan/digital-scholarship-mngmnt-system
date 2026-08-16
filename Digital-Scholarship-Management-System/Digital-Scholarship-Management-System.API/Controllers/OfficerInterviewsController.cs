@@ -456,7 +456,22 @@ namespace Digital_Scholarship_Management_System.API.Controllers
                 interview.InterviewDate.Date.Add(interviewTime);
 
 
-            if (DateTime.Now < interviewDateTime)
+            //if (DateTime.Now < interviewDateTime)
+            //{
+            //    return BadRequest(
+            //        "The interview has not taken place yet.");
+            //}
+
+            var malaysiaTimeZone =
+                TimeZoneInfo.FindSystemTimeZoneById("Singapore Standard Time");
+
+            var malaysiaNow =
+                TimeZoneInfo.ConvertTimeFromUtc(
+                    DateTime.UtcNow,
+                    malaysiaTimeZone
+                );
+
+            if (malaysiaNow < interviewDateTime)
             {
                 return BadRequest(
                     "The interview has not taken place yet.");
