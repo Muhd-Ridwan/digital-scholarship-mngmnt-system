@@ -10,5 +10,9 @@
         public string FileName { get; set; } = string.Empty;
         public string FileType { get; set; } = string.Empty;
         public DateTime UploadAt { get; set; } = DateTime.UtcNow;
+
+        //officer review
+        public DateTime? ReviewedAt { get; set; }
+        public ReviewStatus Status { get; set; } = ReviewStatus.Pending;
     }
 }

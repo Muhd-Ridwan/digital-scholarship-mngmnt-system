@@ -1,0 +1,519 @@
+<div class="p-6">
+
+    <button
+    type="button"
+    routerLink="/officer"
+    class="mb-5 flex items-center gap-2 text-sm text-mist-400 hover:text-mist-100"
+  >
+    <lucide-icon name="arrow-left" class="h-4 w-4"></lucide-icon>
+    Back to Dashboard
+  </button>
+
+  <!-- ========================================================= -->
+  <!-- HEADER -->
+  <!-- ========================================================= -->
+
+  <div class="mb-8">
+
+    <h1 class="text-2xl font-bold text-mist-100">
+      Reports & Analytics
+    </h1>
+
+    <p class="mt-1 text-sm text-mist-400">
+      View scholarship application statistics and performance.
+    </p>
+
+  </div>
+
+
+  <!-- ========================================================= -->
+  <!-- LOADING -->
+  <!-- ========================================================= -->
+
+  @if (loading()) {
+
+    <div class="flex items-center justify-center py-12">
+
+      <p class="text-sm text-mist-400">
+        Loading report data...
+      </p>
+
+    </div>
+
+  } @else {
+
+
+    <!-- ========================================================= -->
+    <!-- REPORT FILTER -->
+    <!-- ========================================================= -->
+
+    <section
+    class="mb-8 rounded-2xl border border-ink-800 bg-ink-900 p-6"
+    >
+
+    <div
+        class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between"
+    >
+
+        <!-- Period Buttons -->
+
+        <div>
+
+        <p class="mb-3 text-sm font-semibold text-mist-100">
+            Report Period
+        </p>
+
+
+        <div class="flex flex-wrap gap-2">
+
+            <!-- All Time -->
+
+            <button
+            type="button"
+            (click)="changePeriod('all')"
+            [class.bg-gold-500]="selectedPeriod() === 'all'"
+            [class.text-ink-950]="selectedPeriod() === 'all'"
+            [class.bg-ink-950]="selectedPeriod() !== 'all'"
+            class="rounded-lg border border-ink-800 px-4 py-2 text-sm font-medium text-mist-300 hover:border-gold-500/40"
+            >
+            All Time
+            </button>
+
+
+            <!-- This Week -->
+
+            <button
+            type="button"
+            (click)="changePeriod('week')"
+            [class.bg-gold-500]="selectedPeriod() === 'week'"
+            [class.text-ink-950]="selectedPeriod() === 'week'"
+            [class.bg-ink-950]="selectedPeriod() !== 'week'"
+            class="rounded-lg border border-ink-800 px-4 py-2 text-sm font-medium text-mist-300 hover:border-gold-500/40"
+            >
+            This Week
+            </button>
+
+
+            <!-- This Month -->
+
+            <button
+            type="button"
+            (click)="changePeriod('month')"
+            [class.bg-gold-500]="selectedPeriod() === 'month'"
+            [class.text-ink-950]="selectedPeriod() === 'month'"
+            [class.bg-ink-950]="selectedPeriod() !== 'month'"
+            class="rounded-lg border border-ink-800 px-4 py-2 text-sm font-medium text-mist-300 hover:border-gold-500/40"
+            >
+            This Month
+            </button>
+
+
+            <!-- This Year -->
+
+            <button
+            type="button"
+            (click)="changePeriod('year')"
+            [class.bg-gold-500]="selectedPeriod() === 'year'"
+            [class.text-ink-950]="selectedPeriod() === 'year'"
+            [class.bg-ink-950]="selectedPeriod() !== 'year'"
+            class="rounded-lg border border-ink-800 px-4 py-2 text-sm font-medium text-mist-300 hover:border-gold-500/40"
+            >
+            This Year
+            </button>
+
+
+            <!-- Custom -->
+
+            <button
+            type="button"
+            (click)="changePeriod('custom')"
+            [class.bg-gold-500]="selectedPeriod() === 'custom'"
+            [class.text-ink-950]="selectedPeriod() === 'custom'"
+            [class.bg-ink-950]="selectedPeriod() !== 'custom'"
+            class="rounded-lg border border-ink-800 px-4 py-2 text-sm font-medium text-mist-300 hover:border-gold-500/40"
+            >
+            Custom
+            </button>
+
+        </div>
+
+        </div>
+
+
+        <!-- Custom Date Inputs -->
+
+        @if (selectedPeriod() === 'custom') {
+
+        <div class="flex flex-col gap-3 sm:flex-row">
+
+            <!-- Start Date -->
+
+            <div>
+
+            <label
+                class="mb-1 block text-xs font-medium text-mist-400"
+            >
+                Start Date
+            </label>
+
+            <input
+                type="date"
+                [value]="startDate()"
+                (change)="changeStartDate($event)"
+                class="rounded-lg border border-ink-800 bg-ink-950 px-3 py-2 text-sm text-mist-100 outline-none focus:border-gold-500"
+            />
+
+            </div>
+
+
+            <!-- End Date -->
+
+            <div>
+
+            <label
+                class="mb-1 block text-xs font-medium text-mist-400"
+            >
+                End Date
+            </label>
+
+            <input
+                type="date"
+                [value]="endDate()"
+                (change)="changeEndDate($event)"
+                class="rounded-lg border border-ink-800 bg-ink-950 px-3 py-2 text-sm text-mist-100 outline-none focus:border-gold-500"
+            />
+
+            </div>
+
+        </div>
+
+        }
+
+    </div>
+
+    </section>
+
+
+    <!-- ======================================================= -->
+    <!-- APPLICATION OVERVIEW -->
+    <!-- ======================================================= -->
+
+    <section class="mb-8">
+
+      <h2 class="mb-4 text-lg font-semibold text-mist-100">
+        Application Overview
+      </h2>
+
+
+      <div
+        class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6"
+      >
+
+
+        <!-- Total -->
+
+        <div
+          class="rounded-2xl border border-ink-800 bg-ink-900 p-5"
+        >
+
+          <p class="text-sm text-mist-400">
+            Total Applications
+          </p>
+
+          <p class="mt-2 text-3xl font-bold text-mist-100">
+            {{ totalApplications() }}
+          </p>
+
+        </div>
+
+
+        <!-- Pending -->
+
+        <div
+          class="rounded-2xl border border-ink-800 bg-ink-900 p-5"
+        >
+
+          <p class="text-sm text-mist-400">
+            Pending
+          </p>
+
+          <p class="mt-2 text-3xl font-bold text-yellow-500">
+            {{ pendingApplications() }}
+          </p>
+
+        </div>
+
+
+        <!-- Under Review -->
+
+        <div
+          class="rounded-2xl border border-ink-800 bg-ink-900 p-5"
+        >
+
+          <p class="text-sm text-mist-400">
+            Under Review
+          </p>
+
+          <p class="mt-2 text-3xl font-bold text-blue-500">
+            {{ underReviewApplications() }}
+          </p>
+
+        </div>
+
+
+        <!-- Shortlisted -->
+
+        <div
+          class="rounded-2xl border border-ink-800 bg-ink-900 p-5"
+        >
+
+          <p class="text-sm text-mist-400">
+            Shortlisted
+          </p>
+
+          <p class="mt-2 text-3xl font-bold text-green-500">
+            {{ shortlistedApplications() }}
+          </p>
+
+        </div>
+
+
+        <!-- Approved -->
+
+        <div
+          class="rounded-2xl border border-ink-800 bg-ink-900 p-5"
+        >
+
+          <p class="text-sm text-mist-400">
+            Approved
+          </p>
+
+          <p class="mt-2 text-3xl font-bold text-green-600">
+            {{ approvedApplications() }}
+          </p>
+
+        </div>
+
+
+        <!-- Rejected -->
+
+        <div
+          class="rounded-2xl border border-ink-800 bg-ink-900 p-5"
+        >
+
+          <p class="text-sm text-mist-400">
+            Rejected
+          </p>
+
+          <p class="mt-2 text-3xl font-bold text-red-500">
+            {{ rejectedApplications() }}
+          </p>
+
+        </div>
+
+
+      </div>
+
+    </section>
+
+
+    <!-- ======================================================= -->
+    <!-- SUMMARY -->
+    <!-- ======================================================= -->
+
+    <section
+      class="rounded-2xl border border-ink-800 bg-ink-900 p-6"
+    >
+
+      <h2 class="text-lg font-semibold text-mist-100">
+        Application Summary
+      </h2>
+
+      <p class="mt-1 text-sm text-mist-400">
+        Current distribution of scholarship applications.
+      </p>
+
+
+      <div class="mt-6 space-y-4">
+
+
+        <!-- Pending -->
+
+        <div>
+
+          <div class="mb-1 flex justify-between text-sm">
+
+            <span class="text-mist-300">
+              Pending
+            </span>
+
+            <span class="text-mist-400">
+              {{ pendingApplications() }}
+            </span>
+
+          </div>
+
+          <div class="h-2 rounded-full bg-ink-800">
+
+            <div
+              class="h-2 rounded-full bg-yellow-500"
+              [style.width.%]="
+                totalApplications()
+                  ? (pendingApplications() / totalApplications()) * 100
+                  : 0
+              "
+            ></div>
+
+          </div>
+
+        </div>
+
+
+        <!-- Under Review -->
+
+        <div>
+
+          <div class="mb-1 flex justify-between text-sm">
+
+            <span class="text-mist-300">
+              Under Review
+            </span>
+
+            <span class="text-mist-400">
+              {{ underReviewApplications() }}
+            </span>
+
+          </div>
+
+          <div class="h-2 rounded-full bg-ink-800">
+
+            <div
+              class="h-2 rounded-full bg-blue-500"
+              [style.width.%]="
+                totalApplications()
+                  ? (underReviewApplications() / totalApplications()) * 100
+                  : 0
+              "
+            ></div>
+
+          </div>
+
+        </div>
+
+
+        <!-- Shortlisted -->
+
+        <div>
+
+          <div class="mb-1 flex justify-between text-sm">
+
+            <span class="text-mist-300">
+              Shortlisted
+            </span>
+
+            <span class="text-mist-400">
+              {{ shortlistedApplications() }}
+            </span>
+
+          </div>
+
+          <div class="h-2 rounded-full bg-ink-800">
+
+            <div
+              class="h-2 rounded-full bg-green-500"
+              [style.width.%]="
+                totalApplications()
+                  ? (shortlistedApplications() / totalApplications()) * 100
+                  : 0
+              "
+            ></div>
+
+          </div>
+
+        </div>
+
+
+        <!-- Approved -->
+
+        <div>
+
+          <div class="mb-1 flex justify-between text-sm">
+
+            <span class="text-mist-300">
+              Approved
+            </span>
+
+            <span class="text-mist-400">
+              {{ approvedApplications() }}
+            </span>
+
+          </div>
+
+          <div class="h-2 rounded-full bg-ink-800">
+
+            <div
+              class="h-2 rounded-full bg-green-600"
+              [style.width.%]="
+                totalApplications()
+                  ? (approvedApplications() / totalApplications()) * 100
+                  : 0
+              "
+            ></div>
+
+          </div>
+
+        </div>
+
+
+        <!-- Rejected -->
+
+        <div>
+
+          <div class="mb-1 flex justify-between text-sm">
+
+            <span class="text-mist-300">
+              Rejected
+            </span>
+
+            <span class="text-mist-400">
+              {{ rejectedApplications() }}
+            </span>
+
+          </div>
+
+          <div class="h-2 rounded-full bg-ink-800">
+
+            <div
+              class="h-2 rounded-full bg-red-500"
+              [style.width.%]="
+                totalApplications()
+                  ? (rejectedApplications() / totalApplications()) * 100
+                  : 0
+              "
+            ></div>
+
+          </div>
+
+        </div>
+
+
+      </div>
+
+    </section>
+
+    <button
+    type="button"
+    (click)="exportToCsv()"
+    class="mt-6 flex items-center gap-2 rounded-lg border border-ink-700 bg-ink-900 px-4 py-2.5 text-sm font-medium text-mist-100 hover:bg-ink-800"
+    >
+    <lucide-icon
+        name="download"
+        class="h-4 w-4"
+    ></lucide-icon>
+
+    Export CSV
+    </button>
+
+  }
+
+</div>

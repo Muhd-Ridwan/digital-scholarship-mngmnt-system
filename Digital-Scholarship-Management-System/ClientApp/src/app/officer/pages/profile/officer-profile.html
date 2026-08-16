@@ -1,0 +1,115 @@
+<!--<div class="mx-auto w-full max-w-xl px-4 sm:px-6 lg:px-8"> -->
+
+<div class="flex min-h-[calc(100vh-4rem)] items-center justify-center">
+
+  <div class="w-full max-w-xl px-4 sm:px-6 lg:px-8">
+
+  <!-- Back Button -->
+  <button
+    type="button"
+    routerLink="/officer"
+    class="mb-5 flex items-center gap-2 text-sm text-mist-400 hover:text-mist-100"
+  >
+    <lucide-icon name="arrow-left" class="h-4 w-4"></lucide-icon>
+    Back to Dashboard
+  </button>
+
+
+  <h1 class="mb-6 text-xl font-semibold text-mist-100">
+    My Profile
+  </h1>
+
+
+  <div class="rounded-xl border border-ink-800 bg-ink-900 p-6">
+
+
+    <div class="mb-6 flex items-center gap-4">
+
+      <div
+        class="flex h-16 w-16 items-center justify-center rounded-full bg-gold-500 text-xl font-semibold text-mist-100"
+      >
+        {{ profile()?.fullName?.charAt(0) }}
+      </div>
+
+
+      <div>
+        <h2 class="text-lg font-semibold text-mist-100">
+          {{ profile()?.fullName }}
+        </h2>
+
+        <p class="text-sm text-mist-400 capitalize">
+          {{ profile()?.role }}
+        </p>
+      </div>
+
+    </div>
+
+
+    <div class="flex flex-col gap-4">
+
+
+      <div>
+        <p class="text-sm text-mist-400">
+          Full Name
+        </p>
+
+        <p class="text-mist-100">
+          {{ profile()?.fullName }}
+        </p>
+      </div>
+
+
+      <div>
+        <p class="text-sm text-mist-400">
+          Email
+        </p>
+
+        <p class="text-mist-100">
+          {{ profile()?.email }}
+        </p>
+      </div>
+
+
+      <div>
+        <p class="text-sm text-mist-400">
+          Role
+        </p>
+
+        <p class="text-mist-100 capitalize">
+          {{ profile()?.role }}
+        </p>
+      </div>
+
+
+    </div>
+
+
+  </div>
+
+
+  <!-- Password Note -->
+  <div class="mt-4 rounded-xl border border-ink-800 bg-ink-900 p-4">
+
+    <div class="flex items-start gap-3">
+
+      <lucide-icon
+        name="info"
+        class="mt-0.5 h-5 w-5 text-gold-500"
+      ></lucide-icon>
+
+
+      <p class="text-sm text-mist-400">
+        To change your password, please sign out and select the
+        <span class="text-mist-100 font-medium">
+          "Forgot Password"
+        </span>
+        option on the login page.
+      </p>
+
+    </div>
+
+  </div>
+
+</div>
+
+</div>
