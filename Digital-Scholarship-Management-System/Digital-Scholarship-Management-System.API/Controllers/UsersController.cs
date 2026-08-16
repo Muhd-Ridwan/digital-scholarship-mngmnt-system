@@ -443,12 +443,22 @@ namespace Digital_Scholarship_Management_System.API.Controllers
                     new { message = "This account has no Cognito username recorded, so it cannot be approved." });
             }
 
+            var temporaryPassword = AuthController.GenerateTemporaryPassword();
+
             try
             {
                 await _cognito.AdminEnableUserAsync(new AdminEnableUserRequest
                 {
                     UserPoolId = _config["Cognito:UserPoolId"],
                     Username = user.CognitoUsername,
+                });
+
+                await _cognito.AdminSetUserPasswordAsync(new AdminSetUserPasswordRequest
+                {
+                    UserPoolId = _config["Cognito:UserPoolId"],
+                    Username = user.CognitoUsername,
+                    Password = temporaryPassword,
+                    Permanent = false,
                 });
             }
             catch (UserNotFoundException)
@@ -463,15 +473,6 @@ namespace Digital_Scholarship_Management_System.API.Controllers
                     new { message = "Could not reach Cognito. Please try again." });
             }
 
-            var temporaryPassword = GenerateTemporaryPassword();
-            await _cognito.AdminSetUserPasswordAsync(new AdminSetUserPasswordRequest
-            {
-                UserPoolId = _config["Cognito:UserPoolId"],
-                Username = user.CognitoUsername,
-                Password = temporaryPassword,
-                Permanent = false,
-            });
-
             user.Status = UserStatus.Active;
             user.SponsorStatus = SponsorApprovalStatus.Approved;
             user.DecidedAt = DateTime.UtcNow;
@@ -480,7 +481,15 @@ namespace Digital_Scholarship_Management_System.API.Controllers
 
             await _auditLog.LogAsync(admin, $"Approved sponsor {user.Email}");
 
-            await SendOnboardingEmailAsync(user.Email, user.CognitoUsername, temporaryPassword, user.FullName);
+            try
+            {
+                var httpClientFactory = HttpContext.RequestServices.GetRequiredService<IHttpClientFactory>();
+                await AuthController.SendOnboardingEmailAsync(httpClientFactory, _config, user.Email, user.CognitoUsername, temporaryPassword, user.FullName);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Approved sponsor {UserId} but the credentials email failed", user.Id);
+            }
 
             return Ok(Project(user));
         }
@@ -527,7 +536,7 @@ namespace Digital_Scholarship_Management_System.API.Controllers
 
             try
             {
-                await _cognito.AdminEnableUserAsync(new AdminEnableUserRequest
+                await _cognito.AdminDeleteUserAsync(new AdminDeleteUserRequest
                 {
                     UserPoolId = _config["Cognito:UserPoolId"],
                     Username = user.CognitoUsername,
@@ -545,12 +554,22 @@ namespace Digital_Scholarship_Management_System.API.Controllers
                     new { message = "Could not reach Cognito. Please try again." });
             }
 
+            user.Status = UserStatus.Locked;
             user.SponsorStatus = SponsorApprovalStatus.Rejected;
             user.DecidedAt = DateTime.UtcNow;
             user.DecidedBy = admin.FullName;
             await _db.SaveChangesAsync();
 
             await _auditLog.LogAsync(admin, $"Rejected sponsor {user.Email}");
+
+            try
+            {
+                await SendSponsorRejectedEmailAsync(user.Email, user.FullName);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Rejected sponsor {UserId} but the notification email failed", user.Id);
+            }
 
             return Ok(Project(user));
         }
@@ -575,6 +594,24 @@ namespace Digital_Scholarship_Management_System.API.Controllers
                 .ToListAsync();
 
             return Ok(sponsors);
+        }
+
+        private async Task SendSponsorRejectedEmailAsync(string toEmail, string fullName)
+        {
+            var client = HttpContext.RequestServices.GetRequiredService<IHttpClientFactory>().CreateClient();
+            client.BaseAddress = new Uri("https://api.resend.com/");
+            client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _config["Resend:ApiKey"]);
+
+            await client.PostAsJsonAsync("emails", new
+            {
+                from = "scholarship@dev-r.org",
+                to = new[] { toEmail },
+                subject = "Your sponsor application was not approved",
+                html = $"<p>Hi {fullName},</p><p>Your sponsor application has been reviewed and was not approved, " +
+                $"so your account has been removed and you will not be able to sign in.</p>" +
+                $"<p>If you believe this decision was made in error, or you would like to apply again with " +
+                $"corrected details, please contact us.</p>"
+            });
         }
 
         private static SponsorResponse Project(User user) => new(

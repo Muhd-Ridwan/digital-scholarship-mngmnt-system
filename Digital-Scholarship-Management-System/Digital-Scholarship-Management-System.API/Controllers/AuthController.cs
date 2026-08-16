@@ -260,7 +260,7 @@ namespace Digital_Scholarship_Management_System.API.Controllers
 
             if (!isSponsor)
             {
-                await SendOnboardingEmailAsync(request.Email, request.Username, temporaryPassword, request.FullName);
+                await SendOnboardingEmailAsync(_httpClientFactory, _config, request.Email, request.Username, temporaryPassword, request.FullName);
             }
             return Ok(new { message = "Registration successful." });
         }
@@ -323,7 +323,7 @@ namespace Digital_Scholarship_Management_System.API.Controllers
             await _auditLog.LogAsync(user, "Logged In");
             return NoContent();
         }
-        private static string GenerateTemporaryPassword()
+        internal static string GenerateTemporaryPassword()
         {
             const string upper = "ABCDEFGHIJKLMNPQRSTUVWXYZ";
             const string lower = "abcdefghijklmnpqrstuvwxyz";
@@ -344,12 +344,12 @@ namespace Digital_Scholarship_Management_System.API.Controllers
             return new string(chars);
         }
 
-        private async Task SendOnboardingEmailAsync(string toEmail, string username, string temporaryPassword, string fullName)
+        internal static async Task SendOnboardingEmailAsync(IHttpClientFactory httpClientFactory, IConfiguration config, string toEmail, string username, string temporaryPassword, string fullName)
         {
-            var loginUrl = $"{_config["Frontend:BaseUrl"]}/login";
-            var client = _httpClientFactory.CreateClient();
+            var loginUrl = $"{config["Frontend:BaseUrl"]}/login";
+            var client = httpClientFactory.CreateClient();
             client.BaseAddress = new Uri("https://api.resend.com/");
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _config["Resend:ApiKey"]);
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", config["Resend:ApiKey"]);
 
             await client.PostAsJsonAsync("emails", new
             {
