@@ -7,9 +7,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using Digital_Scholarship_Management_System.API.Services;
-using System.Net.Http.Headers;
-using System.Net.Http.Json;
-using System.Security.Cryptography;
 
 namespace Digital_Scholarship_Management_System.API.Controllers
 {
@@ -69,16 +66,14 @@ namespace Digital_Scholarship_Management_System.API.Controllers
         private readonly AuditLogService _auditLog;
         private readonly IAmazonCognitoIdentityProvider _cognito;
         private readonly IConfiguration _config;
-        private readonly IHttpClientFactory _httpClientFactory;
 
-        public UsersController(AppDbContext db, ILogger<UsersController> logger, AuditLogService auditLog, IAmazonCognitoIdentityProvider cognito, IConfiguration config, IHttpClientFactory httpClientFactory)
+        public UsersController(AppDbContext db, ILogger<UsersController> logger, AuditLogService auditLog, IAmazonCognitoIdentityProvider cognito, IConfiguration config)
         {
             _db = db;
             _logger = logger;
             _auditLog = auditLog;
             _cognito = cognito;
             _config = config;
-            _httpClientFactory = httpClientFactory;
         }
 
         // GET /api/users — admin only. [Authorize] alone would let any signed-in student
@@ -437,7 +432,7 @@ namespace Digital_Scholarship_Management_System.API.Controllers
                     new { message = "This account has no Cognito username recorded, so it cannot be approved." });
             }
 
-            var temporaryPassword = GenerateTemporaryPassword();
+            var temporaryPassword = AuthController.GenerateTemporaryPassword();
 
             try
             {
@@ -477,7 +472,8 @@ namespace Digital_Scholarship_Management_System.API.Controllers
 
             try
             {
-                await SendOnboardingEmailAsync(user.Email, user.CognitoUsername, temporaryPassword, user.FullName);
+                var httpClientFactory = HttpContext.RequestServices.GetRequiredService<IHttpClientFactory>();
+                await AuthController.SendOnboardingEmailAsync(httpClientFactory, _config, user.Email, user.CognitoUsername, temporaryPassword, user.FullName);
             }
             catch (Exception ex)
             {
@@ -487,11 +483,9 @@ namespace Digital_Scholarship_Management_System.API.Controllers
             return Ok(Project(user));
         }
 
-        // POST /api/users/{id}/reject-sponsor — refuse posting rights, keep the account.
-        // Enables the Cognito user like approval does: registration disabled it only for the
-        // pending window, and sign-in is governed by lock/unlock, not by this decision.
-        // Pending from the Sponsor side: rejection is stored but nothing enforces it yet.
-        // POST /api/scholarships must refuse callers whose SponsorStatus is not Approved.
+        // POST /api/users/{id}/reject-sponsor — refuse the application outright. Deletes the
+        // Cognito user so sign-in is impossible, and keeps the database row as the record of
+        // the decision.
         [HttpPost("{id:int}/reject-sponsor")]
         public async Task<IActionResult> RejectSponsor(int id)
         {
@@ -509,22 +503,12 @@ namespace Digital_Scholarship_Management_System.API.Controllers
                     new { message = "This account has no Cognito username recorded, so it cannot be rejected." });
             }
 
-            var temporaryPassword = GenerateTemporaryPassword();
-
             try
             {
-                await _cognito.AdminEnableUserAsync(new AdminEnableUserRequest
+                await _cognito.AdminDeleteUserAsync(new AdminDeleteUserRequest
                 {
                     UserPoolId = _config["Cognito:UserPoolId"],
                     Username = user.CognitoUsername,
-                });
-
-                await _cognito.AdminSetUserPasswordAsync(new AdminSetUserPasswordRequest
-                {
-                    UserPoolId = _config["Cognito:UserPoolId"],
-                    Username = user.CognitoUsername,
-                    Password = temporaryPassword,
-                    Permanent = false,
                 });
             }
             catch (UserNotFoundException)
@@ -539,6 +523,7 @@ namespace Digital_Scholarship_Management_System.API.Controllers
                     new { message = "Could not reach Cognito. Please try again." });
             }
 
+            user.Status = UserStatus.Locked;
             user.SponsorStatus = SponsorApprovalStatus.Rejected;
             user.DecidedAt = DateTime.UtcNow;
             user.DecidedBy = admin.FullName;
@@ -548,7 +533,7 @@ namespace Digital_Scholarship_Management_System.API.Controllers
 
             try
             {
-                await SendSponsorRejectedEmailAsync(user.Email, user.CognitoUsername, temporaryPassword, user.FullName);
+                await SendSponsorRejectedEmailAsync(user.Email, user.FullName);
             }
             catch (Exception ex)
             {
@@ -580,78 +565,22 @@ namespace Digital_Scholarship_Management_System.API.Controllers
             return Ok(sponsors);
         }
 
-        private static string GenerateTemporaryPassword()
+        private async Task SendSponsorRejectedEmailAsync(string toEmail, string fullName)
         {
-            const string upper = "ABCDEFGHIJKLMNPQRSTUVWXYZ";
-            const string lower = "abcdefghijklmnpqrstuvwxyz";
-            const string digits = "23456789";
-            const string symbols = "!@#$%^&*";
-            const string all = upper + lower + digits + symbols;
-
-            var chars = new char[12];
-            for (var i = 0; i < chars.Length; i++)
-            {
-                chars[i] = all[RandomNumberGenerator.GetInt32(all.Length)];
-            }
-            chars[0] = upper[RandomNumberGenerator.GetInt32(upper.Length)];
-            chars[1] = lower[RandomNumberGenerator.GetInt32(lower.Length)];
-            chars[2] = digits[RandomNumberGenerator.GetInt32(digits.Length)];
-            chars[3] = symbols[RandomNumberGenerator.GetInt32(symbols.Length)];
-
-            return new string(chars);
-        }
-
-        private async Task SendOnboardingEmailAsync(string toEmail, string username, string temporaryPassword, string fullName)
-        {
-            var loginUrl = $"{_config["Frontend:BaseUrl"]}/login";
-            var client = _httpClientFactory.CreateClient();
+            var client = HttpContext.RequestServices.GetRequiredService<IHttpClientFactory>().CreateClient();
             client.BaseAddress = new Uri("https://api.resend.com/");
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _config["Resend:ApiKey"]);
+            client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _config["Resend:ApiKey"]);
 
-            var response = await client.PostAsJsonAsync("emails", new
-            {
-                from = "scholarship@dev-r.org",
-                to = new[] { toEmail },
-                subject = "Your Scholarship Management System account",
-                html = $"<p>Hi {fullName},</p><p>Username: <strong>{username}</strong><p>Temporary password: <strong>{temporaryPassword}</strong></p>" +
-                $"<p>You'll be asked to set a new password the first time you log in.</p>" +
-                $"<p>You must signed in and changed password within 7 Days</p>" +
-                $"<p>Click <a href=\"{loginUrl}\">here</a> to login</p>"
-            });
-
-            if (!response.IsSuccessStatusCode)
-            {
-                var body = await response.Content.ReadAsStringAsync();
-                throw new InvalidOperationException($"Resend returned {(int)response.StatusCode}: {body}");
-            }
-        }
-
-        private async Task SendSponsorRejectedEmailAsync(string toEmail, string username, string temporaryPassword, string fullName)
-        {
-            var loginUrl = $"{_config["Frontend:BaseUrl"]}/login";
-            var client = _httpClientFactory.CreateClient();
-            client.BaseAddress = new Uri("https://api.resend.com/");
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _config["Resend:ApiKey"]);
-
-            var response = await client.PostAsJsonAsync("emails", new
+            await client.PostAsJsonAsync("emails", new
             {
                 from = "scholarship@dev-r.org",
                 to = new[] { toEmail },
                 subject = "Your sponsor application was not approved",
                 html = $"<p>Hi {fullName},</p><p>Your sponsor application has been reviewed and was not approved, " +
-                $"so your account cannot post scholarships.</p>" +
-                $"<p>You can still sign in to view your account:</p>" +
-                $"<p>Username: <strong>{username}</strong></p><p>Temporary password: <strong>{temporaryPassword}</strong></p>" +
-                $"<p>You'll be asked to set a new password the first time you log in, within 7 days.</p>" +
-                $"<p>Click <a href=\"{loginUrl}\">here</a> to login</p>" +
-                $"<p>Please contact us if you believe this decision was made in error.</p>"
+                $"so your account has been removed and you will not be able to sign in.</p>" +
+                $"<p>If you believe this decision was made in error, or you would like to apply again with " +
+                $"corrected details, please contact us.</p>"
             });
-
-            if (!response.IsSuccessStatusCode)
-            {
-                var body = await response.Content.ReadAsStringAsync();
-                throw new InvalidOperationException($"Resend returned {(int)response.StatusCode}: {body}");
-            }
         }
 
         private static SponsorResponse Project(User user) => new(
