@@ -2,6 +2,11 @@
 
 namespace Digital_Scholarship_Management_System.API.Models
 {
+    public enum ScholarshipStatus { 
+        Draft,
+        Open,
+        Closed
+    }
     public class Scholarship
     {
         [Key]
@@ -18,6 +23,7 @@ namespace Digital_Scholarship_Management_System.API.Models
         public decimal FundingAmount { get; set; }
         public DateTime Deadline { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public ScholarshipStatus Status { get; set; } = ScholarshipStatus.Draft;
 
         public ICollection<Application> Applications { get; set; } = new List<Application>();
     }

@@ -92,6 +92,16 @@ export class AdminSponsors {
     this.sponsors.update((list) => list.map((s) => (s.id === updated.id ? updated : s)));
   }
 
+  protected async viewCertificate(sponsor: SponsorProfile): Promise<void> {
+      try {
+        const url = await this.usersApi.getCertificateUrl(sponsor.id);
+        window.open(url, '_blank', 'noopener');
+      } catch {
+        this.toastService.error('No certificate on file for this sponsor.');
+    }
+  }
+  
+
   // The decision targets the sponsor account, not any listing it has posted.
   protected async approve(sponsor: SponsorProfile): Promise<void> {
     if (this.busy()) return;

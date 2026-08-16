@@ -1,0 +1,101 @@
+<div class="flex flex-col gap-6">
+    <a
+    routerLink="/sponsor"
+    class="flex w-fit items-center gap-1 text-sm text-mist-400 hover:text-mist-100"
+    >
+    <lucide-icon name="arrow-left" class="h-4 w-4"></lucide-icon>
+        Back to dashboard
+    </a>
+    <h1 class="font-display text-2xl text-mist-100">Sponsorship Report</h1>
+
+    @if (summary(); as s) {
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
+        <div class="rounded-2xl border border-ink-800 bg-ink-900 p-4">
+            <p class="text-xs text-mist-400">Scholarships Posted</p>
+            <p class="mt-1 text-xl font-semibold text-mist-100">{{ s.totals.scholarships }}</p>
+        </div>
+        <div class="rounded-2xl border border-ink-800 bg-ink-900 p-4">
+            <p class="text-xs text-mist-400">Total Applicants</p>
+            <p class="mt-1 text-xl font-semibold text-mist-100">{{ s.totals.totalApplicants }}</p>
+        </div>
+        <div class="rounded-2xl border border-ink-800 bg-ink-900 p-4">
+            <p class="text-xs text-mist-400">Total Disbursed</p>
+            <p class="mt-1 text-xl font-semibold text-mist-100">
+            {{ s.totals.totalDisbursed | currency: 'MYR' }}
+            </p>
+        </div>
+        <div class="rounded-2xl border border-ink-800 bg-ink-900 p-4">
+            <p class="text-xs text-mist-400">Open / Closed Listings</p>
+            <p class="mt-1 text-xl font-semibold text-mist-100">
+            {{ s.totals.openListings }} / {{ s.totals.closedListings }}
+            </p>
+        </div>
+        </div>
+
+        <div class="rounded-2xl border border-ink-800 bg-ink-900 p-5">
+        <h2 class="text-sm font-semibold text-mist-100">Scholarships</h2>
+        <div class="mt-4 overflow-x-auto">
+            <table class="w-full min-w-160 text-left text-sm">
+            <thead>
+                <tr class="border-b border-ink-800 text-xs tracking-wide text-mist-400 uppercase">
+                <th class="py-2 pr-4 font-medium">Title</th>
+                <th class="py-2 pr-4 font-medium">Fund Type</th>
+                <th class="py-2 pr-4 font-medium">Status</th>
+                <th class="py-2 pr-4 font-medium">Applicants</th>
+                <th class="py-2 font-medium">Disbursed</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (sch of s.scholarships; track sch.id) {
+                <tr class="border-b border-ink-800/60">
+                    <td class="py-2.5 pr-4 text-mist-100">{{ sch.title }}</td>
+                    <td class="py-2.5 pr-4 text-mist-400">{{ sch.fundType }}</td>
+                    <td class="py-2.5 pr-4 text-mist-400">{{ sch.status }}</td>
+                    <td class="py-2.5 pr-4 text-mist-400 tabular-nums">{{ sch.applications }}</td>
+                    <td class="py-2.5 text-mist-400 tabular-nums">{{ sch.disbursed | currency: 'MYR' }}</td>
+                </tr>
+                } @empty {
+                <tr>
+                    <td colspan="5" class="py-6 text-sm text-mist-400">No scholarships yet.</td>
+                </tr>
+                }
+            </tbody>
+            </table>
+        </div>
+        </div>
+
+        <div class="rounded-2xl border border-ink-800 bg-ink-900 p-5">
+        <h2 class="text-sm font-semibold text-mist-100">Disbursement History</h2>
+        <div class="mt-4 overflow-x-auto">
+            <table class="w-full min-w-160 text-left text-sm">
+            <thead>
+                <tr class="border-b border-ink-800 text-xs tracking-wide text-mist-400 uppercase">
+                <th class="py-2 pr-4 font-medium">Scholarship</th>
+                <th class="py-2 pr-4 font-medium">Student</th>
+                <th class="py-2 pr-4 font-medium">Amount</th>
+                <th class="py-2 font-medium">Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (d of s.disbursements; track d.id) {
+                <tr class="border-b border-ink-800/60">
+                    <td class="py-2.5 pr-4 text-mist-100">{{ d.scholarshipTitle }}</td>
+                    <td class="py-2.5 pr-4 text-mist-400">{{ d.studentName }}</td>
+                    <td class="py-2.5 pr-4 text-mist-400 tabular-nums">
+                    {{ d.disbursedAmount | currency: 'MYR' }}
+                    </td>
+                    <td class="py-2.5 text-mist-400">{{ d.disbursedAt | date }}</td>
+                </tr>
+                } @empty {
+                <tr>
+                    <td colspan="4" class="py-6 text-sm text-mist-400">No disbursements yet.</td>
+                </tr>
+                }
+            </tbody>
+            </table>
+        </div>
+        </div>
+    } @else {
+        <p class="text-sm text-mist-400">{{ loading() ? 'Loading...' : 'Could not load report.' }}</p>
+    }
+</div>

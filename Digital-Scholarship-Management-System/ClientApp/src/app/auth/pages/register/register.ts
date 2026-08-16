@@ -16,9 +16,15 @@ export class Register {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
+  readonly certificateFile = signal<File | null>(null);
+
+  protected onCertificateChange(event: Event) {
+    const input = event.target as HTMLInputElement;
+    this.certificateFile.set(input.files?.[0] ?? null);
+  }
 
   readonly form = this.fb.nonNullable.group({
-    username: ['', [Validators.required]],
+    username: ['', [Validators.required, Validators.pattern(/^[\p{L}\p{M}\p{S}\p{N}\p{P}]+$/u)]],
     email: ['', [Validators.required, Validators.email]],
     fullName: ['', [Validators.required]],
     role: ['user' as 'user' | 'sponsor', [Validators.required]],
@@ -31,8 +37,9 @@ export class Register {
   constructor() {
     this.form.controls.role.valueChanges.subscribe((role) => {
       const validators = role === 'sponsor' ? [Validators.required] : [];
+      const ssmValidators = role === 'sponsor' ? [Validators.required, Validators.pattern(/^\d{7}-[A-Z]$|^\d{12}$/)] : [];
       this.form.controls.companyName.setValidators(validators);
-      this.form.controls.ssmNumber.setValidators(validators);
+      this.form.controls.ssmNumber.setValidators(ssmValidators);
       this.form.controls.companyName.updateValueAndValidity();
       this.form.controls.ssmNumber.updateValueAndValidity();
     });
@@ -47,6 +54,10 @@ export class Register {
       this.form.markAllAsTouched();
       return;
     }
+    if (this.isSponsor && !this.certificateFile()) {
+      this.toast.error('Please attach your registration certificate.');
+      return;
+    }
     this.submitting.set(true);
     const { username, email, fullName, role, companyName, ssmNumber } = this.form.getRawValue();
 
@@ -58,7 +69,9 @@ export class Register {
         role,
         companyName: role === 'sponsor' ? companyName : undefined,
         ssmNumber: role === 'sponsor' ? ssmNumber : undefined,
-      });
+      },
+      role === 'sponsor' ? this.certificateFile()! : undefined
+    );
       this.submitting.set(false);
       this.toast.success(
         role === 'sponsor'
