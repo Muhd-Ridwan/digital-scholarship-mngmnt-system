@@ -5,7 +5,7 @@ import { FeedAnnouncement } from '../../models/announcement.model';
 import { AnnouncementsService } from '../../services/api/announcements.service';
 
 // Announcement bell. Mounted once inside DashboardShell's navbar, so it loads once per app
-// load rather than once per navigation — the reason the unread count is cheap.
+// load rather than once per navigation
 @Component({
   selector: 'app-announcement-bell',
   standalone: true,
@@ -19,11 +19,11 @@ export class AnnouncementBell {
   protected readonly items = signal<FeedAnnouncement[]>([]);
   protected readonly open = signal(false);
   protected readonly failed = signal(false);
-  // Which row is expanded to full text. Bodies are clamped to 2 lines otherwise, or one long
+  // Which row is expanded to full text. Bodies are clamped to 2 lines, or one long
   // notice fills the panel and the list stops being scannable.
   protected readonly expandedId = signal<number | null>(null);
 
-  // Admin authors announcements and manages them at /admin/announcements — receiving your own
+  // Admin authors announcements and manages them at /admin/announcements, receiving own
   // broadcast back as an unread badge is noise. Hidden rather than empty, and it skips the
   // feed call entirely so an admin session makes no announcement queries at all.
   // Undefined means the profile hasn't arrived yet: stay hidden, or the bell flashes for an
@@ -34,13 +34,12 @@ export class AnnouncementBell {
   });
 
   protected readonly unread = computed(() => this.items().filter((i) => !i.read).length);
-  // Nobody acts differently on 14 vs 23, and the feed only fetches 10 anyway.
   protected readonly badge = computed(() => (this.unread() > 9 ? '9+' : String(this.unread())));
 
   private loadStarted = false;
 
   constructor() {
-    // The profile resolves after construction, so the first load waits for it rather than
+    // The user resolves after construction, so the first load waits for it rather than
     // firing a feed request before we know whether this role should see the bell at all.
     effect(() => {
       if (this.visible() && !this.loadStarted) {

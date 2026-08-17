@@ -24,7 +24,6 @@ export class AdminDashboard {
 
   readonly profile = this.auth.profile;
 
-  // Pending: scholarship data from the Sponsor side — reads 0 until they post any.
   // Scholarships Available — count where deadline >= today (GET /api/scholarships).
   private readonly scholarshipsAvailableCount = signal<number | null>(null);
   protected readonly scholarshipsAvailableLabel = computed(() => {
@@ -42,8 +41,6 @@ export class AdminDashboard {
   // Queue depth on the Sponsor Approvals card.
   protected readonly pendingSponsors = signal<number | null>(null);
 
-  // Pending: application data from the Student side, approvals from the Officer.
-  // Pending Review and Total Awarded both come from GET /reports/summary.
   private readonly pendingReviewCount = signal<number | null>(null);
   protected readonly pendingReviewLabel = computed(() => {
     const count = this.pendingReviewCount();
