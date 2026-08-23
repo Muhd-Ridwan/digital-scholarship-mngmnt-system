@@ -109,9 +109,6 @@ builder.Services.AddCors(options =>
 });
 
 
-
-var app = builder.Build();
-
 // OpenTelemetry to traces, get metrics exported via OTLP to the local AWS Distro For Open Telemetry ADOT collector
 Sdk.SetDefaultTextMapPropagator(new AWSXRayPropagator());
 
@@ -133,6 +130,8 @@ builder.Services.AddOpenTelemetry()
         {
             otlp.Endpoint = new Uri("http://localhost:4317");
         }));
+
+var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
