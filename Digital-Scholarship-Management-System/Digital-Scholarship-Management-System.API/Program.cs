@@ -10,6 +10,11 @@ using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
 using Microsoft.IdentityModel.Tokens;
 using System.Text.Json.Serialization;
+using OpenTelemetry;
+using OpenTelemetry.Trace;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Extensions.AWS.Trace;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -106,6 +111,28 @@ builder.Services.AddCors(options =>
 
 
 var app = builder.Build();
+
+// OpenTelemetry to traces, get metrics exported via OTLP to the local AWS Distro For Open Telemetry ADOT collector
+Sdk.SetDefaultTextMapPropagator(new AWSXRayPropagator());
+
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(resource => resource.AddService("digital-scholarship-api"))
+    .WithTracing(tracing => tracing
+        .AddXRayTraceId()
+        .AddAspNetCoreInstrumentation()
+        .AddHttpClientInstrumentation()
+        .AddSqlClientInstrumentation()
+        .AddOtlpExporter(otlp =>
+        {
+            otlp.Endpoint = new Uri("http://localhost:4317");
+        }))
+    .WithMetrics(metrics => metrics
+        .AddAspNetCoreInstrumentation()
+        .AddHttpClientInstrumentation()
+        .AddOtlpExporter(otlp =>
+        {
+            otlp.Endpoint = new Uri("http://localhost:4317");
+        }));
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
