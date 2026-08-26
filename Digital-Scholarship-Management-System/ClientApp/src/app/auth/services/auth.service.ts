@@ -157,6 +157,7 @@ export class AuthService {
         { headers: { Authorization: `Bearer ${accessToken}` } },
       ),
     );
+    this.profilePromise = Promise.resolve(updated);
     this._profile.set(updated);
     return updated;
   }
