@@ -1,0 +1,6 @@
+@Dsms.Auth_HostAddress = http://localhost:5202
+
+GET {{Dsms.Auth_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
