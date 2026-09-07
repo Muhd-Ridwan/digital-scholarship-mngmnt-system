@@ -1,0 +1,92 @@
+name: Deploy Backend Lambdas
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "Digital-Scholarship-Management-System/Dsms.Auth/**"
+      - "Digital-Scholarship-Management-System/Dsms.Student/**"
+      - "Digital-Scholarship-Management-System/Dsms.Shared/**"
+  workflow_dispatch:
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - name: Install EF Core Tools
+        run: |
+          dotnet tool install --global dotnet-ef || dotnet tool update --global dotnet-ef
+          echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
+      - name: Apply EF Migrations
+        working-directory: Digital-Scholarship-Management-System
+        run: dotnet ef database update --project Dsms.Shared --startup-project Dsms.Shared
+        env:
+          ConnectionStrings__DefaultConnection: ${{ secrets.DB_CONNECTION_STRING }}
+
+  deploy:
+    needs: migrate
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - service: Dsms.Auth
+            function: dsms-auth-service
+            smoke_url: https://sobc0bt9ri.execute-api.ap-southeast-2.amazonaws.com/prod/api/auth/forgot-password
+            smoke_method: POST
+            smoke_expect: "200"
+          - service: Dsms.Student
+            function: dsms-student-service
+            smoke_url: https://sobc0bt9ri.execute-api.ap-southeast-2.amazonaws.com/prod/api/users/me
+            smoke_method: GET
+            smoke_expect: "401"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - name: Install Lambda Tools
+        run: |
+          dotnet tool install --global Amazon.Lambda.Tools || dotnet tool update --global Amazon.Lambda.Tools
+          echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
+      - name: Write AWS Profile
+        run: |
+          mkdir -p ~/.aws
+          printf '[cloud_assignment]\naws_access_key_id=%s\naws_secret_access_key=%s\n' \
+              "${{ secrets.AWS_ACCESS_KEY_ID }}" "${{ secrets.AWS_SECRET_KEY_ACCESS_KEY }}" > ~/.aws/credentials
+
+      - name: Snapshot current code
+        run: |
+          URL=$(aws lambda get-function --function-name ${{ matrix.function }} \
+                --region ap-southeast-2 --profile cloud_assignment \
+                --query 'Code.Location' --output text)
+          curl -sSf "$URL" -o previous.zip
+          echo "snapshot: $(du -h previous.zip)"
+
+      - name: Deploy ${{ matrix.service }}
+        working-directory: Digital-Scholarship-Management-System
+        run: dotnet lambda deploy-function --project-location ${{ matrix.service }}
+
+      - name: Smoke test
+        id: smoke
+        run: |
+          for i in 1 2 3; do
+            CODE=$(curl -s -o /dev/null -w "%{http_code}" -X ${{ matrix.smoke_method }} \
+                   "${{ matrix.smoke_url }}" -H "Content-Type: application/json" -d '{"email":"smoke@test.com"}')
+            echo "attempt $i: $CODE (expected ${{ matrix.smoke_expect }})"
+            [ "$CODE" = "${{ matrix.smoke_expect }}" ] && exit 0
+            sleep 10
+          done
+          exit 1
+
+      - name: Rollback on smoke failure
+        if: failure() && steps.smoke.outcome == 'failure'
+        run: |
+          echo "Smoke test failed - restoring previous code for ${{ matrix.function }}"
+          aws lambda update-function-code --function-name ${{ matrix.function }} \
+            --region ap-southeast-2 --profile cloud_assignment \
+            --zip-file fileb://previous.zip
