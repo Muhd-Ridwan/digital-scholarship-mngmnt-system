@@ -1,6 +1,7 @@
 ﻿using System.Globalization;
 using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.Model;
+using Microsoft.Extensions.Configuration;
 using Digital_Scholarship_Management_System.API.Models;
 
 namespace Digital_Scholarship_Management_System.API.Services

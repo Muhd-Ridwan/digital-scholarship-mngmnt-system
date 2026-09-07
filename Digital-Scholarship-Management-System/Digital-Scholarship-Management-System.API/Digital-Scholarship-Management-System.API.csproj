@@ -32,4 +32,8 @@
     <PackageReference Include="OpenTelemetry.Instrumentation.SqlClient" Version="1.18.0" />
   </ItemGroup>
 
+	<ItemGroup>
+		<ProjectReference Include="..\Dsms.Shared\Dsms.Shared.csproj" />
+	</ItemGroup>
+
 </Project>
