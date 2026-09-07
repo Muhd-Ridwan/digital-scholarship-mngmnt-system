@@ -99,7 +99,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend", policy => policy.WithOrigins(allowedOrigins).WithHeaders("Authorization", "Content-Type").AllowAnyMethod());
 });
 
-builder.Services.AddAWSLambdaHosting(LambdaEventSource.HttpApi);
+builder.Services.AddAWSLambdaHosting(LambdaEventSource.RestApi);
 
 var app = builder.Build();
 
