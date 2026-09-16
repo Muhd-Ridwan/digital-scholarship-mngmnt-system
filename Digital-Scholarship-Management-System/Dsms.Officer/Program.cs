@@ -20,6 +20,7 @@ builder.Services.AddControllers()
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddHttpClient();
 
 var cognitoRegion = builder.Configuration["Cognito:Region"];
 var cognitoUserPoolId = builder.Configuration["Cognito:UserPoolId"];
