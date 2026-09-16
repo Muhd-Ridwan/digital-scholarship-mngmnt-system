@@ -22,6 +22,9 @@ jobs:
         run: |
           dotnet tool install --global dotnet-ef || dotnet tool update --global dotnet-ef
           echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
+      - name: Restore Dependencies
+        working-directory: Digital-Scholarship-Management-System
+        run: dotnet restore Dsms.Shared
       - name: Apply EF Migrations
         working-directory: Digital-Scholarship-Management-System
         run: dotnet ef database update --project Dsms.Shared --startup-project Dsms.Shared
