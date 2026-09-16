@@ -1,0 +1,6 @@
+@Dsms.Sponsor_HostAddress = http://localhost:5036
+
+GET {{Dsms.Sponsor_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

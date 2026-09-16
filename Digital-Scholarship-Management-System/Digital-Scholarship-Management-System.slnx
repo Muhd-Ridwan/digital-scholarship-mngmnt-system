@@ -5,4 +5,5 @@
   <Project Path="Dsms.Ofiicer(1)/Dsms.Officer.csproj" />
   <Project Path="Dsms.Shared/Dsms.Shared.csproj" Id="48ff7f50-8476-47ab-8fbc-ffa2a474a2f4" />
   <Project Path="Dsms.Student/Dsms.Student.csproj" Id="ea404c4c-8c97-4dd0-a7bd-2f0e475344bb" />
+  <Project Path="Dsms.Sponsor/Dsms.Sponsor.csproj" />
 </Solution>
