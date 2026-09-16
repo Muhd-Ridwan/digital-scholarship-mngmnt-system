@@ -14,8 +14,8 @@ namespace Digital_Scholarship_Management_System.API.Models
         Active,
         Locked,
     }
-    // Whether a sponsor may post scholarships. Separate from UserStatus, which governs
-    // sign-in — a rejected sponsor can still log in, they just cannot post.
+    // Whether a sponsor may post scholarships. Rejection also deletes the Cognito user, so a
+    // rejected sponsor cannot sign in — the row is kept only as the record of the decision.
     public enum SponsorApprovalStatus
     {
         Pending,

@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+	  <RootNamespace>Digital_Scholarship_Management_System.API</RootNamespace>
+	  <UserSecretsId>b953a727-bf73-46c8-9e25-b36ff2d1ba65</UserSecretsId>
+  </PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Amazon.Lambda.AspNetCoreServer.Hosting" Version="2.2.1" />
+		<PackageReference Include="AWSSDK.CognitoIdentityProvider" Version="4.0.102" />
+		<PackageReference Include="AWSSDK.DynamoDBv2" Version="4.0.102.1" />
+		<PackageReference Include="AWSSDK.S3" Version="4.0.101.5" />
+		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.10" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.9" />
+	</ItemGroup>
+
+  <ItemGroup>
+	  <ProjectReference Include="..\Dsms.Shared\Dsms.Shared.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -3,18 +3,13 @@ using Amazon.CognitoIdentityProvider;
 using Amazon.Runtime;
 using Amazon.S3;
 using Amazon.DynamoDBv2;
+using Amazon.Lambda.AspNetCoreServer.Hosting;
 using Digital_Scholarship_Management_System.API.Data;
 using Digital_Scholarship_Management_System.API.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
 using Microsoft.IdentityModel.Tokens;
-using System.Text.Json.Serialization;
-using OpenTelemetry;
-using OpenTelemetry.Trace;
-using OpenTelemetry.Metrics;
-using OpenTelemetry.Resources;
-using OpenTelemetry.Extensions.AWS.Trace;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -26,8 +21,6 @@ builder.Services.AddControllers()
     {
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
 
 builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddHttpClient();
@@ -40,8 +33,9 @@ var cognitoAppClientId = builder.Configuration["Cognito:AppClientId"];
 // Cognito Admin Client
 // Cred are from user secrets.
 var awsAccessKey = builder.Configuration["AWS:AccessKey"];
-var awsSecretKey = builder.Configuration["AWS:SecretKey"];
-var awsCredentials = new BasicAWSCredentials(awsAccessKey, awsSecretKey);
+Amazon.Runtime.AWSCredentials awsCredentials = string.IsNullOrEmpty(awsAccessKey)
+    ? Amazon.Runtime.FallbackCredentialsFactory.GetCredentials()
+    : new BasicAWSCredentials(awsAccessKey, builder.Configuration["AWS:SecretKey"]);
 var cognitoRegionEndpoint = RegionEndpoint.GetBySystemName(cognitoRegion);
 
 // S3 Client for document stroage
@@ -61,9 +55,6 @@ builder.Services.AddSingleton<IAmazonDynamoDB>(
     new AmazonDynamoDBClient(awsCredentials, dynamoDbRegionEndpoint));
 
 builder.Services.AddSingleton<AuditLogService>();
-// Scoped, not singleton: it depends on AppDbContext, which is scoped.
-builder.Services.AddScoped<AnnouncementService>();
-
 builder.Services.AddSingleton<IAmazonCognitoIdentityProvider>(
     new AmazonCognitoIdentityProviderClient(awsCredentials, cognitoRegionEndpoint)
     );
@@ -108,36 +99,9 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend", policy => policy.WithOrigins(allowedOrigins).WithHeaders("Authorization", "Content-Type").AllowAnyMethod());
 });
 
-
-// OpenTelemetry to traces, get metrics exported via OTLP to the local AWS Distro For Open Telemetry ADOT collector
-Sdk.SetDefaultTextMapPropagator(new AWSXRayPropagator());
-
-builder.Services.AddOpenTelemetry()
-    .ConfigureResource(resource => resource.AddService("digital-scholarship-api"))
-    .WithTracing(tracing => tracing
-        .AddXRayTraceId()
-        .AddAspNetCoreInstrumentation()
-        .AddHttpClientInstrumentation()
-        .AddSqlClientInstrumentation()
-        .AddOtlpExporter(otlp =>
-        {
-            otlp.Endpoint = new Uri("http://localhost:4317");
-        }))
-    .WithMetrics(metrics => metrics
-        .AddAspNetCoreInstrumentation()
-        .AddHttpClientInstrumentation()
-        .AddOtlpExporter(otlp =>
-        {
-            otlp.Endpoint = new Uri("http://localhost:4317");
-        }));
+builder.Services.AddAWSLambdaHosting(LambdaEventSource.RestApi);
 
 var app = builder.Build();
-
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-}
 
 // This need to put before authorization to activate the policy in request pipeline.
 // So every incoming request got checked against it before proceeding further.

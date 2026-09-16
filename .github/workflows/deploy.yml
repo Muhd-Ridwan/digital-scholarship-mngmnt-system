@@ -1,11 +1,6 @@
 name: Deploy Backend to AWS EB
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - "Digital-Scholarship-Management-System/Digital-Scholarship-Management-System.API/**"
   workflow_dispatch:
 
 jobs:
@@ -81,6 +76,9 @@ jobs:
       - name: Publish backend
         run: |
           dotnet publish Digital-Scholarship-Management-System/Digital-Scholarship-Management-System.API/Digital-Scholarship-Management-System.API.csproj -c Release -o publish_output
+
+      - name: Copy .ebextensions into publish output
+        run: cp -r Digital-Scholarship-Management-System/Digital-Scholarship-Management-System.API/.ebextensions publish_output/
 
       - name: Zip backend for deployment
         run: |

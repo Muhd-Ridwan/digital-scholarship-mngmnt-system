@@ -1,0 +1,6 @@
+@Dsms.Student_HostAddress = http://localhost:5202
+
+GET {{Dsms.Student_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

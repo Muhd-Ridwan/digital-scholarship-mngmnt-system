@@ -1,0 +1,10 @@
+{
+  "profile": "cloud_assignment",
+  "region": "ap-southeast-2",
+  "function-runtime": "dotnet10",
+  "function-memory-size": 1024,
+  "function-timeout": 30,
+  "function-handler": "Dsms.Auth",
+  "function-name": "dsms-auth-service",
+  "function-role": "arn:aws:iam::465768367728:role/dsms-lambda-exec-role"
+}
