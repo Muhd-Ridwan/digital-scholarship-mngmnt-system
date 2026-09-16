@@ -114,6 +114,7 @@ namespace Digital_Scholarship_Management_System.API.Controllers
                 return BadRequest("A registration certificate is required for sponsor registration.");
             }
 
+            // Sponsor
             string? certExtension = null;
             if (isSponsor)
             {
