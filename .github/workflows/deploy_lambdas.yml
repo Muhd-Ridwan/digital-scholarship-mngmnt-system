@@ -6,6 +6,7 @@ on:
     paths:
       - "Digital-Scholarship-Management-System/Dsms.Auth/**"
       - "Digital-Scholarship-Management-System/Dsms.Student/**"
+      - "Digital-Scholarship-Management-System/Dsms.Admin/**"
       - "Digital-Scholarship-Management-System/Dsms.Shared/**"
   workflow_dispatch:
 
@@ -42,6 +43,11 @@ jobs:
           - service: Dsms.Student
             function: dsms-student-service
             smoke_url: https://sobc0bt9ri.execute-api.ap-southeast-2.amazonaws.com/prod/api/users/me
+            smoke_method: GET
+            smoke_expect: "401"
+          - service: Dsms.Admin
+            function: dsms-admin-service
+            smoke_url: https://sobc0bt9ri.execute-api.ap-southeast-2.amazonaws.com/prod/api/audit-log
             smoke_method: GET
             smoke_expect: "401"
     steps:
