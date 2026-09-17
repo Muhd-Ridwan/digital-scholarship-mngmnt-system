@@ -9,8 +9,12 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text.Json.Serialization;
+using Amazon.XRay.Recorder.Handlers.AwsSdk;
+using Amazon.XRay.Recorder.Handlers.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
+
+AWSSDKHandler.RegisterXRayForAllServices();
 
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
@@ -78,6 +82,8 @@ builder.Services.AddCors(options =>
 builder.Services.AddAWSLambdaHosting(LambdaEventSource.RestApi);
 
 var app = builder.Build();
+
+app.UseXRay("dsms-admin-service");
 
 app.UseCors("AllowFrontend");
 app.UseAuthentication();
