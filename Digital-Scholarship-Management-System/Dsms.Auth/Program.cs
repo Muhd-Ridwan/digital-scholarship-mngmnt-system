@@ -10,9 +10,13 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
 using Microsoft.IdentityModel.Tokens;
+using Amazon.XRay.Recorder.Handlers.AwsSdk;
+using Amazon.XRay.Recorder.Handlers.AspNetCore;
 
 
 var builder = WebApplication.CreateBuilder(args);
+
+AWSSDKHandler.RegisterXRayForAllServices();
 
 // Add services to the container.
 
@@ -102,6 +106,8 @@ builder.Services.AddCors(options =>
 builder.Services.AddAWSLambdaHosting(LambdaEventSource.RestApi);
 
 var app = builder.Build();
+
+app.UseXRay("dsms-auth-service");
 
 // This need to put before authorization to activate the policy in request pipeline.
 // So every incoming request got checked against it before proceeding further.
