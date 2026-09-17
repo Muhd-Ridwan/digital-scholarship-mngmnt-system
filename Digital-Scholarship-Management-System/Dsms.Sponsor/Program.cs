@@ -1,15 +1,19 @@
 using Amazon;
-using Amazon.Runtime;
 using Amazon.DynamoDBv2;
 using Amazon.Lambda.AspNetCoreServer.Hosting;
+using Amazon.Runtime;
+using Amazon.XRay.Recorder.Handlers.AwsSdk;
 using Digital_Scholarship_Management_System.API.Data;
 using Digital_Scholarship_Management_System.API.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text.Json.Serialization;
+using Amazon.XRay.Recorder.Handlers.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
+
+AWSSDKHandler.RegisterXRayForAllServices();
 
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
@@ -74,6 +78,8 @@ builder.Services.AddCors(options =>
 builder.Services.AddAWSLambdaHosting(LambdaEventSource.RestApi);
 
 var app = builder.Build();
+
+app.UseXRay("dsms-sponsor-service");
 
 app.UseCors("AllowFrontend");
 app.UseAuthentication();
