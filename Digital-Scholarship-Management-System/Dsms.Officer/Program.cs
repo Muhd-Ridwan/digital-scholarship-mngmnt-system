@@ -83,7 +83,7 @@ builder.Services.AddAWSLambdaHosting(LambdaEventSource.RestApi);
 
 var app = builder.Build();
 
-app.UseXRay("dsms-admin-service");
+app.UseXRay("dsms-officer-service");
 
 app.UseCors("AllowFrontend");
 app.UseAuthentication();
